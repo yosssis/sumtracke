@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>מסכם חודשי</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;600;700;900&display=swap');
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f7f4ef;
+      --card: #ffffff;
+      --accent: #ff6b35;
+      --text: #1a1a2e;
+      --muted: #8a8a9a;
+      --border: #e2ddd6;
+      --row-hover: #fff9f5;
+      --delete: #ff4757;
+      --green: #2ecc71;
+      --tab-h: 42px;
+    }
+
+    body {
+      font-family: 'Heebo', sans-serif;
+      background: var(--bg);
+      min-height: 100vh;
+      color: var(--text);
+      padding: clamp(12px, 4vw, 28px) clamp(8px, 3vw, 16px) 60px;
+    }
+
+    .container { max-width: 680px; margin: 0 auto; }
+
+    /* TITLE */
+    .title-wrap { text-align: center; margin-bottom: 20px; }
+    #main-title {
+      font-size: clamp(1.4rem, 5vw, 2rem);
+      font-weight: 900; color: var(--text);
+      border: none; background: transparent; width: 100%;
+      text-align: center; outline: none; cursor: text;
+      border-radius: 8px; padding: 6px 10px;
+      transition: background 0.2s;
+    }
+    #main-title:hover, #main-title:focus { background: rgba(255,107,53,0.08); }
+    .title-hint { font-size: 0.68rem; color: var(--muted); margin-top: 2px; }
+
+    /* TABS */
+    .tabs-outer {
+      display: flex; align-items: flex-end;
+      overflow-x: auto; padding-bottom: 0;
+      scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+      margin-bottom: -1px; position: relative; z-index: 2;
+    }
+    .tabs-outer::-webkit-scrollbar { height: 3px; }
+    .tabs-outer::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    .tab {
+      display: flex; align-items: center; gap: 4px;
+      height: var(--tab-h); padding: 0 10px;
+      background: #e8e3db; border: 1px solid var(--border); border-bottom: none;
+      border-radius: 10px 10px 0 0; cursor: pointer;
+      font-family: 'Heebo', sans-serif; font-size: clamp(0.75rem, 2.5vw, 0.85rem);
+      font-weight: 600; color: var(--muted); white-space: nowrap;
+      transition: background 0.15s, color 0.15s;
+      position: relative; flex-shrink: 0; user-select: none;
+    }
+    .tab:hover { background: #f0ebe3; color: var(--text); }
+    .tab.active {
+      background: var(--card); color: var(--text);
+      border-bottom: 1px solid var(--card);
+      z-index: 3; height: calc(var(--tab-h) + 2px);
+    }
+
+    .tab-name-input {
+      background: transparent; border: none; outline: none;
+      font-family: 'Heebo', sans-serif;
+      font-size: clamp(0.75rem, 2.5vw, 0.85rem);
+      font-weight: 600; color: inherit;
+      width: clamp(56px, 15vw, 80px);
+      cursor: text; text-align: center;
+    }
+
+    .tab-del-btn {
+      background: none; border: none; cursor: pointer;
+      color: #bbb; font-size: 0.7rem; line-height: 1; padding: 0;
+      transition: color 0.15s; flex-shrink: 0;
+    }
+    .tab-del-btn:hover { color: var(--delete); }
+
+    .btn-add-tab {
+      height: var(--tab-h); padding: 0 12px;
+      background: transparent;
+      border: 1.5px dashed var(--border); border-bottom: none;
+      border-radius: 10px 10px 0 0; cursor: pointer;
+      font-size: 1.2rem; color: var(--muted);
+      transition: color 0.15s, border-color 0.15s; flex-shrink: 0;
+    }
+    .btn-add-tab:hover { color: var(--accent); border-color: var(--accent); }
+
+    /* CARD */
+    .card {
+      background: var(--card);
+      border-radius: 0 0 18px 18px;
+      border: 1px solid var(--border); border-top: none;
+      box-shadow: 0 6px 28px rgba(0,0,0,0.08);
+      overflow: hidden; position: relative; z-index: 1;
+    }
+
+    /* ADD ROW */
+    .add-section {
+      padding: clamp(10px, 3vw, 16px) clamp(12px, 3vw, 20px);
+      display: flex; gap: 8px; align-items: center;
+      border-bottom: 1px solid var(--border); background: #fffdfb;
+    }
+    .add-section input {
+      font-family: 'Heebo', sans-serif;
+      font-size: clamp(0.85rem, 3vw, 1rem);
+      border: 1.5px solid var(--border); border-radius: 9px;
+      padding: clamp(7px, 2vw, 9px) clamp(9px, 2vw, 13px);
+      outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+      background: #fff; color: var(--text); min-width: 0;
+    }
+    .add-section input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(255,107,53,0.12);
+    }
+    .inp-name { flex: 2; }
+    .inp-amount { flex: 1; text-align: left; direction: ltr; }
+
+    /* second row for notes */
+    .add-section-row2 {
+      padding: 0 clamp(12px,3vw,20px) clamp(10px,3vw,14px);
+      display: flex; gap: 8px; align-items: center;
+      background: #fffdfb; border-bottom: 1px solid var(--border);
+    }
+    .inp-notes {
+      font-family: 'Heebo', sans-serif;
+      font-size: clamp(0.82rem, 2.8vw, 0.92rem);
+      border: 1.5px solid var(--border); border-radius: 9px;
+      padding: clamp(6px,2vw,8px) clamp(9px,2vw,13px);
+      outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+      background: #fff; color: var(--text);
+      flex: 1; min-width: 0;
+    }
+    .inp-notes:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(255,107,53,0.12);
+    }
+    .inp-notes::placeholder { color: #bbb; }
+
+    .btn-add {
+      background: var(--accent); color: #fff; border: none;
+      border-radius: 9px; padding: clamp(7px,2vw,9px) clamp(12px,3vw,16px);
+      font-family: 'Heebo', sans-serif; font-size: 1.1rem; font-weight: 700;
+      cursor: pointer; transition: background 0.2s, transform 0.1s; flex-shrink: 0;
+    }
+    .btn-add:hover { background: #e85d28; }
+    .btn-add:active { transform: scale(0.96); }
+
+    /* LIST HEADER */
+    .list-header {
+      display: flex; justify-content: space-between;
+      padding: 8px clamp(12px,3vw,20px) 6px;
+      font-size: 0.67rem; font-weight: 700; color: var(--muted);
+      letter-spacing: 0.05em; text-transform: uppercase;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .rows-list { list-style: none; }
+
+    .row-item {
+      display: flex; align-items: center;
+      padding: clamp(10px,2.5vw,13px) clamp(12px,3vw,20px);
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s; gap: 8px;
+    }
+    .row-item:last-child { border-bottom: none; }
+    .row-item:hover { background: var(--row-hover); }
+
+    .row-num { font-size: 0.70rem; color: var(--muted); min-width: 18px; font-weight: 600; }
+    .row-info { flex: 2; min-width: 0; }
+    .row-name { font-size: clamp(0.85rem,2.8vw,0.97rem); font-weight: 500; word-break: break-word; }
+    .row-note-input {
+      font-family: 'Heebo', sans-serif;
+      font-size: clamp(0.72rem,2.3vw,0.80rem);
+      color: var(--muted); font-style: italic;
+      border: none; border-bottom: 1.5px dashed transparent;
+      background: transparent; outline: none; width: 100%;
+      padding: 2px 0; margin-top: 3px;
+      transition: border-color 0.2s, color 0.2s;
+      cursor: text;
+    }
+    .row-note-input::placeholder { color: #ccc; font-style: italic; }
+    .row-note-input:hover { border-bottom-color: var(--border); }
+    .row-note-input:focus { border-bottom-color: var(--accent); color: var(--text); font-style: normal; }
+    .row-amount { flex: 1; font-size: clamp(0.85rem,2.8vw,0.97rem); font-weight: 700; color: var(--accent); text-align: left; direction: ltr; font-variant-numeric: tabular-nums; }
+    .btn-del { background: none; border: none; cursor: pointer; color: #ccc; font-size: 0.95rem; transition: color 0.15s; line-height: 1; padding: 0 2px; flex-shrink: 0; }
+    .btn-del:hover { color: var(--delete); }
+
+    .empty-state { padding: 32px 20px; text-align: center; color: var(--muted); font-size: 0.88rem; }
+    .empty-icon { font-size: 2rem; margin-bottom: 8px; opacity: 0.35; }
+
+    /* TOTAL BAR */
+    .total-bar {
+      background: linear-gradient(135deg, var(--accent) 0%, #ff9f43 100%);
+      padding: clamp(14px,3vw,18px) clamp(16px,4vw,24px);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .total-label { color: rgba(255,255,255,0.85); font-size: clamp(0.82rem,2.5vw,0.92rem); font-weight: 600; }
+    .total-count { display: block; font-size: 0.68rem; font-weight: 400; opacity: 0.7; margin-top: 2px; }
+    .total-amount-el {
+      color: #fff; font-size: clamp(1.5rem,5vw,1.9rem); font-weight: 900;
+      letter-spacing: -0.02em; font-variant-numeric: tabular-nums;
+      direction: ltr; transition: transform 0.18s;
+    }
+    .total-amount-el.bump { transform: scale(1.08); }
+
+    /* BOTTOM ACTIONS */
+    .bottom-actions {
+      display: flex; justify-content: center; gap: 10px;
+      margin-top: 12px; flex-wrap: wrap;
+    }
+    .btn-action {
+      background: none; border: 1.5px solid var(--border); border-radius: 8px;
+      color: var(--muted); font-family: 'Heebo', sans-serif;
+      font-size: clamp(0.75rem, 2.5vw, 0.82rem);
+      padding: 7px 16px; cursor: pointer; transition: color 0.2s, border-color 0.2s;
+      display: flex; align-items: center; gap: 5px;
+    }
+    .btn-action:hover { color: var(--text); border-color: var(--text); }
+    .btn-action.danger:hover { color: var(--delete); border-color: var(--delete); }
+    .btn-action.export:hover { color: var(--green); border-color: var(--green); }
+
+    /* CONFIRM DIALOG */
+    .overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.18s;
+    }
+    .overlay.show { opacity: 1; pointer-events: all; }
+    .dialog {
+      background: #fff; border-radius: 16px;
+      padding: clamp(20px,5vw,28px) clamp(20px,5vw,28px) clamp(16px,4vw,22px);
+      max-width: 320px; width: 90%; text-align: center;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.18);
+      transform: scale(0.9); transition: transform 0.18s;
+    }
+    .overlay.show .dialog { transform: scale(1); }
+    .dialog-icon { font-size: 2rem; margin-bottom: 8px; }
+    .dialog-msg { font-size: clamp(0.9rem,3vw,1rem); font-weight: 600; color: var(--text); margin-bottom: 5px; }
+    .dialog-sub { font-size: clamp(0.75rem,2.5vw,0.82rem); color: var(--muted); margin-bottom: 18px; }
+    .dialog-btns { display: flex; gap: 10px; justify-content: center; }
+    .dialog-btns button {
+      font-family: 'Heebo', sans-serif; font-size: clamp(0.85rem,3vw,0.9rem); font-weight: 700;
+      border: none; border-radius: 10px; padding: 9px 20px; cursor: pointer; transition: opacity 0.15s;
+    }
+    .dialog-btns button:hover { opacity: 0.85; }
+    .btn-cancel { background: var(--border); color: var(--text); }
+    .btn-confirm-del { background: var(--delete); color: #fff; }
+
+    /* TOAST */
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(60px);
+      background: var(--text); color: #fff;
+      padding: 10px 22px; border-radius: 24px;
+      font-size: 0.85rem; font-weight: 600;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+      transition: transform 0.3s, opacity 0.3s; opacity: 0; z-index: 200;
+      white-space: nowrap;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <div class="title-wrap">
+    <input type="text" id="main-title" value="מסכם חודשי" spellcheck="false" />
+    <div class="title-hint">לחץ על הכותרת כדי לערוך</div>
+  </div>
+
+  <div class="tabs-outer" id="tabs-bar"></div>
+
+  <div class="card">
+    <div class="add-section">
+      <input type="text" id="input-name" class="inp-name" placeholder="שם / תיאור" />
+      <input type="number" id="input-amount" class="inp-amount" placeholder="סכום" step="0.01" inputmode="decimal" />
+      <button class="btn-add" onclick="addRow()">+</button>
+    </div>
+    <div class="add-section-row2">
+      <input type="text" id="input-notes" class="inp-notes" placeholder="הערה (אופציונלי)" />
+    </div>
+    <div class="list-header"><span>פריט</span><span>סכום</span></div>
+    <ul class="rows-list" id="rows-list"></ul>
+    <div class="total-bar">
+      <div class="total-label">
+        סה"כ
+        <span class="total-count" id="total-count">0 פריטים</span>
+      </div>
+      <div class="total-amount-el" id="total-amount">₪0.00</div>
+    </div>
+  </div>
+
+  <div class="bottom-actions">
+    <button class="btn-action export" onclick="exportExcel()">📥 ייצוא לאקסל</button>
+    <button class="btn-action danger" onclick="clearCurrent()">🗑 נקה חודש זה</button>
+  </div>
+  <div style="text-align:center; margin-top:10px;">
+    <span id="sync-status" style="font-size:0.78rem; font-weight:600; transition: color 0.3s;"></span>
+  </div>
+
+</div>
+
+<!-- Confirm Dialog -->
+<div class="overlay" id="overlay">
+  <div class="dialog">
+    <div class="dialog-icon" id="dialog-icon">🗑️</div>
+    <div class="dialog-msg" id="dialog-msg"></div>
+    <div class="dialog-sub" id="dialog-sub"></div>
+    <div class="dialog-btns">
+      <button class="btn-cancel" onclick="closeDialog()">ביטול</button>
+      <button class="btn-confirm-del" id="confirm-btn" onclick="confirmDelete()">מחק</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const MONTHS_HE = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני',
+                     'יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+
+  function defaultMonthName() {
+    const d = new Date();
+    return MONTHS_HE[d.getMonth()] + ' ' + d.getFullYear();
+  }
+
+  let months = [{ id: 1, name: defaultMonthName(), rows: [] }];
+  let activeId = 1;
+  let nextMonthId = 2;
+  let pendingDelete = null;
+
+  const tabsBar   = document.getElementById('tabs-bar');
+  const rowsList  = document.getElementById('rows-list');
+  const totalEl   = document.getElementById('total-amount');
+  const countEl   = document.getElementById('total-count');
+  const nameInput = document.getElementById('input-name');
+  const amtInput  = document.getElementById('input-amount');
+  const notesInput= document.getElementById('input-notes');
+  const overlay   = document.getElementById('overlay');
+  const dialogMsg = document.getElementById('dialog-msg');
+  const dialogSub = document.getElementById('dialog-sub');
+  const dialogIcon= document.getElementById('dialog-icon');
+  const toastEl   = document.getElementById('toast');
+
+  [nameInput, amtInput, notesInput].forEach(el =>
+    el.addEventListener('keydown', e => { if (e.key === 'Enter') addRow(); })
+  );
+  document.getElementById('main-title').addEventListener('focus', function() {
+    if (this.value === 'מסכם חודשי') this.select();
+  });
+
+  // ── TABS ─────────────────────────────────────────────
+  function renderTabs() {
+    tabsBar.innerHTML = '';
+    months.forEach(m => {
+      const tab = document.createElement('div');
+      tab.className = 'tab' + (m.id === activeId ? ' active' : '');
+
+      const inp = document.createElement('input');
+      inp.type = 'text'; inp.className = 'tab-name-input';
+      inp.value = m.name; inp.readOnly = true;
+      inp.title = 'לחץ לפתיחה / לחץ פעמיים לשינוי שם';
+
+      inp.addEventListener('click', () => {
+        if (m.id !== activeId) { activeId = m.id; renderTabs(); renderRows(); }
+      });
+      inp.addEventListener('dblclick', () => {
+        inp.readOnly = false; inp.style.width = '96px';
+        inp.focus(); inp.select();
+      });
+      inp.addEventListener('blur', () => {
+        inp.readOnly = true; inp.style.width = '';
+        m.name = inp.value.trim() || m.name; renderTabs();
+      });
+      inp.addEventListener('keydown', e => { if (e.key === 'Enter') inp.blur(); });
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'tab-del-btn'; delBtn.textContent = '✕'; delBtn.title = 'מחק חודש';
+      delBtn.addEventListener('click', e => { e.stopPropagation(); askDeleteMonth(m.id, m.name); });
+
+      tab.appendChild(inp);
+      if (months.length > 1) tab.appendChild(delBtn);
+      tabsBar.appendChild(tab);
+    });
+
+    const addBtn = document.createElement('button');
+    addBtn.className = 'btn-add-tab'; addBtn.textContent = '+'; addBtn.title = 'הוסף חודש';
+    addBtn.addEventListener('click', addMonth);
+    tabsBar.appendChild(addBtn);
+
+    const activeTab = tabsBar.querySelector('.tab.active');
+    if (activeTab) activeTab.scrollIntoView({ inline: 'nearest', behavior: 'smooth' });
+  }
+
+  function addMonth() {
+    const m = { id: nextMonthId++, name: 'חודש חדש', rows: [] };
+    months.push(m); activeId = m.id;
+    renderTabs(); renderRows();
+    setTimeout(() => {
+      const inp = tabsBar.querySelector('.tab.active .tab-name-input');
+      if (inp) { inp.readOnly = false; inp.style.width = '96px'; inp.focus(); inp.select(); }
+    }, 50);
+  }
+
+  // ── ROWS ─────────────────────────────────────────────
+  function activeMonth() { return months.find(m => m.id === activeId); }
+
+  function addRow() {
+    const name = nameInput.value.trim();
+    const amount = parseFloat(amtInput.value);
+    const notes = notesInput.value.trim();
+    if (!name && isNaN(amount)) return;
+    activeMonth().rows.push({ id: Date.now(), name: name || '—', amount: isNaN(amount) ? 0 : amount, notes });
+    nameInput.value = ''; amtInput.value = ''; notesInput.value = '';
+    nameInput.focus(); renderRows();
+  }
+
+  function renderRows() {
+    const m = activeMonth(); rowsList.innerHTML = '';
+    if (!m || m.rows.length === 0) {
+      rowsList.innerHTML = `<li class="empty-state"><div class="empty-icon">📋</div>עדיין אין פריטים — הוסף את הראשון!</li>`;
+      totalEl.textContent = '₪0.00'; countEl.textContent = '0 פריטים'; return;
+    }
+    const total = m.rows.reduce((s, r) => s + r.amount, 0);
+    m.rows.forEach((r, i) => {
+      const li = document.createElement('li'); li.className = 'row-item';
+      li.innerHTML = `
+        <span class="row-num">${i+1}</span>
+        <span class="row-info">
+          <div class="row-name">${esc(r.name)}</div>
+          <input class="row-note-input" type="text" placeholder="+ הוסף הערה" value="${esc(r.notes||'')}" data-id="${r.id}" />
+        </span>
+        <span class="row-amount">${fmt(r.amount)}</span>
+        <button class="btn-del" data-id="${r.id}" data-name="${esc(r.name)}" title="מחק">✕</button>`;
+      rowsList.appendChild(li);
+    });
+    // note inputs — save on blur/enter
+    rowsList.querySelectorAll('.row-note-input').forEach(inp => {
+      const id = +inp.dataset.id;
+      inp.addEventListener('blur', () => {
+        const row = activeMonth().rows.find(r => r.id === id);
+        if (row) row.notes = inp.value.trim();
+      });
+      inp.addEventListener('keydown', e => { if (e.key === 'Enter') inp.blur(); });
+    });
+    rowsList.querySelectorAll('.btn-del').forEach(btn =>
+      btn.addEventListener('click', () => askDeleteRow(+btn.dataset.id, btn.dataset.name))
+    );
+    totalEl.textContent = fmt(total);
+    countEl.textContent = m.rows.length + (m.rows.length === 1 ? ' פריט' : ' פריטים');
+    totalEl.classList.remove('bump'); void totalEl.offsetWidth;
+    totalEl.classList.add('bump'); setTimeout(() => totalEl.classList.remove('bump'), 200);
+  }
+
+  function clearCurrent() {
+    if (!activeMonth() || activeMonth().rows.length === 0) return;
+    pendingDelete = { type: 'clearMonth' };
+    dialogIcon.textContent = '🗑️';
+    dialogMsg.textContent = 'לנקות את כל פריטי החודש?';
+    dialogSub.textContent = activeMonth().name + ' — ' + activeMonth().rows.length + ' פריטים יימחקו';
+    overlay.classList.add('show');
+  }
+
+  // ── EXPORT TO EXCEL ───────────────────────────────────
+  function exportExcel() {
+    const m = activeMonth();
+    if (!m || m.rows.length === 0) { showToast('אין נתונים לייצוא'); return; }
+
+    const title = document.getElementById('main-title').value || 'מסכם חודשי';
+    const total = m.rows.reduce((s, r) => s + r.amount, 0);
+
+    // Build CSV with BOM for Hebrew Excel support
+    let csv = '\uFEFF'; // UTF-8 BOM
+    csv += `"${title} — ${m.name}"\r\n`;
+    csv += `\r\n`;
+    csv += `"#","שם / תיאור","הערה","סכום"\r\n`;
+    m.rows.forEach((r, i) => {
+      csv += `"${i+1}","${r.name.replace(/"/g,'""')}","${(r.notes||'').replace(/"/g,'""')}","${r.amount}"\r\n`;
+    });
+    csv += `\r\n`;
+    csv += `"","סה״כ","${total}"\r\n`;
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${title}_${m.name}.csv`;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('✅ הקובץ יוצא בהצלחה!');
+  }
+
+  // ── DIALOG ────────────────────────────────────────────
+  function askDeleteRow(rowId, rowName) {
+    pendingDelete = { type: 'row', rowId };
+    dialogIcon.textContent = '⚠️';
+    dialogMsg.textContent = 'למחוק את הפריט?';
+    dialogSub.textContent = rowName;
+    overlay.classList.add('show');
+  }
+
+  function askDeleteMonth(monthId, monthName) {
+    pendingDelete = { type: 'month', monthId };
+    dialogIcon.textContent = '⚠️';
+    dialogMsg.textContent = 'למחוק את החודש?';
+    dialogSub.textContent = monthName + ' — כל הנתונים יאבדו';
+    overlay.classList.add('show');
+  }
+
+  function closeDialog() { overlay.classList.remove('show'); pendingDelete = null; }
+
+  function confirmDelete() {
+    if (!pendingDelete) return closeDialog();
+    const { type } = pendingDelete;
+    if (type === 'row') {
+      activeMonth().rows = activeMonth().rows.filter(r => r.id !== pendingDelete.rowId);
+      renderRows();
+    } else if (type === 'month') {
+      months = months.filter(m => m.id !== pendingDelete.monthId);
+      if (activeId === pendingDelete.monthId) activeId = months[months.length - 1].id;
+      renderTabs(); renderRows();
+    } else if (type === 'clearMonth') {
+      activeMonth().rows = []; renderRows();
+    }
+    closeDialog();
+  }
+
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeDialog(); });
+
+  // ── TOAST ─────────────────────────────────────────────
+  let toastTimer;
+  function showToast(msg) {
+    toastEl.textContent = msg; toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2500);
+  }
+
+  // ── UTILS ─────────────────────────────────────────────
+  function fmt(n) {
+    return '₪' + n.toLocaleString('he-IL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── DRIVE SYNC ────────────────────────────────────────
+  const API_URL = 'https://script.google.com/macros/s/AKfycbxcssJ7vV6oUuYQYg0970LivLdSEsSBG5ye5UKQ1yuc_NzbQK7SoiMTTjMfbPU5Sjmw/exec';
+  const LOCAL_KEY = 'sumtracker_v1';
+  let saveTimer = null;
+  let isSyncing = false;
+
+  function setSyncStatus(status) {
+    const el = document.getElementById('sync-status');
+    if (!el) return;
+    const states = {
+      saving:  { text: '💾 שומר...', color: '#f39c12' },
+      saved:   { text: '✅ נשמר בדרייב', color: 'var(--green)' },
+      loading: { text: '🔄 טוען...', color: '#f39c12' },
+      error:   { text: '⚠️ שגיאת שמירה', color: 'var(--delete)' },
+      offline: { text: '📴 נשמר מקומית', color: 'var(--muted)' },
+    };
+    const s = states[status] || {};
+    el.textContent = s.text; el.style.color = s.color;
+  }
+
+  function getPayload() {
+    return JSON.stringify({
+      months, activeId, nextMonthId,
+      title: document.getElementById('main-title').value
+    });
+  }
+
+  function applyPayload(d) {
+    if (d.months)      months      = d.months;
+    if (d.activeId)    activeId    = d.activeId;
+    if (d.nextMonthId) nextMonthId = d.nextMonthId;
+    if (d.title)       document.getElementById('main-title').value = d.title;
+  }
+
+  // save locally always, then push to Drive
+  function saveData() {
+    const payload = getPayload();
+    try { localStorage.setItem(LOCAL_KEY, payload); } catch(e) {}
+
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(async () => {
+      setSyncStatus('saving');
+      try {
+        await fetch(API_URL, {
+          method: 'POST',
+          body: payload,
+          headers: { 'Content-Type': 'text/plain' }
+        });
+        setSyncStatus('saved');
+      } catch(e) {
+        setSyncStatus('offline');
+      }
+    }, 800); // debounce 800ms
+  }
+
+  async function loadData() {
+    // 1. load local immediately so UI is instant
+    try {
+      const raw = localStorage.getItem(LOCAL_KEY);
+      if (raw) applyPayload(JSON.parse(raw));
+    } catch(e) {}
+
+    // 2. fetch from Drive and override if newer
+    setSyncStatus('loading');
+    try {
+      const res = await fetch(API_URL);
+      const text = await res.text();
+      if (text && text !== '{}') {
+        const d = JSON.parse(text);
+        applyPayload(d);
+        // update local cache with Drive data
+        try { localStorage.setItem(LOCAL_KEY, text); } catch(e) {}
+      }
+      setSyncStatus('saved');
+    } catch(e) {
+      setSyncStatus('offline');
+    }
+
+    renderTabs();
+    renderRows();
+  }
+
+  // save on title change
+  document.getElementById('main-title').addEventListener('input', saveData);
+
+  // save on note blur
+  rowsList.addEventListener('blur', e => {
+    if (e.target.classList.contains('row-note-input')) {
+      const id = +e.target.dataset.id;
+      const row = activeMonth()?.rows.find(r => r.id === id);
+      if (row) { row.notes = e.target.value.trim(); saveData(); }
+    }
+  }, true);
+
+  // wrap renderRows to auto-save after every mutation
+  const _origRenderRows = renderRows;
+  renderRows = function() { _origRenderRows(); saveData(); };
+
+  // ── INIT ──────────────────────────────────────────────
+  loadData();
+</script>
+</body>
+</html>
