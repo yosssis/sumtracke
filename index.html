@@ -979,11 +979,19 @@ function closeEmailChoice() {
 async function confirmEmailChoice(includeMarked) {
   closeEmailChoice();
 
-  if (window.emailChoiceType === 'annual') {
-    window.emailChoiceType = null;
+  const type = window.emailChoiceType;
+  window.emailChoiceType = null;
+
+  if (type === 'annual') {
     await sendAnnualEmailNow(includeMarked);
+
+  } else if (type === 'tempAnnual') {
+    await sendTempAnnualEmailNow(includeMarked);
+
+  } else if (type === 'tempMonthly') {
+    await sendTempMonthlyEmailNow(includeMarked);
+
   } else {
-    window.emailChoiceType = null;
     await sendMonthlyEmailNow(includeMarked);
   }
 }
@@ -1169,6 +1177,112 @@ async function sendTempEmail() {
   } else {
     await sendTempMonthlyEmailNow(true);
   }
+  }
+  async function sendTempMonthlyEmailNow(includeMarked) {
+  const m = activeMonth();
+
+  if (!m || m.rows.length === 0) {
+    showToast('אין נתונים לשליחה');
+    return;
+  }
+
+  const monthToSend = {
+    ...m,
+    rows: includeMarked
+      ? [...m.rows]
+      : m.rows.filter(row => !row.marked)
+  };
+
+  if (monthToSend.rows.length === 0) {
+    showToast('אין פריטים לשליחה');
+    return;
+  }
+
+  try {
+    showToast('שולח מייל...');
+
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      redirect: 'follow',
+      body: JSON.stringify({
+        action: 'sendTempEmail',
+        email: tempEmailAddress,
+        title: document.getElementById('main-title').value || 'מסכם חודשי',
+        month: monthToSend
+      }),
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8'
+      }
+    });
+
+    const text = await res.text();
+
+    console.log('TEMP EMAIL STATUS:', res.status);
+    console.log('TEMP EMAIL RESPONSE:', text);
+
+    if (text.trim() === 'temp email sent') {
+      showToast('✅ המייל נשלח');
+    } else {
+      showToast('❌ המייל לא נשלח');
+      console.error('SERVER RESPONSE:', text);
+    }
+
+  } catch (e) {
+    console.error('TEMP EMAIL ERROR:', e);
+    showToast('❌ שגיאה בשליחת המייל');
+  }
+}
+
+
+async function sendTempAnnualEmailNow(includeMarked) {
+  const monthsToSend = months.map(month => ({
+    ...month,
+    rows: includeMarked
+      ? [...(month.rows || [])]
+      : (month.rows || []).filter(row => !row.marked)
+  }));
+
+  const hasRows = monthsToSend.some(month => month.rows.length > 0);
+
+  if (!hasRows) {
+    showToast('אין פריטים לשליחה');
+    return;
+  }
+
+  try {
+    showToast('שולח דוח שנתי...');
+
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      redirect: 'follow',
+      body: JSON.stringify({
+        action: 'sendTempAnnualEmail',
+        email: tempEmailAddress,
+        title: document.getElementById('main-title').value || 'מסכם חודשי',
+        months: monthsToSend
+      }),
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8'
+      }
+    });
+
+    const text = await res.text();
+
+    console.log('TEMP ANNUAL EMAIL STATUS:', res.status);
+    console.log('TEMP ANNUAL EMAIL RESPONSE:', text);
+
+    if (text.trim() === 'temp annual email sent') {
+      showToast('✅ הדוח השנתי נשלח');
+    } else {
+      showToast('❌ הדוח השנתי לא נשלח');
+      console.error('SERVER RESPONSE:', text);
+    }
+
+  } catch (e) {
+    console.error('TEMP ANNUAL EMAIL ERROR:', e);
+    showToast('❌ שגיאה בשליחת הדוח השנתי');
+  
+}
 }
  function getAllNames() {
   const names = new Set();
