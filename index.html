@@ -488,6 +488,44 @@
     </div>
   </div>
 </div>
+  <!-- Documents Dialog -->
+<div class="overlay" id="documents-overlay">
+  <div class="dialog" style="max-width:420px;">
+    <div class="dialog-icon">📎</div>
+    <div class="dialog-msg" id="documents-title">מסמכים</div>
+    <div class="dialog-sub">העלה ופתח מסמכים השייכים לפריט</div>
+
+    <input
+      type="file"
+      id="document-file-input"
+      style="width:100%; margin-bottom:14px;"
+    />
+
+    <button
+      class="btn-action"
+      onclick="uploadDocument()"
+      style="margin:0 auto 16px;"
+    >
+      ⬆️ העלה מסמך
+    </button>
+
+    <div
+      id="documents-list"
+      style="
+        text-align:right;
+        max-height:250px;
+        overflow-y:auto;
+        margin-bottom:16px;
+      "
+    ></div>
+
+    <div class="dialog-btns">
+      <button class="btn-cancel" onclick="closeDocuments()">
+        סגור
+      </button>
+    </div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -704,6 +742,9 @@ rowsList.querySelectorAll('.row-mark').forEach(chk => {
     rowsList.querySelectorAll('.btn-edit').forEach(btn => {
   btn.addEventListener('click', () => editRow(+btn.dataset.id));
 });
+  rowsList.querySelectorAll('.btn-docs').forEach(btn => {
+  btn.addEventListener('click', () => openDocuments(+btn.dataset.id));
+});
     rowsList.querySelectorAll('.btn-del').forEach(btn =>
       btn.addEventListener('click', () => askDeleteRow(+btn.dataset.id, btn.dataset.name))
     );
@@ -760,7 +801,97 @@ function saveEditRow() {
   closeEditDialog();
   renderRows();
   showToast('✅ הפריט עודכן');
+  }
+  // ── DOCUMENTS ────────────────────────────────────────────
+let documentsRowId = null;
+
+function openDocuments(rowId) {
+  const row = activeMonth().rows.find(r => r.id === rowId);
+  if (!row) return;
+
+  documentsRowId = rowId;
+
+  // תמיכה גם בפריטים ישנים שנוצרו לפני שהוספנו מסמכים
+  if (!Array.isArray(row.documents)) {
+    row.documents = [];
+  }
+
+  document.getElementById('documents-title').textContent =
+    `מסמכים — ${row.name}`;
+
+  document.getElementById('document-file-input').value = '';
+
+  renderDocuments();
+
+  document.getElementById('documents-overlay').classList.add('show');
 }
+
+function closeDocuments() {
+  document.getElementById('documents-overlay').classList.remove('show');
+  document.getElementById('document-file-input').value = '';
+  documentsRowId = null;
+}
+
+function renderDocuments() {
+  const list = document.getElementById('documents-list');
+
+  const row = activeMonth().rows.find(
+    r => r.id === documentsRowId
+  );
+
+  if (!row) {
+    list.innerHTML = '';
+    return;
+  }
+
+  const documents = Array.isArray(row.documents)
+    ? row.documents
+    : [];
+
+  if (documents.length === 0) {
+    list.innerHTML = `
+      <div style="
+        text-align:center;
+        color:var(--muted);
+        padding:18px 8px;
+        font-size:0.85rem;
+      ">
+        עדיין אין מסמכים לפריט זה
+      </div>
+    `;
+    return;
+  }
+
+  list.innerHTML = '';
+
+  documents.forEach(doc => {
+    const item = document.createElement('div');
+
+    item.style.cssText = `
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:9px 4px;
+      border-bottom:1px solid var(--border);
+    `;
+
+    const name = document.createElement('span');
+    name.textContent = '📄 ' + (doc.name || 'מסמך');
+    name.style.cssText = `
+      flex:1;
+      min-width:0;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+      font-size:0.85rem;
+    `;
+
+    item.appendChild(name);
+    list.appendChild(item);
+  });
+}
+
   function clearCurrent() {
     if (!activeMonth() || activeMonth().rows.length === 0) return;
     pendingDelete = { type: 'clearMonth' };
