@@ -303,27 +303,13 @@
 .name-suggestion-item:hover {
   background: var(--row-hover);
 }
-    .search-section {
-  padding: 10px 12px;
-  background: #fff;
-  border-bottom: 1px solid var(--border);
+.inp-search {
+  flex: 1.4;
+  min-width: 0;
 }
 
-.search-section input {
-  width: 100%;
-  font-family: 'Heebo', sans-serif;
-  font-size: 0.88rem;
-  border: 1.5px solid var(--border);
-  border-radius: 9px;
-  padding: 8px 12px;
-  outline: none;
-  background: #fff;
-  color: var(--text);
-}
-
-.search-section input:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(255,107,53,0.12);
+.inp-search::placeholder {
+  color: #aaa;
 }
   </style>
 </head>
@@ -350,7 +336,13 @@
   <div id="name-suggestions" class="name-suggestions"></div>
 </div>
 
-
+<input
+  type="text"
+  id="search-input"
+  class="inp-search"
+  placeholder="🔍 חיפוש..."
+  autocomplete="off"
+/>
       
       <input type="number" id="input-amount" class="inp-amount" placeholder="סכום" step="0.01" inputmode="decimal" />
       <button class="btn-add" onclick="addRow()">+</button>
@@ -358,14 +350,7 @@
     <div class="add-section-row2">
       <input type="text" id="input-notes" class="inp-notes" placeholder="הערה (אופציונלי)" />
     </div>
-    <div class="search-section">
-  <input
-    type="text"
-    id="search-input"
-    placeholder="🔍 חיפוש לפי שם או הערה..."
-    autocomplete="off"
-  />
-</div>
+   
     <div class="list-header"><span>פריט</span><span>סכום</span></div>
     <ul class="rows-list" id="rows-list"></ul>
     <div class="total-bar">
