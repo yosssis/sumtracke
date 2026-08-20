@@ -548,7 +548,13 @@ nameInput.addEventListener('blur', () => {
     const amount = parseFloat(amtInput.value);
     const notes = notesInput.value.trim();
     if (!name && isNaN(amount)) return;
-    activeMonth().rows.push({ id: Date.now(), name: name || '—', amount: isNaN(amount) ? 0 : amount, notes });
+ activeMonth().rows.push({
+  id: Date.now(),
+  name: name || '—',
+  amount: isNaN(amount) ? 0 : amount,
+  notes,
+  marked: false
+});
     nameInput.value = ''; amtInput.value = ''; notesInput.value = '';
     nameInput.focus(); renderRows();
   }
@@ -579,8 +585,25 @@ filteredRows.forEach((r, i) => {
       li.innerHTML = `
         <span class="row-num">${i+1}</span>
         <span class="row-info">
-          <div class="row-name">${esc(r.name)}</div>
-          <input class="row-note-input" type="text" placeholder="+ הוסף הערה" value="${esc(r.notes||'')}" data-id="${r.id}" />
+  <div class="row-name" style="display:flex; align-items:center; gap:7px;">
+    <input
+      type="checkbox"
+      class="row-mark"
+      data-id="${r.id}"
+      ${r.marked ? 'checked' : ''}
+      title="אל תכלול בדוח"
+    />
+    <span>${esc(r.name)}</span>
+  </div>
+
+  <input
+    class="row-note-input"
+    type="text"
+    placeholder="+ הוסף הערה"
+    value="${esc(r.notes || '')}"
+    data-id="${r.id}"
+  />
+</span>
         </span>
         <span class="row-amount">${fmt(r.amount)}</span>
         <button class="btn-edit" data-id="${r.id}" title="ערוך">✏️</button>
