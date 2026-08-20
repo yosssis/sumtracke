@@ -656,7 +656,7 @@
   const _origRenderRows = renderRows;
   renderRows = function() { _origRenderRows(); saveData(); };
 
-  async function sendEmail() {
+async function sendEmail() {
   const m = activeMonth();
 
   if (!m || m.rows.length === 0) {
@@ -667,8 +667,9 @@
   try {
     showToast('שולח מייל...');
 
-    await fetch(API_URL, {
+    const res = await fetch(API_URL, {
       method: 'POST',
+      redirect: 'follow',
       body: JSON.stringify({
         action: 'sendEmail',
         title: document.getElementById('main-title').value || 'מסכם חודשי',
@@ -679,13 +680,23 @@
       }
     });
 
-    showToast('✅ המייל נשלח');
+    const text = await res.text();
+
+    console.log('EMAIL STATUS:', res.status);
+    console.log('EMAIL RESPONSE:', text);
+
+    if (text.trim() === 'email sent') {
+      showToast('✅ המייל נשלח');
+    } else {
+      showToast('❌ המייל לא נשלח');
+      console.error('SERVER RESPONSE:', text);
+    }
+
   } catch (e) {
-    console.error(e);
+    console.error('EMAIL ERROR:', e);
     showToast('❌ שגיאה בשליחת המייל');
   }
 }
-
   // ── INIT ──────────────────────────────────────────────
   loadData();
 </script>
