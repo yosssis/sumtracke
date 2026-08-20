@@ -300,10 +300,10 @@
       <div class="total-amount-el" id="total-amount">₪0.00</div>
     </div>
   </div>
-
-  <div class="bottom-actions">
-    <button class="btn-action export" onclick="exportExcel()">📥 ייצוא לאקסל</button>
-    <button class="btn-action danger" onclick="clearCurrent()">🗑 נקה חודש זה</button>
+ <div class="bottom-actions">
+  <button class="btn-action export" onclick="exportExcel()">📥 ייצוא לאקסל</button>
+  <button class="btn-action" onclick="sendEmail()">✉️ שלח במייל</button>
+  <button class="btn-action danger" onclick="clearCurrent()">🗑 נקה חודש זה</button>
   </div>
   <div style="text-align:center; margin-top:10px;">
     <span id="sync-status" style="font-size:0.78rem; font-weight:600; transition: color 0.3s;"></span>
@@ -655,6 +655,36 @@
   // wrap renderRows to auto-save after every mutation
   const _origRenderRows = renderRows;
   renderRows = function() { _origRenderRows(); saveData(); };
+
+  async function sendEmail() {
+  const m = activeMonth();
+
+  if (!m || m.rows.length === 0) {
+    showToast('אין נתונים לשליחה');
+    return;
+  }
+
+  try {
+    showToast('שולח מייל...');
+
+    await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'sendEmail',
+        title: document.getElementById('main-title').value || 'מסכם חודשי',
+        month: m
+      }),
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8'
+      }
+    });
+
+    showToast('✅ המייל נשלח');
+  } catch (e) {
+    console.error(e);
+    showToast('❌ שגיאה בשליחת המייל');
+  }
+}
 
   // ── INIT ──────────────────────────────────────────────
   loadData();
