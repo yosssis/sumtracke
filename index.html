@@ -598,11 +598,14 @@
     saveTimer = setTimeout(async () => {
       setSyncStatus('saving');
       try {
-        await fetch(API_URL, {
-          method: 'POST',
-          body: payload,
-          headers: { 'Content-Type': 'text/plain' }
-        });
+     await fetch(API_URL, {
+  method: 'POST',
+  redirect: 'follow',
+  body: payload,
+  headers: {
+    'Content-Type': 'text/plain;charset=utf-8'
+  }
+});
         setSyncStatus('saved');
       } catch(e) {
         setSyncStatus('offline');
