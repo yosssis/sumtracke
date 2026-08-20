@@ -428,9 +428,10 @@
 
     <div id="annual-report-content"></div>
 
-    <div class="dialog-btns" style="margin-top:18px;">
-      <button class="btn-cancel" onclick="closeAnnualReport()">סגור</button>
-    </div>
+  <div class="dialog-btns" style="margin-top:18px; flex-wrap:wrap;">
+  <button class="btn-cancel" onclick="closeAnnualReport()">סגור</button>
+  <button class="btn-action export" onclick="exportAnnualExcel()">📥 ייצוא לאקסל</button>
+</div>
   </div>
 </div>
   
@@ -1017,7 +1018,57 @@ function openAnnualReport() {
 function closeAnnualReport() {
   document.getElementById('annual-overlay').classList.remove('show');
 }
+function exportAnnualExcel() {
+  if (!months || months.length === 0) {
+    showToast('אין נתונים לייצוא');
+    return;
+  }
 
+  const title =
+    document.getElementById('main-title').value || 'מסכם חודשי';
+
+  let grandTotal = 0;
+
+  // BOM כדי שאקסל יציג עברית כמו שצריך
+  let csv = '\uFEFF';
+
+  csv += `"${title} — דוח שנתי"\r\n`;
+  csv += `\r\n`;
+  csv += `"#","חודש","מספר פריטים","סה״כ"\r\n`;
+
+  months.forEach((month, index) => {
+    const monthTotal = month.rows.reduce(
+      (sum, row) => sum + (Number(row.amount) || 0),
+      0
+    );
+
+    grandTotal += monthTotal;
+
+    csv += `"${index + 1}","${month.name.replace(/"/g, '""')}","${month.rows.length}","${monthTotal}"\r\n`;
+  });
+
+  csv += `\r\n`;
+  csv += `"","סה״כ שנתי","","${grandTotal}"\r\n`;
+
+  const blob = new Blob(
+    [csv],
+    { type: 'text/csv;charset=utf-8;' }
+  );
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+
+  a.href = url;
+  a.download = `${title}_דוח_שנתי.csv`;
+
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+
+  URL.revokeObjectURL(url);
+
+  showToast('✅ הדוח השנתי יוצא בהצלחה!');
+}
   // ── INIT ──────────────────────────────────────────────
   loadData();
 </script>
