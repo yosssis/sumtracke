@@ -600,13 +600,15 @@ nameInput.addEventListener('blur', () => {
     const amount = parseFloat(amtInput.value);
     const notes = notesInput.value.trim();
     if (!name && isNaN(amount)) return;
- activeMonth().rows.push({
+activeMonth().rows.push({
   id: Date.now(),
   name: name || '—',
   amount: isNaN(amount) ? 0 : amount,
   notes,
-  marked: false
+  marked: false,
+  documents: []
 });
+
     nameInput.value = ''; amtInput.value = ''; notesInput.value = '';
     nameInput.focus(); renderRows();
   }
@@ -646,6 +648,21 @@ filteredRows.forEach((r, i) => {
       title="אל תכלול בדוח"
     />
     <span>${esc(r.name)}</span>
+    <button
+  class="btn-docs"
+  data-id="${r.id}"
+  title="מסמכים"
+  style="
+    background:none;
+    border:none;
+    cursor:pointer;
+    font-size:0.85rem;
+    color:var(--muted);
+    padding:0 4px;
+  "
+>
+  📎 ${(r.documents || []).length}
+</button>
   </div>
 
   <input
