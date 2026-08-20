@@ -269,6 +269,40 @@
       white-space: nowrap;
     }
     .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    .name-autocomplete {
+  position: relative;
+  flex: 2;
+  min-width: 0;
+}
+
+.name-autocomplete .inp-name {
+  width: 100%;
+}
+
+.name-suggestions {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  left: 0;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+  z-index: 1000;
+  max-height: 180px;
+  overflow-y: auto;
+  display: none;
+}
+
+.name-suggestion-item {
+  padding: 9px 12px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.name-suggestion-item:hover {
+  background: var(--row-hover);
+}
   </style>
 </head>
 <body>
@@ -283,15 +317,18 @@
 
   <div class="card">
     <div class="add-section">
-      <input
-  type="text"
-  id="input-name"
-  class="inp-name"
-  placeholder="שם / תיאור"
-  list="name-suggestions"
-/>
+<div class="name-autocomplete">
+  <input
+    type="text"
+    id="input-name"
+    class="inp-name"
+    placeholder="שם / תיאור"
+    autocomplete="off"
+  />
+  <div id="name-suggestions" class="name-suggestions"></div>
+</div>
 
-<datalist id="name-suggestions"></datalist>
+
       
       <input type="number" id="input-amount" class="inp-amount" placeholder="סכום" step="0.01" inputmode="decimal" />
       <button class="btn-add" onclick="addRow()">+</button>
@@ -361,6 +398,16 @@
   const dialogSub = document.getElementById('dialog-sub');
   const dialogIcon= document.getElementById('dialog-icon');
   const toastEl   = document.getElementById('toast');
+  nameInput.addEventListener('input', updateNameSuggestions);
+
+nameInput.addEventListener('focus', updateNameSuggestions);
+
+nameInput.addEventListener('blur', () => {
+  setTimeout(() => {
+    const box = document.getElementById('name-suggestions');
+    if (box) box.style.display = 'none';
+  }, 150);
+});
 
   [nameInput, amtInput, notesInput].forEach(el =>
     el.addEventListener('keydown', e => { if (e.key === 'Enter') addRow(); })
@@ -711,32 +758,65 @@ async function sendEmail() {
     showToast('❌ שגיאה בשליחת המייל');
   }
 }
-  function updateNameSuggestions() {
-  const datalist = document.getElementById('name-suggestions');
-  if (!datalist) return;
-
+ function getAllNames() {
   const names = new Set();
 
   months.forEach(month => {
     month.rows.forEach(row => {
       const name = (row.name || '').trim();
-
       if (name && name !== '—') {
         names.add(name);
       }
     });
   });
 
-  datalist.innerHTML = '';
-
-  [...names]
-    .sort((a, b) => a.localeCompare(b, 'he'))
-    .forEach(name => {
-      const option = document.createElement('option');
-      option.value = name;
-      datalist.appendChild(option);
-    });
+  return [...names].sort((a, b) => a.localeCompare(b, 'he'));
 }
+
+function updateNameSuggestions() {
+  const box = document.getElementById('name-suggestions');
+  if (!box) return;
+
+  const query = nameInput.value.trim().toLowerCase();
+
+  if (!query) {
+    box.style.display = 'none';
+    box.innerHTML = '';
+    return;
+  }
+
+  const matches = getAllNames()
+    .filter(name => name.toLowerCase().includes(query))
+    .slice(0, 10);
+
+  if (matches.length === 0) {
+    box.style.display = 'none';
+    box.innerHTML = '';
+    return;
+  }
+
+  box.innerHTML = '';
+
+  matches.forEach(name => {
+    const item = document.createElement('div');
+    item.className = 'name-suggestion-item';
+    item.textContent = name;
+
+    item.addEventListener('mousedown', e => {
+      e.preventDefault();
+      nameInput.value = name;
+      box.style.display = 'none';
+      amtInput.focus();
+    });
+
+    box.appendChild(item);
+  });
+
+  box.style.display = 'block';
+}
+
+
+
   // ── INIT ──────────────────────────────────────────────
   loadData();
 </script>
