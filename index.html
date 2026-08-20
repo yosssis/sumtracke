@@ -364,6 +364,7 @@
  <div class="bottom-actions">
   <button class="btn-action export" onclick="exportExcel()">📥 ייצוא לאקסל</button>
   <button class="btn-action" onclick="sendEmail()">✉️ שלח במייל</button>
+   <button class="btn-action" onclick="openTempEmail('monthly')">📧 מייל מזדמן</button>
    <button class="btn-action" onclick="openAnnualReport()">📊 דוח שנתי</button>
   <button class="btn-action danger" onclick="clearCurrent()">🗑 נקה חודש זה</button>
   </div>
@@ -431,6 +432,7 @@
   <div class="dialog-btns" style="margin-top:18px; flex-wrap:wrap;">
   <button class="btn-cancel" onclick="closeAnnualReport()">סגור</button>
     <button class="btn-action" onclick="sendAnnualEmail()">✉️ שלח במייל</button>
+    <button class="btn-action" onclick="openTempEmail('annual')">📧 מייל מזדמן</button>
   <button class="btn-action export" onclick="exportAnnualExcel()">📥 ייצוא לאקסל</button>
 </div>
   </div>
@@ -454,6 +456,35 @@
       <button class="btn-action" onclick="confirmEmailChoice(true)">
         כולל המסומנים
       </button>
+    </div>
+  </div>
+</div>
+  <!-- Temporary Email Dialog -->
+<div class="overlay" id="temp-email-overlay">
+  <div class="dialog">
+    <div class="dialog-icon">📧</div>
+    <div class="dialog-msg">שליחה למייל מזדמן</div>
+    <div class="dialog-sub">הזן כתובת מייל</div>
+
+    <input
+      type="email"
+      id="temp-email-input"
+      placeholder="example@gmail.com"
+      autocomplete="email"
+      style="
+        width:100%;
+        padding:10px;
+        margin:8px 0 16px;
+        border:1.5px solid #ddd;
+        border-radius:9px;
+        font-family:Heebo;
+        direction:ltr;
+      "
+    />
+
+    <div class="dialog-btns">
+      <button class="btn-cancel" onclick="closeTempEmail()">ביטול</button>
+      <button class="btn-action" onclick="sendTempEmail()">שלח</button>
     </div>
   </div>
 </div>
