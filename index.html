@@ -435,7 +435,28 @@
 </div>
   </div>
 </div>
-  
+  <!-- Email Marked Choice Dialog -->
+<div class="overlay" id="email-choice-overlay">
+  <div class="dialog">
+    <div class="dialog-icon">✉️</div>
+    <div class="dialog-msg">יש פריטים מסומנים</div>
+    <div class="dialog-sub">איך לשלוח את הדוח?</div>
+
+    <div class="dialog-btns" style="flex-wrap:wrap;">
+      <button class="btn-cancel" onclick="closeEmailChoice()">
+        ביטול
+      </button>
+
+      <button class="btn-action" onclick="confirmEmailChoice(false)">
+        בלי המסומנים
+      </button>
+
+      <button class="btn-action" onclick="confirmEmailChoice(true)">
+        כולל המסומנים
+      </button>
+    </div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -904,6 +925,51 @@ async function sendEmail() {
     return;
   }
 
+  // אם יש פריטים מסומנים - פותחים את חלון הבחירה
+  const hasMarked = m.rows.some(row => row.marked);
+
+  if (hasMarked) {
+    document.getElementById('email-choice-overlay').classList.add('show');
+    return;
+  }
+
+  // אין מסומנים - שולחים כרגיל
+  await sendMonthlyEmailNow(true);
+}
+
+
+function closeEmailChoice() {
+  document.getElementById('email-choice-overlay').classList.remove('show');
+}
+
+
+async function confirmEmailChoice(includeMarked) {
+  closeEmailChoice();
+  await sendMonthlyEmailNow(includeMarked);
+}
+
+
+async function sendMonthlyEmailNow(includeMarked) {
+  const m = activeMonth();
+
+  if (!m || m.rows.length === 0) {
+    showToast('אין נתונים לשליחה');
+    return;
+  }
+
+  // יוצרים עותק של החודש כדי לא למחוק שום דבר מהמערכת
+  const monthToSend = {
+    ...m,
+    rows: includeMarked
+      ? [...m.rows]
+      : m.rows.filter(row => !row.marked)
+  };
+
+  if (monthToSend.rows.length === 0) {
+    showToast('אין פריטים לשליחה');
+    return;
+  }
+
   try {
     showToast('שולח מייל...');
 
@@ -913,7 +979,7 @@ async function sendEmail() {
       body: JSON.stringify({
         action: 'sendEmail',
         title: document.getElementById('main-title').value || 'מסכם חודשי',
-        month: m
+        month: monthToSend
       }),
       headers: {
         'Content-Type': 'text/plain;charset=utf-8'
@@ -932,12 +998,11 @@ async function sendEmail() {
       console.error('SERVER RESPONSE:', text);
     }
 
- } catch (e) {
-  console.error('EMAIL ERROR:', e);
-  showToast('❌ שגיאה בשליחת המייל');
+  } catch (e) {
+    console.error('EMAIL ERROR:', e);
+    showToast('❌ שגיאה בשליחת המייל');
+  }
 }
-}
-
 async function sendAnnualEmail() {
   if (!months || months.length === 0) {
     showToast('אין נתונים לשליחה');
