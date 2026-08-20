@@ -283,7 +283,16 @@
 
   <div class="card">
     <div class="add-section">
-      <input type="text" id="input-name" class="inp-name" placeholder="שם / תיאור" />
+      <input
+  type="text"
+  id="input-name"
+  class="inp-name"
+  placeholder="שם / תיאור"
+  list="name-suggestions"
+/>
+
+<datalist id="name-suggestions"></datalist>
+      
       <input type="number" id="input-amount" class="inp-amount" placeholder="סכום" step="0.01" inputmode="decimal" />
       <button class="btn-add" onclick="addRow()">+</button>
     </div>
@@ -637,7 +646,8 @@
     }
 
     renderTabs();
-    renderRows();
+renderRows();
+updateNameSuggestions();
   }
 
   // save on title change
@@ -654,7 +664,11 @@
 
   // wrap renderRows to auto-save after every mutation
   const _origRenderRows = renderRows;
-  renderRows = function() { _origRenderRows(); saveData(); };
+  renderRows = function() {
+  _origRenderRows();
+  updateNameSuggestions();
+  saveData();
+};
 
 async function sendEmail() {
   const m = activeMonth();
@@ -696,6 +710,32 @@ async function sendEmail() {
     console.error('EMAIL ERROR:', e);
     showToast('❌ שגיאה בשליחת המייל');
   }
+}
+  function updateNameSuggestions() {
+  const datalist = document.getElementById('name-suggestions');
+  if (!datalist) return;
+
+  const names = new Set();
+
+  months.forEach(month => {
+    month.rows.forEach(row => {
+      const name = (row.name || '').trim();
+
+      if (name && name !== '—') {
+        names.add(name);
+      }
+    });
+  });
+
+  datalist.innerHTML = '';
+
+  [...names]
+    .sort((a, b) => a.localeCompare(b, 'he'))
+    .forEach(name => {
+      const option = document.createElement('option');
+      option.value = name;
+      datalist.appendChild(option);
+    });
 }
   // ── INIT ──────────────────────────────────────────────
   loadData();
