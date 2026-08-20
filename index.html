@@ -430,6 +430,7 @@
 
   <div class="dialog-btns" style="margin-top:18px; flex-wrap:wrap;">
   <button class="btn-cancel" onclick="closeAnnualReport()">סגור</button>
+    <button class="btn-action" onclick="sendAnnualEmail()">✉️ שלח במייל</button>
   <button class="btn-action export" onclick="exportAnnualExcel()">📥 ייצוא לאקסל</button>
 </div>
   </div>
@@ -895,11 +896,52 @@ async function sendEmail() {
       console.error('SERVER RESPONSE:', text);
     }
 
+ } catch (e) {
+  console.error('EMAIL ERROR:', e);
+  showToast('❌ שגיאה בשליחת המייל');
+}
+}
+
+async function sendAnnualEmail() {
+  if (!months || months.length === 0) {
+    showToast('אין נתונים לשליחה');
+    return;
+  }
+
+  try {
+    showToast('שולח דוח שנתי...');
+
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      redirect: 'follow',
+      body: JSON.stringify({
+        action: 'sendAnnualEmail',
+        title: document.getElementById('main-title').value || 'מסכם חודשי',
+        months: months
+      }),
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8'
+      }
+    });
+
+    const text = await res.text();
+
+    console.log('ANNUAL EMAIL STATUS:', res.status);
+    console.log('ANNUAL EMAIL RESPONSE:', text);
+
+    if (text.trim() === 'annual email sent') {
+      showToast('✅ הדוח השנתי נשלח');
+    } else {
+      showToast('❌ הדוח השנתי לא נשלח');
+      console.error('SERVER RESPONSE:', text);
+    }
+
   } catch (e) {
-    console.error('EMAIL ERROR:', e);
-    showToast('❌ שגיאה בשליחת המייל');
+    console.error('ANNUAL EMAIL ERROR:', e);
+    showToast('❌ שגיאה בשליחת הדוח השנתי');
   }
 }
+
  function getAllNames() {
   const names = new Set();
 
