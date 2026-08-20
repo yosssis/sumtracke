@@ -1107,7 +1107,69 @@ async function sendAnnualEmailNow(includeMarked) {
     showToast('❌ שגיאה בשליחת הדוח השנתי');
   }
 }
+// ── TEMPORARY EMAIL ─────────────────────────────────────
 
+let tempEmailType = null;
+let tempEmailAddress = '';
+
+function openTempEmail(type) {
+  tempEmailType = type;
+
+  const input = document.getElementById('temp-email-input');
+  input.value = '';
+
+  document.getElementById('temp-email-overlay').classList.add('show');
+
+  setTimeout(() => input.focus(), 50);
+}
+
+function closeTempEmail() {
+  document.getElementById('temp-email-overlay').classList.remove('show');
+}
+
+async function sendTempEmail() {
+  const input = document.getElementById('temp-email-input');
+  const email = input.value.trim();
+
+  if (!email || !email.includes('@')) {
+    showToast('❌ כתובת מייל לא תקינה');
+    input.focus();
+    return;
+  }
+
+  tempEmailAddress = email;
+  closeTempEmail();
+
+  // בודקים אם יש פריטים מסומנים
+  let hasMarked = false;
+
+  if (tempEmailType === 'annual') {
+    hasMarked = months.some(month =>
+      (month.rows || []).some(row => row.marked)
+    );
+  } else {
+    const m = activeMonth();
+    hasMarked = m && m.rows.some(row => row.marked);
+  }
+
+  // אם יש מסומנים — משתמשים בחלון הבחירה שכבר בנינו
+  if (hasMarked) {
+    window.emailChoiceType =
+      tempEmailType === 'annual'
+        ? 'tempAnnual'
+        : 'tempMonthly';
+
+    document.getElementById('email-choice-overlay').classList.add('show');
+    return;
+  }
+
+  // אין מסומנים
+  if (tempEmailType === 'annual') {
+    await sendTempAnnualEmailNow(true);
+  } else {
+    await sendTempMonthlyEmailNow(true);
+  }
+}
  function getAllNames() {
   const names = new Set();
 
