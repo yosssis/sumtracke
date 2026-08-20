@@ -498,6 +498,7 @@ nameInput.addEventListener('blur', () => {
           <input class="row-note-input" type="text" placeholder="+ הוסף הערה" value="${esc(r.notes||'')}" data-id="${r.id}" />
         </span>
         <span class="row-amount">${fmt(r.amount)}</span>
+        <button class="btn-edit" data-id="${r.id}" title="ערוך">✏️</button>
         <button class="btn-del" data-id="${r.id}" data-name="${esc(r.name)}" title="מחק">✕</button>`;
       rowsList.appendChild(li);
     });
@@ -510,6 +511,9 @@ nameInput.addEventListener('blur', () => {
       });
       inp.addEventListener('keydown', e => { if (e.key === 'Enter') inp.blur(); });
     });
+    rowsList.querySelectorAll('.btn-edit').forEach(btn => {
+  btn.addEventListener('click', () => editRow(+btn.dataset.id));
+});
     rowsList.querySelectorAll('.btn-del').forEach(btn =>
       btn.addEventListener('click', () => askDeleteRow(+btn.dataset.id, btn.dataset.name))
     );
@@ -518,7 +522,29 @@ nameInput.addEventListener('blur', () => {
     totalEl.classList.remove('bump'); void totalEl.offsetWidth;
     totalEl.classList.add('bump'); setTimeout(() => totalEl.classList.remove('bump'), 200);
   }
+function editRow(rowId) {
+  const row = activeMonth().rows.find(r => r.id === rowId);
+  if (!row) return;
 
+  const newName = prompt('עריכת שם:', row.name);
+  if (newName === null) return;
+
+  const newAmount = prompt('עריכת סכום:', row.amount);
+  if (newAmount === null) return;
+
+  const amount = parseFloat(newAmount);
+
+  if (isNaN(amount)) {
+    showToast('❌ סכום לא תקין');
+    return;
+  }
+
+  row.name = newName.trim() || '—';
+  row.amount = amount;
+
+  renderRows();
+  showToast('✅ הפריט עודכן');
+}
   function clearCurrent() {
     if (!activeMonth() || activeMonth().rows.length === 0) return;
     pendingDelete = { type: 'clearMonth' };
