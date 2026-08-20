@@ -370,6 +370,41 @@
   </div>
 </div>
 
+<!-- Edit Row Dialog -->
+<div class="overlay" id="edit-overlay">
+  <div class="dialog">
+    <div class="dialog-icon">✏️</div>
+    <div class="dialog-msg">עריכת פריט</div>
+
+    <input
+      type="text"
+      id="edit-name"
+      placeholder="שם / תיאור"
+      style="width:100%; padding:10px; margin:10px 0 6px; border:1.5px solid #ddd; border-radius:9px; font-family:Heebo;"
+    />
+
+    <input
+      type="number"
+      id="edit-amount"
+      placeholder="סכום"
+      step="0.01"
+      style="width:100%; padding:10px; margin:6px 0; border:1.5px solid #ddd; border-radius:9px; font-family:Heebo;"
+    />
+
+    <input
+      type="text"
+      id="edit-notes"
+      placeholder="הערה"
+      style="width:100%; padding:10px; margin:6px 0 16px; border:1.5px solid #ddd; border-radius:9px; font-family:Heebo;"
+    />
+
+    <div class="dialog-btns">
+      <button class="btn-cancel" onclick="closeEditDialog()">ביטול</button>
+      <button class="btn-confirm-del" onclick="saveEditRow()">שמור</button>
+    </div>
+  </div>
+</div>
+  
 <div class="toast" id="toast"></div>
 
 <script>
@@ -522,26 +557,52 @@ nameInput.addEventListener('blur', () => {
     totalEl.classList.remove('bump'); void totalEl.offsetWidth;
     totalEl.classList.add('bump'); setTimeout(() => totalEl.classList.remove('bump'), 200);
   }
+let editingRowId = null;
+
 function editRow(rowId) {
   const row = activeMonth().rows.find(r => r.id === rowId);
   if (!row) return;
 
-  const newName = prompt('עריכת שם:', row.name);
-  if (newName === null) return;
+  editingRowId = rowId;
 
-  const newAmount = prompt('עריכת סכום:', row.amount);
-  if (newAmount === null) return;
+  document.getElementById('edit-name').value = row.name || '';
+  document.getElementById('edit-amount').value = row.amount ?? '';
+  document.getElementById('edit-notes').value = row.notes || '';
 
-  const amount = parseFloat(newAmount);
+  document.getElementById('edit-overlay').classList.add('show');
 
-  if (isNaN(amount)) {
+  setTimeout(() => {
+    document.getElementById('edit-name').focus();
+  }, 50);
+}
+
+function closeEditDialog() {
+  document.getElementById('edit-overlay').classList.remove('show');
+  editingRowId = null;
+}
+
+function saveEditRow() {
+  if (editingRowId === null) return;
+
+  const row = activeMonth().rows.find(r => r.id === editingRowId);
+  if (!row) return closeEditDialog();
+
+  const newName = document.getElementById('edit-name').value.trim();
+  const newAmount = parseFloat(
+    document.getElementById('edit-amount').value
+  );
+  const newNotes = document.getElementById('edit-notes').value.trim();
+
+  if (isNaN(newAmount)) {
     showToast('❌ סכום לא תקין');
     return;
   }
 
-  row.name = newName.trim() || '—';
-  row.amount = amount;
+  row.name = newName || '—';
+  row.amount = newAmount;
+  row.notes = newNotes;
 
+  closeEditDialog();
   renderRows();
   showToast('✅ הפריט עודכן');
 }
@@ -620,7 +681,13 @@ function editRow(rowId) {
   }
 
   overlay.addEventListener('click', e => { if (e.target === overlay) closeDialog(); });
+const editOverlay = document.getElementById('edit-overlay');
 
+editOverlay.addEventListener('click', e => {
+  if (e.target === editOverlay) {
+    closeEditDialog();
+  }
+});
   // ── TOAST ─────────────────────────────────────────────
   let toastTimer;
   function showToast(msg) {
