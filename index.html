@@ -619,6 +619,19 @@ filteredRows.forEach((r, i) => {
       });
       inp.addEventListener('keydown', e => { if (e.key === 'Enter') inp.blur(); });
     });
+  // שמירת הסימון
+rowsList.querySelectorAll('.row-mark').forEach(chk => {
+  chk.addEventListener('change', () => {
+    const row = activeMonth().rows.find(
+      r => r.id === +chk.dataset.id
+    );
+
+    if (row) {
+      row.marked = chk.checked;
+      saveData();
+    }
+  });
+});
     rowsList.querySelectorAll('.btn-edit').forEach(btn => {
   btn.addEventListener('click', () => editRow(+btn.dataset.id));
 });
