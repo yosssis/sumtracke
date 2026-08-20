@@ -918,6 +918,8 @@ updateNameSuggestions();
 };
 
 async function sendEmail() {
+  window.emailChoiceType = 'monthly';
+
   const m = activeMonth();
 
   if (!m || m.rows.length === 0) {
@@ -945,7 +947,14 @@ function closeEmailChoice() {
 
 async function confirmEmailChoice(includeMarked) {
   closeEmailChoice();
-  await sendMonthlyEmailNow(includeMarked);
+
+  if (window.emailChoiceType === 'annual') {
+    window.emailChoiceType = null;
+    await sendAnnualEmailNow(includeMarked);
+  } else {
+    window.emailChoiceType = null;
+    await sendMonthlyEmailNow(includeMarked);
+  }
 }
 
 
@@ -1009,6 +1018,31 @@ async function sendAnnualEmail() {
     return;
   }
 
+  // האם יש לפחות פריט מסומן באחד החודשים?
+  const hasMarked = months.some(month =>
+    (month.rows || []).some(row => row.marked)
+  );
+
+  if (hasMarked) {
+    window.emailChoiceType = 'annual';
+    document.getElementById('email-choice-overlay').classList.add('show');
+    return;
+  }
+
+  // אין מסומנים בכלל
+  await sendAnnualEmailNow(true);
+}
+
+
+async function sendAnnualEmailNow(includeMarked) {
+
+  const monthsToSend = months.map(month => ({
+    ...month,
+    rows: includeMarked
+      ? [...(month.rows || [])]
+      : (month.rows || []).filter(row => !row.marked)
+  }));
+
   try {
     showToast('שולח דוח שנתי...');
 
@@ -1018,7 +1052,7 @@ async function sendAnnualEmail() {
       body: JSON.stringify({
         action: 'sendAnnualEmail',
         title: document.getElementById('main-title').value || 'מסכם חודשי',
-        months: months
+        months: monthsToSend
       }),
       headers: {
         'Content-Type': 'text/plain;charset=utf-8'
