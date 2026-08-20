@@ -303,6 +303,28 @@
 .name-suggestion-item:hover {
   background: var(--row-hover);
 }
+    .search-section {
+  padding: 10px 12px;
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+}
+
+.search-section input {
+  width: 100%;
+  font-family: 'Heebo', sans-serif;
+  font-size: 0.88rem;
+  border: 1.5px solid var(--border);
+  border-radius: 9px;
+  padding: 8px 12px;
+  outline: none;
+  background: #fff;
+  color: var(--text);
+}
+
+.search-section input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(255,107,53,0.12);
+}
   </style>
 </head>
 <body>
@@ -336,6 +358,14 @@
     <div class="add-section-row2">
       <input type="text" id="input-notes" class="inp-notes" placeholder="הערה (אופציונלי)" />
     </div>
+    <div class="search-section">
+  <input
+    type="text"
+    id="search-input"
+    placeholder="🔍 חיפוש לפי שם או הערה..."
+    autocomplete="off"
+  />
+</div>
     <div class="list-header"><span>פריט</span><span>סכום</span></div>
     <ul class="rows-list" id="rows-list"></ul>
     <div class="total-bar">
@@ -433,6 +463,11 @@
   const dialogSub = document.getElementById('dialog-sub');
   const dialogIcon= document.getElementById('dialog-icon');
   const toastEl   = document.getElementById('toast');
+  const searchInput = document.getElementById('search-input');
+
+searchInput.addEventListener('input', () => {
+  renderRows();
+});
   nameInput.addEventListener('input', updateNameSuggestions);
 
 nameInput.addEventListener('focus', updateNameSuggestions);
@@ -517,14 +552,28 @@ nameInput.addEventListener('blur', () => {
     nameInput.focus(); renderRows();
   }
 
-  function renderRows() {
-    const m = activeMonth(); rowsList.innerHTML = '';
+function renderRows() {
+  const m = activeMonth();
+  rowsList.innerHTML = '';
+
+  const query = (searchInput.value || '')
+    .trim()
+    .toLowerCase();
     if (!m || m.rows.length === 0) {
       rowsList.innerHTML = `<li class="empty-state"><div class="empty-icon">📋</div>עדיין אין פריטים — הוסף את הראשון!</li>`;
       totalEl.textContent = '₪0.00'; countEl.textContent = '0 פריטים'; return;
     }
     const total = m.rows.reduce((s, r) => s + r.amount, 0);
-    m.rows.forEach((r, i) => {
+const filteredRows = m.rows.filter(r => {
+  if (!query) return true;
+
+  const name = (r.name || '').toLowerCase();
+  const notes = (r.notes || '').toLowerCase();
+
+  return name.includes(query) || notes.includes(query);
+});
+
+filteredRows.forEach((r, i) => {
       const li = document.createElement('li'); li.className = 'row-item';
       li.innerHTML = `
         <span class="row-num">${i+1}</span>
