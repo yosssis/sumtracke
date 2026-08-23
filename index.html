@@ -2312,6 +2312,110 @@ monthsContainer.innerHTML = monthsHtml;
 
   const peopleContainer = document.getElementById('dashboard-people');
 
+  // גרף חודשי
+const monthTotals = months.map(month => ({
+  name: month.name,
+  total: (month.rows || []).reduce(
+    (sum, row) => sum + (Number(row.amount) || 0),
+    0
+  )
+}));
+
+const maxMonthTotal = Math.max(
+  ...monthTotals.map(m => m.total),
+  1
+);
+
+let chartHtml = `
+  <div style="
+    margin-top:24px;
+    padding:16px;
+    border:1px solid var(--border);
+    border-radius:12px;
+    background:#fff;
+  ">
+
+    <div style="
+      font-weight:900;
+      font-size:1rem;
+      margin-bottom:18px;
+      text-align:right;
+    ">
+      📈 מגמת סכומים לפי חודשים
+    </div>
+
+    <div style="
+      display:flex;
+      align-items:flex-end;
+      gap:12px;
+      height:220px;
+      overflow-x:auto;
+      padding:10px 4px 0;
+    ">
+`;
+
+monthTotals.forEach(month => {
+  const height = Math.max(
+    8,
+    Math.round((month.total / maxMonthTotal) * 160)
+  );
+
+  chartHtml += `
+    <div style="
+      min-width:80px;
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      justify-content:flex-end;
+      align-items:center;
+    ">
+
+      <div style="
+        font-size:0.72rem;
+        font-weight:700;
+        margin-bottom:5px;
+        direction:ltr;
+      ">
+        ${fmt(month.total)}
+      </div>
+
+      <div style="
+        width:38px;
+        height:${height}px;
+        background:linear-gradient(
+          180deg,
+          #ff9f43,
+          var(--accent)
+        );
+        border-radius:7px 7px 3px 3px;
+      "></div>
+
+      <div style="
+        margin-top:7px;
+        font-size:0.70rem;
+        color:var(--muted);
+        white-space:nowrap;
+        max-width:80px;
+        overflow:hidden;
+        text-overflow:ellipsis;
+      " title="${esc(month.name)}">
+        ${esc(month.name)}
+      </div>
+
+    </div>
+  `;
+});
+
+chartHtml += `
+    </div>
+  </div>
+`;
+
+monthsContainer.insertAdjacentHTML(
+  'beforeend',
+  chartHtml
+);
+
 const peopleMap = {};
 
 months.forEach(month => {
