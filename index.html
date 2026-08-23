@@ -717,6 +717,54 @@ body {
 #dashboard-months [data-dashboard-month-id] > div:last-child {
   font-weight: 600;
 }
+    /* ===== DASHBOARD PEOPLE TABLE UPGRADE ===== */
+
+#dashboard-people > div:last-child {
+  border: 1px solid rgba(0,0,0,0.06) !important;
+  border-radius: 16px !important;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.05);
+}
+
+#dashboard-people table {
+  border-collapse: separate !important;
+  border-spacing: 0;
+}
+
+#dashboard-people thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #fff7f2;
+  padding: 12px 10px !important;
+  font-weight: 800 !important;
+  border-bottom: 2px solid rgba(255,107,53,0.15) !important;
+}
+
+#dashboard-people tbody td {
+  padding: 11px 10px !important;
+  background: #fff;
+  transition: background 0.15s;
+}
+
+#dashboard-people tbody tr:hover td {
+  background: #fff8f4;
+}
+
+#dashboard-people tbody tr:last-child td {
+  border-bottom: none !important;
+}
+
+/* עמודת שם */
+#dashboard-people tbody td:first-child {
+  font-weight: 700 !important;
+}
+
+/* עמודת סה"כ */
+#dashboard-people tbody td:last-child {
+  background: #fffaf7;
+  font-weight: 900 !important;
+}
   </style>
 </head>
 <body>
