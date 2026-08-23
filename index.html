@@ -963,6 +963,7 @@ function renderDocuments() {
     } else if (type === 'clearMonth') {
       activeMonth().rows = []; renderRows();
     }
+    saveData();
     closeDialog();
   }
 
@@ -1001,7 +1002,7 @@ editOverlay.addEventListener('click', e => {
     if (!el) return;
     const states = {
       saving:  { text: '💾 שומר...', color: '#f39c12' },
-      saved:   { text: '✅ נשמר בדרייב', color: 'var(--green)' },
+      saved: { text: '✅ נשמר בשרת', color: 'var(--green)' },
       loading: { text: '🔄 טוען...', color: '#f39c12' },
       error:   { text: '⚠️ שגיאת שמירה', color: 'var(--delete)' },
       offline: { text: '📴 נשמר מקומית', color: 'var(--muted)' },
@@ -1088,12 +1089,11 @@ updateNameSuggestions();
     }
   }, true);
 
-  // wrap renderRows to auto-save after every mutation
-  const _origRenderRows = renderRows;
-  renderRows = function() {
+const _origRenderRows = renderRows;
+
+renderRows = function() {
   _origRenderRows();
   updateNameSuggestions();
-  saveData();
 };
 
 async function sendEmail() {
