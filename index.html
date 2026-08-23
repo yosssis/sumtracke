@@ -654,6 +654,69 @@ body {
     font-size: 1.05rem !important;
   }
 }
+    /* ===== DASHBOARD MONTH CARDS ===== */
+
+.dashboard-month-card {
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 5px 16px rgba(0,0,0,0.045);
+  transition: transform 0.18s, box-shadow 0.18s;
+}
+
+.dashboard-month-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 22px rgba(0,0,0,0.07);
+}
+
+.dashboard-month-card::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  width: 100%;
+  background: linear-gradient(90deg, #ffd8c8, var(--accent));
+  opacity: 0.85;
+}
+    /* ===== DASHBOARD CHART UPGRADE ===== */
+
+#dashboard-months > div:last-child {
+  border: 1px solid rgba(0,0,0,0.06) !important;
+  border-radius: 18px !important;
+  background:
+    linear-gradient(to top, rgba(0,0,0,0.035) 1px, transparent 1px),
+    #fff !important;
+  background-size: 100% 40px !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.05);
+}
+
+/* כל עמודה בגרף */
+#dashboard-months [data-dashboard-month-id] > div:nth-child(2) {
+  transition:
+    height 0.35s ease,
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+  box-shadow: 0 5px 14px rgba(255,107,53,0.18);
+}
+
+/* מעבר עכבר */
+#dashboard-months [data-dashboard-month-id]:hover > div:nth-child(2) {
+  transform: scaleY(1.03);
+  box-shadow: 0 8px 20px rgba(255,107,53,0.28);
+}
+
+/* הסכום מעל העמודה */
+#dashboard-months [data-dashboard-month-id] > div:first-child {
+  background: #fff7f2;
+  padding: 4px 7px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,107,53,0.12);
+}
+
+/* שם החודש */
+#dashboard-months [data-dashboard-month-id] > div:last-child {
+  font-weight: 600;
+}
   </style>
 </head>
 <body>
@@ -2749,6 +2812,7 @@ months.forEach(month => {
 
 monthsHtml += `
   <div
+  class="dashboard-month-card"
     data-dashboard-month-id="${month.id}"
     style="
       display:flex;
