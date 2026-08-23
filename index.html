@@ -2328,6 +2328,7 @@ months.forEach(month => {
       if (name && name !== '—') {
         filteredNames.add(name);
       }
+    
     });
   });
 
@@ -2339,7 +2340,23 @@ months.forEach(month => {
 
 document.getElementById('dashboard-people-value').textContent =
   filteredNames.size;
+document
+  .querySelectorAll('[data-dashboard-person-total]')
+  .forEach(el => {
+    const personName = el.dataset.dashboardPersonTotal;
 
+    let total = 0;
+
+    selectedMonths.forEach(month => {
+      (month.rows || []).forEach(row => {
+        if ((row.name || '').trim() === personName) {
+          total += Number(row.amount) || 0;
+        }
+      });
+    });
+
+    el.textContent = fmt(total);
+  });
 document
   .querySelectorAll('[data-dashboard-month-id]')
   .forEach(el => {
@@ -2360,6 +2377,7 @@ document
         ? ''
         : 'none';
   });
+   
 });
 const monthsContainer = document.getElementById('dashboard-months');
 
@@ -2665,8 +2683,10 @@ peopleNames.forEach(name => {
     `;
   });
 
-  peopleHtml += `
-      <td style="
+ peopleHtml += `
+  <td
+    data-dashboard-person-total="${esc(name)}"
+    style="
         padding:9px;
         border-bottom:1px solid #eee;
         font-weight:900;
