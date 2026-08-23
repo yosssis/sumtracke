@@ -1615,16 +1615,7 @@ async function loadData() {
 document.getElementById('main-title').addEventListener('change', function() {
   saveData('שינוי כותרת', this.value.trim());
 });
-  if (!authToken) {
-    this.blur();
 
-    requireAuth(() => {
-      this.focus();
-    });
-  }
-});
-
-document.getElementById('main-title').addEventListener('input', saveData);
 
 
 
