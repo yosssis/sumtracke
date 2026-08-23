@@ -894,6 +894,79 @@ function renderDocuments() {
     list.appendChild(item);
   });
 }
+  async function uploadDocument() {
+  const input = document.getElementById('document-file-input');
+  const file = input.files[0];
+
+  if (!file) {
+    showToast('⚠️ קודם בחר מסמך');
+    return;
+  }
+
+  const row = activeMonth().rows.find(r => r.id === documentsRowId);
+
+  if (!row) {
+    showToast('❌ הפריט לא נמצא');
+    return;
+  }
+
+  try {
+    showToast('⏳ מעלה מסמך...');
+
+    const base64 = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onload = () => {
+        resolve(reader.result.split(',')[1]);
+      };
+
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      redirect: 'follow',
+      body: JSON.stringify({
+        action: 'uploadDocument',
+        fileName: file.name,
+        mimeType: file.type || 'application/octet-stream',
+        base64: base64
+      }),
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8'
+      }
+    });
+
+    const result = await response.json();
+
+    if (!result.ok) {
+      throw new Error(result.error || 'Upload failed');
+    }
+
+    if (!Array.isArray(row.documents)) {
+      row.documents = [];
+    }
+
+    row.documents.push({
+      id: result.id,
+      name: result.name,
+      url: result.url
+    });
+
+    input.value = '';
+
+    renderDocuments();
+    renderRows();
+    saveData();
+
+    showToast('✅ המסמך הועלה ונשמר');
+
+  } catch (err) {
+    console.error('UPLOAD ERROR:', err);
+    showToast('❌ העלאת המסמך נכשלה');
+  }
+}
 
   function clearCurrent() {
     if (!activeMonth() || activeMonth().rows.length === 0) return;
