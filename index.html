@@ -2265,7 +2265,7 @@ function openDashboard() {
           color:var(--accent);
           direction:ltr;
         ">
-          ${fmt(grandTotal)}
+          <span id="dashboard-total-value">${fmt(grandTotal)}</span>
         </div>
       </div>
 
@@ -2278,7 +2278,7 @@ function openDashboard() {
           חודשים
         </div>
         <div style="font-size:1.25rem;font-weight:900;">
-          ${months.length}
+          <span id="dashboard-months-value">${months.length}</span>
         </div>
       </div>
 
@@ -2291,7 +2291,7 @@ function openDashboard() {
           אנשים
         </div>
         <div style="font-size:1.25rem;font-weight:900;">
-          ${uniqueNames.size}
+          <span id="dashboard-people-value">${uniqueNames.size}</span>
         </div>
       </div>
 
@@ -2307,6 +2307,37 @@ months.forEach(month => {
   option.value = month.id;
   option.textContent = month.name;
   monthFilter.appendChild(option);
+});
+  monthFilter.addEventListener('change', () => {
+  const selectedValue = monthFilter.value;
+
+  const selectedMonths =
+    selectedValue === 'all'
+      ? months
+      : months.filter(month => String(month.id) === selectedValue);
+
+  let filteredTotal = 0;
+  const filteredNames = new Set();
+
+  selectedMonths.forEach(month => {
+    (month.rows || []).forEach(row => {
+      filteredTotal += Number(row.amount) || 0;
+
+      const name = (row.name || '').trim();
+      if (name && name !== '—') {
+        filteredNames.add(name);
+      }
+    });
+  });
+
+  document.getElementById('dashboard-total-value').textContent =
+    fmt(filteredTotal);
+
+  document.getElementById('dashboard-months-value').textContent =
+    selectedMonths.length;
+
+  document.getElementById('dashboard-people-value').textContent =
+    filteredNames.size;
 });
 const monthsContainer = document.getElementById('dashboard-months');
 
