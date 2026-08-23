@@ -2309,6 +2309,7 @@ months.forEach(month => {
   monthFilter.appendChild(option);
 });
   monthFilter.addEventListener('change', () => {
+    const peopleTable = document.querySelector('#dashboard-people table');
   const selectedValue = monthFilter.value;
 
   const selectedMonths =
@@ -2347,6 +2348,16 @@ document
     el.style.display =
       selectedValue === 'all' || monthId === selectedValue
         ? 'flex'
+        : 'none';
+  });
+    document
+  .querySelectorAll('[data-dashboard-person-month-id]')
+  .forEach(el => {
+    const monthId = el.dataset.dashboardPersonMonthId;
+
+    el.style.display =
+      selectedValue === 'all' || monthId === selectedValue
+        ? ''
         : 'none';
   });
 });
@@ -2594,11 +2605,13 @@ let peopleHtml = `
 
 months.forEach(month => {
   peopleHtml += `
-    <th style="
-      padding:10px;
-      border-bottom:1px solid var(--border);
-      white-space:nowrap;
-    ">
+<th
+  data-dashboard-person-month-id="${month.id}"
+  style="
+    padding:10px;
+    border-bottom:1px solid var(--border);
+    white-space:nowrap;
+  ">
       ${esc(month.name)}
     </th>
   `;
@@ -2639,7 +2652,9 @@ peopleNames.forEach(name => {
     personTotal += amount;
 
     peopleHtml += `
-      <td style="
+  <td
+    data-dashboard-person-month-id="${month.id}"
+    style="
         padding:9px;
         border-bottom:1px solid #eee;
         text-align:center;
