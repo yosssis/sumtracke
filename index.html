@@ -2250,7 +2250,59 @@ function openDashboard() {
     <div id="dashboard-months"></div>
     <div id="dashboard-people"></div>
   `;
+const monthsContainer = document.getElementById('dashboard-months');
 
+let monthsHtml = `
+  <div style="
+    text-align:right;
+    font-weight:900;
+    font-size:1rem;
+    margin:10px 0 8px;
+  ">
+    📊 סה"כ לפי חודשים
+  </div>
+
+  <div style="
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  ">
+`;
+
+months.forEach(month => {
+  const monthTotal = (month.rows || []).reduce(
+    (sum, row) => sum + (Number(row.amount) || 0),
+    0
+  );
+
+  monthsHtml += `
+    <div style="
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:10px 12px;
+      border:1px solid var(--border);
+      border-radius:10px;
+      background:#fff;
+    ">
+      <span style="font-weight:600;">
+        ${esc(month.name)}
+      </span>
+
+      <span style="
+        font-weight:900;
+        color:var(--accent);
+        direction:ltr;
+      ">
+        ${fmt(monthTotal)}
+      </span>
+    </div>
+  `;
+});
+
+monthsHtml += `</div>`;
+
+monthsContainer.innerHTML = monthsHtml;
   overlay.classList.add('show');
 }
 
