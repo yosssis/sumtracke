@@ -2223,6 +2223,27 @@ function openDashboard() {
   });
 
   content.innerHTML = `
+  <div style="
+  display:flex;
+  justify-content:flex-start;
+  margin:5px 0 12px;
+">
+  <select
+    id="dashboard-month-filter"
+    style="
+      padding:8px 12px;
+      border:1.5px solid var(--border);
+      border-radius:9px;
+      font-family:Heebo;
+      background:#fff;
+      color:var(--text);
+      min-width:180px;
+      cursor:pointer;
+    "
+  >
+    <option value="all">כל התקופה</option>
+  </select>
+</div>
     <div style="
       display:grid;
       grid-template-columns:repeat(3,1fr);
@@ -2279,6 +2300,14 @@ function openDashboard() {
     <div id="dashboard-months"></div>
     <div id="dashboard-people"></div>
   `;
+  const monthFilter = document.getElementById('dashboard-month-filter');
+
+months.forEach(month => {
+  const option = document.createElement('option');
+  option.value = month.id;
+  option.textContent = month.name;
+  monthFilter.appendChild(option);
+});
 const monthsContainer = document.getElementById('dashboard-months');
 
 let monthsHtml = `
