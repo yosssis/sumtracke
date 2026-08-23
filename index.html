@@ -879,15 +879,33 @@ function renderDocuments() {
       border-bottom:1px solid var(--border);
     `;
 
-    const name = document.createElement('span');
-    name.textContent = '📄 ' + (doc.name || 'מסמך');
-    name.style.cssText = `
-      flex:1;
-      min-width:0;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      white-space:nowrap;
-      font-size:0.85rem;
+  const name = document.createElement('a');
+
+name.textContent = '📄 ' + (doc.name || 'מסמך');
+name.href = doc.url;
+name.target = '_blank';
+name.rel = 'noopener noreferrer';
+name.title = 'פתח מסמך';
+
+name.style.cssText = `
+  flex:1;
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:0.85rem;
+  color:var(--text);
+  text-decoration:none;
+  cursor:pointer;
+`;
+
+name.addEventListener('mouseenter', () => {
+  name.style.textDecoration = 'underline';
+});
+
+name.addEventListener('mouseleave', () => {
+  name.style.textDecoration = 'none';
+});
     `;
 
     item.appendChild(name);
