@@ -2303,6 +2303,141 @@ months.forEach(month => {
 monthsHtml += `</div>`;
 
 monthsContainer.innerHTML = monthsHtml;
+
+  const peopleContainer = document.getElementById('dashboard-people');
+
+const peopleMap = {};
+
+months.forEach(month => {
+  (month.rows || []).forEach(row => {
+    const name = (row.name || '').trim();
+
+    if (!name || name === '—') return;
+
+    if (!peopleMap[name]) {
+      peopleMap[name] = {};
+    }
+
+    if (!peopleMap[name][month.id]) {
+      peopleMap[name][month.id] = 0;
+    }
+
+    peopleMap[name][month.id] += Number(row.amount) || 0;
+  });
+});
+
+const peopleNames = Object.keys(peopleMap)
+  .sort((a, b) => a.localeCompare(b, 'he'));
+
+let peopleHtml = `
+  <div style="
+    text-align:right;
+    font-weight:900;
+    font-size:1rem;
+    margin:24px 0 8px;
+  ">
+    👥 פירוט לפי אדם
+  </div>
+
+  <div style="
+    overflow-x:auto;
+    border:1px solid var(--border);
+    border-radius:10px;
+  ">
+    <table style="
+      width:100%;
+      border-collapse:collapse;
+      min-width:650px;
+      font-size:0.82rem;
+    ">
+      <thead>
+        <tr style="background:#fff9f5;">
+          <th style="padding:10px;border-bottom:1px solid var(--border);">
+            שם
+          </th>
+`;
+
+months.forEach(month => {
+  peopleHtml += `
+    <th style="
+      padding:10px;
+      border-bottom:1px solid var(--border);
+      white-space:nowrap;
+    ">
+      ${esc(month.name)}
+    </th>
+  `;
+});
+
+peopleHtml += `
+          <th style="
+            padding:10px;
+            border-bottom:1px solid var(--border);
+            white-space:nowrap;
+          ">
+            סה"כ
+          </th>
+        </tr>
+      </thead>
+
+      <tbody>
+`;
+
+peopleNames.forEach(name => {
+  let personTotal = 0;
+
+  peopleHtml += `
+    <tr>
+      <td style="
+        padding:9px;
+        border-bottom:1px solid #eee;
+        font-weight:600;
+        white-space:nowrap;
+      ">
+        ${esc(name)}
+      </td>
+  `;
+
+  months.forEach(month => {
+    const amount = peopleMap[name][month.id] || 0;
+
+    personTotal += amount;
+
+    peopleHtml += `
+      <td style="
+        padding:9px;
+        border-bottom:1px solid #eee;
+        text-align:center;
+        direction:ltr;
+      ">
+        ${amount ? fmt(amount) : '—'}
+      </td>
+    `;
+  });
+
+  peopleHtml += `
+      <td style="
+        padding:9px;
+        border-bottom:1px solid #eee;
+        font-weight:900;
+        color:var(--accent);
+        direction:ltr;
+        white-space:nowrap;
+      ">
+        ${fmt(personTotal)}
+      </td>
+    </tr>
+  `;
+});
+
+peopleHtml += `
+      </tbody>
+    </table>
+  </div>
+`;
+
+peopleContainer.innerHTML = peopleHtml;
+  
   overlay.classList.add('show');
 }
 
