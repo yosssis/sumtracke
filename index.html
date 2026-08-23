@@ -2490,9 +2490,10 @@ let peopleHtml = `
   id="dashboard-person-summary"
   style="
     display:none;
-    grid-template-columns:repeat(3,1fr);
+    grid-template-columns:repeat(3,minmax(0,1fr));
     gap:8px;
     margin-bottom:12px;
+    width:100%;
   "
 ></div>
   <div style="
