@@ -594,6 +594,55 @@ let pendingProtectedAction = null;
   let addButtonIndex = months.length;
 
   const tabsBar   = document.getElementById('tabs-bar');
+  tabsBar.addEventListener('dragover', e => {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+});
+
+tabsBar.addEventListener('drop', e => {
+  e.preventDefault();
+
+  const tabs = [...tabsBar.querySelectorAll('.tab')];
+
+  if (tabs.length === 0) {
+    addButtonIndex = 0;
+    renderTabs();
+    return;
+  }
+
+  let newIndex = months.length;
+
+  for (let i = 0; i < tabs.length; i++) {
+    const rect = tabs[i].getBoundingClientRect();
+
+    if (e.clientX >= rect.left && e.clientX <= rect.right) {
+      const middle = rect.left + rect.width / 2;
+
+      // האתר RTL:
+      // צד ימין של החודש = לפניו
+      // צד שמאל של החודש = אחריו
+      newIndex = e.clientX > middle
+        ? i
+        : i + 1;
+
+      break;
+    }
+  }
+
+  const firstRect = tabs[0].getBoundingClientRect();
+  const lastRect = tabs[tabs.length - 1].getBoundingClientRect();
+
+  if (e.clientX > firstRect.right) {
+    newIndex = 0;
+  }
+
+  if (e.clientX < lastRect.left) {
+    newIndex = months.length;
+  }
+
+  addButtonIndex = newIndex;
+  renderTabs();
+});
   const rowsList  = document.getElementById('rows-list');
   const totalEl   = document.getElementById('total-amount');
   const countEl   = document.getElementById('total-count');
@@ -640,28 +689,15 @@ nameInput.addEventListener('blur', () => {
        addBtn.draggable = true;
 
 addBtn.addEventListener('dragstart', e => {
+  e.dataTransfer.effectAllowed = 'move';
   e.dataTransfer.setData('text/plain', String(addButtonIndex));
 });
   addBtn.addEventListener('click', () => requireAuth(addMonth));
   tabsBar.appendChild(addBtn);
 }
       const tab = document.createElement('div');
-     tab.addEventListener('dragover', e => {
-  e.preventDefault();
-});
+ 
 
-tab.addEventListener('drop', e => {
-  e.preventDefault();
-
-  const rect = tab.getBoundingClientRect();
-  const middle = rect.left + rect.width / 2;
-
-  addButtonIndex = e.clientX < middle
-    ? index
-    : index + 1;
-
-  renderTabs();
-});
       tab.className = 'tab' + (m.id === activeId ? ' active' : '');
 
       const inp = document.createElement('input');
@@ -721,6 +757,7 @@ tab.addEventListener('drop', e => {
       addBtn.draggable = true;
 
 addBtn.addEventListener('dragstart', e => {
+  e.dataTransfer.effectAllowed = 'move';
   e.dataTransfer.setData('text/plain', String(addButtonIndex));
 });
   addBtn.addEventListener('click', () => requireAuth(addMonth));
