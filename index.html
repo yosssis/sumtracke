@@ -526,6 +526,35 @@
     </div>
   </div>
 </div>
+  <!-- Login Dialog -->
+<div class="overlay" id="login-overlay">
+  <div class="dialog">
+    <div class="dialog-icon">🔐</div>
+    <div class="dialog-msg">נדרשת הרשאה</div>
+    <div class="dialog-sub">הזן שם משתמש וסיסמה כדי לבצע פעולה</div>
+
+    <input
+      type="text"
+      id="login-username"
+      placeholder="שם משתמש"
+      autocomplete="username"
+      style="width:100%;padding:10px;margin:8px 0 6px;border:1.5px solid #ddd;border-radius:9px;font-family:Heebo;"
+    />
+
+    <input
+      type="password"
+      id="login-password"
+      placeholder="סיסמה"
+      autocomplete="current-password"
+      style="width:100%;padding:10px;margin:6px 0 16px;border:1.5px solid #ddd;border-radius:9px;font-family:Heebo;"
+    />
+
+    <div class="dialog-btns">
+      <button class="btn-cancel" onclick="closeLogin()">ביטול</button>
+      <button class="btn-action" onclick="submitLogin()">כניסה</button>
+    </div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -541,6 +570,8 @@
   let activeId = 1;
   let nextMonthId = 2;
   let pendingDelete = null;
+  let authToken = sessionStorage.getItem('authToken') || '';
+let pendingProtectedAction = null;
 
   const tabsBar   = document.getElementById('tabs-bar');
   const rowsList  = document.getElementById('rows-list');
@@ -592,19 +623,42 @@ nameInput.addEventListener('blur', () => {
       inp.addEventListener('click', () => {
         if (m.id !== activeId) { activeId = m.id; renderTabs(); renderRows(); }
       });
-      inp.addEventListener('dblclick', () => {
-        inp.readOnly = false; inp.style.width = '96px';
-        inp.focus(); inp.select();
-      });
-      inp.addEventListener('blur', () => {
-        inp.readOnly = true; inp.style.width = '';
-        m.name = inp.value.trim() || m.name; renderTabs();
-      });
-      inp.addEventListener('keydown', e => { if (e.key === 'Enter') inp.blur(); });
+   inp.addEventListener('dblclick', () => {
+  if (!authToken) {
+    requireAuth(() => {
+      inp.readOnly = false;
+      inp.style.width = '96px';
+      inp.focus();
+      inp.select();
+    });
+    return;
+  }
+
+  inp.readOnly = false;
+  inp.style.width = '96px';
+  inp.focus();
+  inp.select();
+});
+    inp.addEventListener('blur', () => {
+  inp.readOnly = true;
+  inp.style.width = '';
+
+  if (!authToken) {
+    renderTabs();
+    return;
+  }
+
+  m.name = inp.value.trim() || m.name;
+  renderTabs();
+  saveData();
+});      inp.addEventListener('keydown', e => { if (e.key === 'Enter') inp.blur(); });
 
       const delBtn = document.createElement('button');
       delBtn.className = 'tab-del-btn'; delBtn.textContent = '✕'; delBtn.title = 'מחק חודש';
-      delBtn.addEventListener('click', e => { e.stopPropagation(); askDeleteMonth(m.id, m.name); });
+   delBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  requireAuth(() => askDeleteMonth(m.id, m.name));
+});
 
       tab.appendChild(inp);
       if (months.length > 1) tab.appendChild(delBtn);
@@ -613,7 +667,7 @@ nameInput.addEventListener('blur', () => {
 
     const addBtn = document.createElement('button');
     addBtn.className = 'btn-add-tab'; addBtn.textContent = '+'; addBtn.title = 'הוסף חודש';
-    addBtn.addEventListener('click', addMonth);
+  addBtn.addEventListener('click', () => requireAuth(addMonth));
     tabsBar.appendChild(addBtn);
 
     const activeTab = tabsBar.querySelector('.tab.active');
@@ -621,6 +675,10 @@ nameInput.addEventListener('blur', () => {
   }
 
   function addMonth() {
+      if (!authToken) {
+    requireAuth(addMonth);
+    return;
+  }
     const m = { id: nextMonthId++, name: 'חודש חדש', rows: [] };
     months.push(m); activeId = m.id;
     renderTabs(); renderRows();
@@ -634,6 +692,10 @@ nameInput.addEventListener('blur', () => {
   function activeMonth() { return months.find(m => m.id === activeId); }
 
   function addRow() {
+      if (!authToken) {
+    requireAuth(addRow);
+    return;
+  }
     const name = nameInput.value.trim();
     const amount = parseFloat(amtInput.value);
     const notes = notesInput.value.trim();
@@ -722,21 +784,50 @@ filteredRows.forEach((r, i) => {
     // note inputs — save on blur/enter
     rowsList.querySelectorAll('.row-note-input').forEach(inp => {
       const id = +inp.dataset.id;
-      inp.addEventListener('blur', () => {
-        const row = activeMonth().rows.find(r => r.id === id);
-        if (row) row.notes = inp.value.trim();
-      });
+ inp.addEventListener('blur', () => {
+  if (!authToken) {
+    requireAuth(() => {
+      const row = activeMonth().rows.find(r => r.id === id);
+      if (row) {
+        row.notes = inp.value.trim();
+        saveData();
+      }
+    });
+    return;
+  }
+
+  const row = activeMonth().rows.find(r => r.id === id);
+  if (row) {
+    row.notes = inp.value.trim();
+    saveData();
+  }
+});
       inp.addEventListener('keydown', e => { if (e.key === 'Enter') inp.blur(); });
     });
-  // שמירת הסימון
-rowsList.querySelectorAll('.row-mark').forEach(chk => {
+ rowsList.querySelectorAll('.row-mark').forEach(chk => {
   chk.addEventListener('change', () => {
-    const row = activeMonth().rows.find(
-      r => r.id === +chk.dataset.id
-    );
+    const id = +chk.dataset.id;
+    const newValue = chk.checked;
 
+    if (!authToken) {
+      // מחזירים מיד את הסימון למצב הקודם
+      chk.checked = !newValue;
+
+      requireAuth(() => {
+        const row = activeMonth().rows.find(r => r.id === id);
+        if (row) {
+          row.marked = newValue;
+          chk.checked = newValue;
+          saveData();
+        }
+      });
+
+      return;
+    }
+
+    const row = activeMonth().rows.find(r => r.id === id);
     if (row) {
-      row.marked = chk.checked;
+      row.marked = newValue;
       saveData();
     }
   });
@@ -748,7 +839,9 @@ rowsList.querySelectorAll('.row-mark').forEach(chk => {
   btn.addEventListener('click', () => openDocuments(+btn.dataset.id));
 });
     rowsList.querySelectorAll('.btn-del').forEach(btn =>
-      btn.addEventListener('click', () => askDeleteRow(+btn.dataset.id, btn.dataset.name))
+    btn.addEventListener('click', () =>
+  requireAuth(() => askDeleteRow(+btn.dataset.id, btn.dataset.name))
+)
     );
     totalEl.textContent = fmt(total);
     countEl.textContent = m.rows.length + (m.rows.length === 1 ? ' פריט' : ' פריטים');
@@ -758,6 +851,10 @@ rowsList.querySelectorAll('.row-mark').forEach(chk => {
 let editingRowId = null;
 
 function editRow(rowId) {
+    if (!authToken) {
+    requireAuth(() => editRow(rowId));
+    return;
+  }
   const row = activeMonth().rows.find(r => r.id === rowId);
   if (!row) return;
 
@@ -780,6 +877,10 @@ function closeEditDialog() {
 }
 
 function saveEditRow() {
+  if (!authToken) {
+  requireAuth(saveEditRow);
+  return;
+}
   if (editingRowId === null) return;
 
   const row = activeMonth().rows.find(r => r.id === editingRowId);
@@ -913,6 +1014,10 @@ name.addEventListener('mouseleave', () => {
   });
 }
   async function uploadDocument() {
+    if (!authToken) {
+  requireAuth(uploadDocument);
+  return;
+}
   const input = document.getElementById('document-file-input');
   const file = input.files[0];
 
@@ -947,6 +1052,7 @@ name.addEventListener('mouseleave', () => {
       redirect: 'follow',
       body: JSON.stringify({
         action: 'uploadDocument',
+        token: authToken,
         fileName: file.name,
         mimeType: file.type || 'application/octet-stream',
         base64: base64
@@ -987,6 +1093,10 @@ name.addEventListener('mouseleave', () => {
 }
 
   function clearCurrent() {
+      if (!authToken) {
+    requireAuth(clearCurrent);
+    return;
+  }
     if (!activeMonth() || activeMonth().rows.length === 0) return;
     pendingDelete = { type: 'clearMonth' };
     dialogIcon.textContent = '🗑️';
@@ -997,6 +1107,10 @@ name.addEventListener('mouseleave', () => {
 
   // ── EXPORT TO EXCEL ───────────────────────────────────
   function exportExcel() {
+      if (!authToken) {
+    requireAuth(exportExcel);
+    return;
+  }
     const m = activeMonth();
     if (!m || m.rows.length === 0) { showToast('אין נתונים לייצוא'); return; }
 
@@ -1045,6 +1159,10 @@ name.addEventListener('mouseleave', () => {
   function closeDialog() { overlay.classList.remove('show'); pendingDelete = null; }
 
   function confirmDelete() {
+      if (!authToken) {
+    requireAuth(confirmDelete);
+    return;
+  }
     if (!pendingDelete) return closeDialog();
     const { type } = pendingDelete;
     if (type === 'row') {
@@ -1076,7 +1194,80 @@ editOverlay.addEventListener('click', e => {
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2500);
   }
+function requireAuth(action) {
+  if (authToken) {
+    action();
+    return;
+  }
 
+  pendingProtectedAction = action;
+
+  document.getElementById('login-username').value = '';
+  document.getElementById('login-password').value = '';
+
+  document.getElementById('login-overlay').classList.add('show');
+
+  setTimeout(() => {
+    document.getElementById('login-username').focus();
+  }, 50);
+}
+
+function closeLogin() {
+  document.getElementById('login-overlay').classList.remove('show');
+  pendingProtectedAction = null;
+}
+
+async function submitLogin() {
+  const username = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value;
+
+  if (!username || !password) {
+    showToast('⚠️ הזן שם משתמש וסיסמה');
+    return;
+  }
+
+  try {
+    showToast('🔐 בודק הרשאה...');
+
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      redirect: 'follow',
+      body: JSON.stringify({
+        action: 'login',
+        username: username,
+        password: password
+      }),
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8'
+      }
+    });
+
+    const result = await response.json();
+
+    if (!result.ok || !result.token) {
+      showToast('❌ שם משתמש או סיסמה שגויים');
+      return;
+    }
+
+    authToken = result.token;
+    sessionStorage.setItem('authToken', authToken);
+
+    document.getElementById('login-overlay').classList.remove('show');
+
+    showToast('✅ ההתחברות הצליחה');
+
+    const action = pendingProtectedAction;
+    pendingProtectedAction = null;
+
+    if (action) {
+      action();
+    }
+
+  } catch (err) {
+    console.error('LOGIN ERROR:', err);
+    showToast('❌ שגיאה בהתחברות');
+  }
+}
   // ── UTILS ─────────────────────────────────────────────
   function fmt(n) {
     return '₪' + n.toLocaleString('he-IL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -1120,68 +1311,113 @@ editOverlay.addEventListener('click', e => {
   }
 
   // save locally always, then push to Drive
-  function saveData() {
-    const payload = getPayload();
-    try { localStorage.setItem(LOCAL_KEY, payload); } catch(e) {}
+function saveData() {
+  const payload = getPayload();
 
-    clearTimeout(saveTimer);
-    saveTimer = setTimeout(async () => {
-      setSyncStatus('saving');
-      try {
-     await fetch(API_URL, {
-  method: 'POST',
-  redirect: 'follow',
-  body: payload,
-  headers: {
-    'Content-Type': 'text/plain;charset=utf-8'
-  }
-});
-        setSyncStatus('saved');
-      } catch(e) {
+  try {
+    localStorage.setItem(LOCAL_KEY, payload);
+  } catch(e) {}
+
+  clearTimeout(saveTimer);
+
+  saveTimer = setTimeout(async () => {
+
+    if (!authToken) {
+      setSyncStatus('offline');
+      return;
+    }
+
+    setSyncStatus('saving');
+
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        redirect: 'follow',
+        body: JSON.stringify({
+          action: 'saveData',
+          token: authToken,
+          payload: JSON.parse(payload)
+        }),
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8'
+        }
+      });
+
+      const text = await response.text();
+
+      if (text.trim() === 'unauthorized') {
+        authToken = '';
+        sessionStorage.removeItem('authToken');
         setSyncStatus('offline');
+        return;
       }
-    }, 800); // debounce 800ms
-  }
 
-  async function loadData() {
-    // 1. load local immediately so UI is instant
-    try {
-      const raw = localStorage.getItem(LOCAL_KEY);
-      if (raw) applyPayload(JSON.parse(raw));
-    } catch(e) {}
-
-    // 2. fetch from Drive and override if newer
-    setSyncStatus('loading');
-    try {
-      const res = await fetch(API_URL);
-      const text = await res.text();
-      if (text && text !== '{}') {
-        const d = JSON.parse(text);
-        applyPayload(d);
-        // update local cache with Drive data
-        try { localStorage.setItem(LOCAL_KEY, text); } catch(e) {}
+      if (text.trim() !== 'ok') {
+        throw new Error(text);
       }
+
       setSyncStatus('saved');
+
     } catch(e) {
+      console.error('SAVE ERROR:', e);
       setSyncStatus('offline');
     }
 
-    renderTabs();
-renderRows();
-updateNameSuggestions();
+  }, 800);
+}
+
+
+async function loadData() {
+  // קודם טוענים מקומית
+  try {
+    const raw = localStorage.getItem(LOCAL_KEY);
+    if (raw) applyPayload(JSON.parse(raw));
+  } catch(e) {}
+
+  renderTabs();
+  renderRows();
+  updateNameSuggestions();
+
+  setSyncStatus('loading');
+
+  try {
+    const response = await fetch(API_URL + '?t=' + Date.now());
+    const d = await response.json();
+
+    if (d && Object.keys(d).length > 0) {
+      applyPayload(d);
+
+      try {
+        localStorage.setItem(LOCAL_KEY, JSON.stringify(d));
+      } catch(e) {}
+
+      renderTabs();
+      renderRows();
+      updateNameSuggestions();
+    }
+
+    setSyncStatus('saved');
+
+  } catch(e) {
+    console.error('LOAD ERROR:', e);
+    setSyncStatus('offline');
   }
+}
 
   // save on title change
-  document.getElementById('main-title').addEventListener('input', saveData);
+document.getElementById('main-title').addEventListener('focus', function() {
+  if (!authToken) {
+    this.blur();
 
-  // save on note blur
-  rowsList.addEventListener('blur', e => {
-    if (e.target.classList.contains('row-note-input')) {
-      const id = +e.target.dataset.id;
-      const row = activeMonth()?.rows.find(r => r.id === id);
-      if (row) { row.notes = e.target.value.trim(); saveData(); }
-    }
-  }, true);
+    requireAuth(() => {
+      this.focus();
+    });
+  }
+});
+
+document.getElementById('main-title').addEventListener('input', saveData);
+
+
 
 const _origRenderRows = renderRows;
 
@@ -1191,6 +1427,10 @@ renderRows = function() {
 };
 
 async function sendEmail() {
+  if (!authToken) {
+  requireAuth(sendEmail);
+  return;
+}
   window.emailChoiceType = 'monthly';
 
   const m = activeMonth();
@@ -1268,6 +1508,7 @@ async function sendMonthlyEmailNow(includeMarked) {
       redirect: 'follow',
       body: JSON.stringify({
         action: 'sendEmail',
+        token: authToken,
         title: document.getElementById('main-title').value || 'מסכם חודשי',
         month: monthToSend
       }),
@@ -1294,6 +1535,10 @@ async function sendMonthlyEmailNow(includeMarked) {
   }
 }
 async function sendAnnualEmail() {
+  if (!authToken) {
+  requireAuth(sendAnnualEmail);
+  return;
+}
   if (!months || months.length === 0) {
     showToast('אין נתונים לשליחה');
     return;
@@ -1332,6 +1577,7 @@ async function sendAnnualEmailNow(includeMarked) {
       redirect: 'follow',
       body: JSON.stringify({
         action: 'sendAnnualEmail',
+        token: authToken,
         title: document.getElementById('main-title').value || 'מסכם חודשי',
         months: monthsToSend
       }),
@@ -1363,6 +1609,10 @@ let tempEmailType = null;
 let tempEmailAddress = '';
 
 function openTempEmail(type) {
+  if (!authToken) {
+  requireAuth(() => openTempEmail(type));
+  return;
+}
   tempEmailType = type;
 
   const input = document.getElementById('temp-email-input');
@@ -1378,6 +1628,10 @@ function closeTempEmail() {
 }
 
 async function sendTempEmail() {
+    if (!authToken) {
+    requireAuth(sendTempEmail);
+    return;
+  }
   const input = document.getElementById('temp-email-input');
   const email = input.value.trim();
 
@@ -1449,6 +1703,7 @@ async function sendTempEmail() {
       body: JSON.stringify({
         action: 'sendTempEmail',
         email: tempEmailAddress,
+        token: authToken,
         title: document.getElementById('main-title').value || 'מסכם חודשי',
         month: monthToSend
       }),
@@ -1499,6 +1754,7 @@ async function sendTempAnnualEmailNow(includeMarked) {
       redirect: 'follow',
       body: JSON.stringify({
         action: 'sendTempAnnualEmail',
+        token: authToken,
         email: tempEmailAddress,
         title: document.getElementById('main-title').value || 'מסכם חודשי',
         months: monthsToSend
@@ -1645,6 +1901,10 @@ function closeAnnualReport() {
   document.getElementById('annual-overlay').classList.remove('show');
 }
 function exportAnnualExcel() {
+    if (!authToken) {
+    requireAuth(exportAnnualExcel);
+    return;
+  }
   if (!months || months.length === 0) {
     showToast('אין נתונים לייצוא');
     return;
