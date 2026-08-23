@@ -2486,6 +2486,15 @@ let peopleHtml = `
     outline:none;
   "
 />
+<div
+  id="dashboard-person-summary"
+  style="
+    display:none;
+    grid-template-columns:repeat(3,1fr);
+    gap:8px;
+    margin-bottom:12px;
+  "
+></div>
   <div style="
     overflow-x:auto;
     border:1px solid var(--border);
@@ -2585,9 +2594,58 @@ peopleHtml += `
 
 peopleContainer.innerHTML = peopleHtml;
   const personSearch = document.getElementById('dashboard-person-search');
+  const personSummary = document.getElementById('dashboard-person-summary');
 
 personSearch.addEventListener('input', () => {
   const query = personSearch.value.trim().toLowerCase();
+  if (!query) {
+  personSummary.style.display = 'none';
+  personSummary.innerHTML = '';
+} else {
+  const matchedNames = peopleNames.filter(name =>
+    name.toLowerCase().includes(query)
+  );
+
+  if (matchedNames.length === 1) {
+    const name = matchedNames[0];
+
+    let total = 0;
+    let activeMonths = 0;
+
+    months.forEach(month => {
+      const amount = peopleMap[name][month.id] || 0;
+
+      if (amount > 0) {
+        total += amount;
+        activeMonths++;
+      }
+    });
+
+    const average = activeMonths ? total / activeMonths : 0;
+
+    personSummary.innerHTML = `
+      <div style="padding:10px;background:#fff9f5;border-radius:10px;text-align:center;">
+        <div style="font-size:0.72rem;color:var(--muted);">סה"כ</div>
+        <div style="font-weight:900;color:var(--accent);">${fmt(total)}</div>
+      </div>
+
+      <div style="padding:10px;background:#fff9f5;border-radius:10px;text-align:center;">
+        <div style="font-size:0.72rem;color:var(--muted);">חודשים</div>
+        <div style="font-weight:900;">${activeMonths}</div>
+      </div>
+
+      <div style="padding:10px;background:#fff9f5;border-radius:10px;text-align:center;">
+        <div style="font-size:0.72rem;color:var(--muted);">ממוצע</div>
+        <div style="font-weight:900;">${fmt(average)}</div>
+      </div>
+    `;
+
+    personSummary.style.display = 'grid';
+  } else {
+    personSummary.style.display = 'none';
+    personSummary.innerHTML = '';
+  }
+}
 
   const rows = peopleContainer.querySelectorAll('tbody tr');
 
