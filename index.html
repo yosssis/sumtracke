@@ -541,13 +541,32 @@
       style="width:100%;padding:10px;margin:8px 0 6px;border:1.5px solid #ddd;border-radius:9px;font-family:Heebo;"
     />
 
-    <input
-      type="password"
-      id="login-password"
-      placeholder="סיסמה"
-      autocomplete="current-password"
-      style="width:100%;padding:10px;margin:6px 0 16px;border:1.5px solid #ddd;border-radius:9px;font-family:Heebo;"
-    />
+  <div style="position:relative; width:100%; margin:6px 0 16px;">
+  <input
+    type="password"
+    id="login-password"
+    placeholder="סיסמה"
+    autocomplete="current-password"
+    style="width:100%;padding:10px 42px 10px 10px;border:1.5px solid #ddd;border-radius:9px;font-family:Heebo;"
+  />
+
+  <button
+    type="button"
+    onclick="togglePassword()"
+    title="הצג / הסתר סיסמה"
+    style="
+      position:absolute;
+      right:10px;
+      top:50%;
+      transform:translateY(-50%);
+      border:none;
+      background:none;
+      cursor:pointer;
+      font-size:18px;
+      padding:2px;
+    "
+  >👁️</button>
+</div>
 
     <div class="dialog-btns">
       <button class="btn-cancel" onclick="closeLogin()">ביטול</button>
@@ -1338,7 +1357,15 @@ function closeLogin() {
   document.getElementById('login-overlay').classList.remove('show');
   pendingProtectedAction = null;
 }
+function togglePassword() {
+  const passwordInput = document.getElementById('login-password');
 
+  if (passwordInput.type === 'password') {
+    passwordInput.type = 'text';
+  } else {
+    passwordInput.type = 'password';
+  }
+}
 async function submitLogin() {
   const username = document.getElementById('login-username').value.trim();
   const password = document.getElementById('login-password').value;
