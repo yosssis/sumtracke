@@ -2336,8 +2336,19 @@ months.forEach(month => {
   document.getElementById('dashboard-months-value').textContent =
     selectedMonths.length;
 
-  document.getElementById('dashboard-people-value').textContent =
-    filteredNames.size;
+document.getElementById('dashboard-people-value').textContent =
+  filteredNames.size;
+
+document
+  .querySelectorAll('[data-dashboard-month-id]')
+  .forEach(el => {
+    const monthId = el.dataset.dashboardMonthId;
+
+    el.style.display =
+      selectedValue === 'all' || monthId === selectedValue
+        ? 'flex'
+        : 'none';
+  });
 });
 const monthsContainer = document.getElementById('dashboard-months');
 
@@ -2364,8 +2375,10 @@ months.forEach(month => {
     0
   );
 
-  monthsHtml += `
-    <div style="
+monthsHtml += `
+  <div
+    data-dashboard-month-id="${month.id}"
+    style="
       display:flex;
       justify-content:space-between;
       align-items:center;
@@ -2373,20 +2386,21 @@ months.forEach(month => {
       border:1px solid var(--border);
       border-radius:10px;
       background:#fff;
-    ">
-      <span style="font-weight:600;">
-        ${esc(month.name)}
-      </span>
+    "
+  >
+    <span style="font-weight:600;">
+      ${esc(month.name)}
+    </span>
 
-      <span style="
-        font-weight:900;
-        color:var(--accent);
-        direction:ltr;
-      ">
-        ${fmt(monthTotal)}
-      </span>
-    </div>
-  `;
+    <span style="
+      font-weight:900;
+      color:var(--accent);
+      direction:ltr;
+    ">
+      ${fmt(monthTotal)}
+    </span>
+  </div>
+`;
 });
 
 monthsHtml += `</div>`;
@@ -2397,6 +2411,7 @@ monthsContainer.innerHTML = monthsHtml;
 
   // גרף חודשי
 const monthTotals = months.map(month => ({
+  id: month.id,
   name: month.name,
   total: (month.rows || []).reduce(
     (sum, row) => sum + (Number(row.amount) || 0),
@@ -2443,16 +2458,19 @@ monthTotals.forEach(month => {
     Math.round((month.total / maxMonthTotal) * 160)
   );
 
-  chartHtml += `
-    <div style="
+chartHtml += `
+  <div
+    data-dashboard-month-id="${month.id}"
+    style="
       min-width:80px;
       height:100%;
       display:flex;
       flex-direction:column;
       justify-content:flex-end;
       align-items:center;
-    ">
-
+    "
+  >
+     
       <div style="
         font-size:0.72rem;
         font-weight:700;
