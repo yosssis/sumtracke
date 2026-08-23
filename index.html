@@ -1008,8 +1008,24 @@ name.addEventListener('mouseleave', () => {
   name.style.textDecoration = 'none';
 });
     
+const deleteBtn = document.createElement('button');
 
+deleteBtn.textContent = '🗑️';
+deleteBtn.title = 'מחק מסמך';
+
+deleteBtn.style.cssText = `
+  background:none;
+  border:none;
+  cursor:pointer;
+  font-size:0.9rem;
+  padding:4px 6px;
+`;
+
+deleteBtn.addEventListener('click', () => {
+  requireAuth(() => deleteDocument(doc.id));
+});
     item.appendChild(name);
+    item.appendChild(deleteBtn);
     list.appendChild(item);
   });
 }
@@ -1091,8 +1107,69 @@ name.addEventListener('mouseleave', () => {
     showToast('❌ העלאת המסמך נכשלה');
   }
 }
+async function deleteDocument(fileId) {
+  if (!authToken) {
+    requireAuth(() => deleteDocument(fileId));
+    return;
+  }
 
+  const row = activeMonth().rows.find(r => r.id === documentsRowId);
+
+  if (!row) {
+    showToast('❌ הפריט לא נמצא');
+    return;
+  }
+
+  const doc = (row.documents || []).find(d => d.id === fileId);
+
+  if (!doc) {
+    showToast('❌ המסמך לא נמצא');
+    return;
+  }
+
+  if (!confirm(`למחוק את המסמך "${doc.name}"?`)) {
+    return;
+  }
+
+  try {
+    showToast('⏳ מוחק מסמך...');
+
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      redirect: 'follow',
+      body: JSON.stringify({
+        action: 'deleteDocument',
+        token: authToken,
+        fileId: fileId
+      }),
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8'
+      }
+    });
+
+    const result = await response.json();
+
+    if (!result.ok) {
+      throw new Error(result.error || 'Delete failed');
+    }
+
+    row.documents = (row.documents || []).filter(
+      d => d.id !== fileId
+    );
+
+    renderDocuments();
+    renderRows();
+    saveData();
+
+    showToast('✅ המסמך נמחק');
+
+  } catch (err) {
+    console.error('DELETE DOCUMENT ERROR:', err);
+    showToast('❌ מחיקת המסמך נכשלה');
+  }
+}
   function clearCurrent() {
+    
       if (!authToken) {
     requireAuth(clearCurrent);
     return;
