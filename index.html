@@ -735,7 +735,7 @@ addBtn.addEventListener('dragstart', e => {
 
   m.name = inp.value.trim() || m.name;
   renderTabs();
-  saveData();
+saveData('שינוי שם חודש', m.name);
 });      inp.addEventListener('keydown', e => { if (e.key === 'Enter') inp.blur(); });
 
       const delBtn = document.createElement('button');
@@ -782,7 +782,7 @@ activeId = m.id;
 
 addButtonIndex++;
     renderTabs(); renderRows();
-    saveData();
+  saveData('הוספת חודש', m.name);
     setTimeout(() => {
       const inp = tabsBar.querySelector('.tab.active .tab-name-input');
       if (inp) { inp.readOnly = false; inp.style.width = '96px'; inp.focus(); inp.select(); }
@@ -813,7 +813,7 @@ activeMonth().rows.push({
     nameInput.value = ''; amtInput.value = ''; notesInput.value = '';
    nameInput.focus();
 renderRows();
-saveData();
+saveData('הוספת פריט', name || '—');
   }
 
 function renderRows() {
@@ -891,7 +891,7 @@ filteredRows.forEach((r, i) => {
       const row = activeMonth().rows.find(r => r.id === id);
       if (row) {
         row.notes = inp.value.trim();
-        saveData();
+        saveData('שינוי הערה', row.name);
       }
     });
     return;
@@ -900,7 +900,7 @@ filteredRows.forEach((r, i) => {
   const row = activeMonth().rows.find(r => r.id === id);
   if (row) {
     row.notes = inp.value.trim();
-    saveData();
+   saveData('שינוי הערה', row.name);
   }
 });
       inp.addEventListener('keydown', e => { if (e.key === 'Enter') inp.blur(); });
@@ -919,7 +919,10 @@ filteredRows.forEach((r, i) => {
         if (row) {
           row.marked = newValue;
           chk.checked = newValue;
-          saveData();
+         saveData(
+  newValue ? 'סימון פריט' : 'ביטול סימון פריט',
+  row.name
+);
         }
       });
 
@@ -929,7 +932,10 @@ filteredRows.forEach((r, i) => {
     const row = activeMonth().rows.find(r => r.id === id);
     if (row) {
       row.marked = newValue;
-      saveData();
+      saveData(
+  newValue ? 'סימון פריט' : 'ביטול סימון פריט',
+  row.name
+);
     }
   });
 });
@@ -1004,7 +1010,7 @@ function saveEditRow() {
 
   closeEditDialog();
   renderRows();
-  saveData();
+  saveData('עריכת פריט', row.name);
   showToast('✅ הפריט עודכן');
   }
   // ── DOCUMENTS ────────────────────────────────────────────
@@ -1344,16 +1350,29 @@ async function deleteDocument(fileId) {
     if (!pendingDelete) return closeDialog();
     const { type } = pendingDelete;
     if (type === 'row') {
+      const deletedRow = activeMonth().rows.find(r => r.id === pendingDelete.rowId);
       activeMonth().rows = activeMonth().rows.filter(r => r.id !== pendingDelete.rowId);
+      saveData('מחיקת פריט', deletedRow ? deletedRow.name : '');
       renderRows();
     } else if (type === 'month') {
+      const deletedMonth = months.find(m => m.id === pendingDelete.monthId);
       months = months.filter(m => m.id !== pendingDelete.monthId);
+      saveData('מחיקת חודש', deletedMonth ? deletedMonth.name : '');
       if (activeId === pendingDelete.monthId) activeId = months[months.length - 1].id;
       renderTabs(); renderRows();
     } else if (type === 'clearMonth') {
-      activeMonth().rows = []; renderRows();
+    const clearedMonthName = activeMonth().name;
+activeMonth().rows = [];
+renderRows();
+saveData('ניקוי חודש', clearedMonthName);
     }
-    saveData();
+if (
+  type !== 'row' &&
+  type !== 'month' &&
+  type !== 'clearMonth'
+) {
+  saveData();
+}
     closeDialog();
   }
 
@@ -1497,7 +1516,7 @@ async function submitLogin() {
   }
 
   // save locally always, then push to Drive
-function saveData() {
+function saveData(auditAction = '', auditDetails = '') {
   const payload = getPayload();
 
   try {
@@ -1519,11 +1538,13 @@ function saveData() {
       const response = await fetch(API_URL, {
         method: 'POST',
         redirect: 'follow',
-        body: JSON.stringify({
-          action: 'saveData',
-          token: authToken,
-          payload: JSON.parse(payload)
-        }),
+body: JSON.stringify({
+  action: 'saveData',
+  token: authToken,
+  payload: JSON.parse(payload),
+  auditAction: auditAction,
+  auditDetails: auditDetails
+}),
         headers: {
           'Content-Type': 'text/plain;charset=utf-8'
         }
@@ -1591,7 +1612,9 @@ async function loadData() {
 }
 
   // save on title change
-document.getElementById('main-title').addEventListener('focus', function() {
+document.getElementById('main-title').addEventListener('change', function() {
+  saveData('שינוי כותרת', this.value.trim());
+});
   if (!authToken) {
     this.blur();
 
