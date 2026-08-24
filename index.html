@@ -2725,7 +2725,7 @@ function openDashboard() {
 </div>
     <div style="
       display:grid;
-      grid-template-columns:repeat(3,1fr);
+      grid-template-columns:repeat(4,1fr);
       gap:10px;
       margin:15px 0 20px;
     ">
@@ -2773,7 +2773,18 @@ function openDashboard() {
           <span id="dashboard-people-value">${uniqueNames.size}</span>
         </div>
       </div>
-
+<div style="
+  padding:15px 8px;
+  background:#fff9f5;
+  border-radius:12px;
+">
+  <div style="font-size:0.75rem;color:var(--muted);">
+    פריטים
+  </div>
+  <div style="font-size:1.25rem;font-weight:900;">
+    <span id="dashboard-rows-value">${totalRows}</span>
+  </div>
+</div>
     </div>
 
     <div id="dashboard-months"></div>
