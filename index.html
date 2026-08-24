@@ -2214,21 +2214,45 @@ async function sendMonthlyEmailNow(includeMarked) {
       }
     });
 
-    const text = await res.text();
+      const text = await res.text();
+    const result = text.trim();
 
     console.log('EMAIL STATUS:', res.status);
-    console.log('EMAIL RESPONSE:', text);
+    console.log('EMAIL RESPONSE:', result);
 
-    if (text.trim() === 'email sent') {
+    if (
+      result === 'unauthorized' ||
+      res.status === 401 ||
+      res.status === 403
+    ) {
+      authToken = '';
+      sessionStorage.removeItem('authToken');
+
+      showToast('🔐 ההתחברות פגה — התחבר מחדש');
+
+      requireAuth(() => sendMonthlyEmailNow(includeMarked));
+      return;
+    }
+
+    if (!res.ok) {
+      throw new Error('HTTP ' + res.status + ': ' + result);
+    }
+
+    if (result === 'email sent') {
       showToast('✅ המייל נשלח');
     } else {
-      showToast('❌ המייל לא נשלח');
-      console.error('SERVER RESPONSE:', text);
+      console.error('SERVER RESPONSE:', result);
+      showToast('❌ המייל לא נשלח: ' + result);
     }
 
   } catch (e) {
     console.error('EMAIL ERROR:', e);
-    showToast('❌ שגיאה בשליחת המייל');
+
+    authToken = '';
+    sessionStorage.removeItem('authToken');
+
+    showToast('❌ שגיאה בשליחה — יש להתחבר מחדש');
+    requireAuth(() => sendMonthlyEmailNow(includeMarked));
   }
 }
 async function sendAnnualEmail() {
@@ -2677,6 +2701,7 @@ function openDashboard() {
   });
 
   content.innerHTML = `
+  
   <div style="
   display:flex;
   justify-content:flex-start;
