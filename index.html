@@ -2786,7 +2786,29 @@ function openDashboard() {
   </div>
 </div>
     </div>
+<div style="
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin:0 0 22px;
+  justify-content:flex-start;
+">
+  <button class="btn-action" onclick="closeDashboard(); setTimeout(() => document.getElementById('input-name').focus(), 100)">
+    ➕ הוספת רשומה
+  </button>
 
+  <button class="btn-action" onclick="sendEmail()">
+    ✉️ שליחת דוח
+  </button>
+
+  <button class="btn-action" onclick="closeDashboard(); openAnnualReport()">
+    📊 דוח שנתי
+  </button>
+
+  <button class="btn-action export" onclick="exportAnnualExcel()">
+    📥 ייצוא שנתי
+  </button>
+</div>
     <div id="dashboard-months"></div>
     <div id="dashboard-people"></div>
   `;
