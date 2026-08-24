@@ -3045,7 +3045,8 @@ const donutGradient =
     justify-content:center;
     align-items:center;
   ">
-    <div style="
+   
+    <div id="dashboard-donut" style="
       width:150px;
       height:150px;
       border-radius:50%;
@@ -3072,7 +3073,7 @@ const donutGradient =
           font-size:0.82rem;
           font-weight:900;
           direction:ltr;
-        ">${fmt(grandTotal)}</div>
+        "><span id="dashboard-donut-total">${fmt(grandTotal)}</span></div>
       </div>
     </div>
   </div>
@@ -3117,7 +3118,43 @@ months.forEach(month => {
 
   document.getElementById('dashboard-total-value').textContent =
     fmt(filteredTotal);
+document.getElementById('dashboard-donut-total').textContent =
+  fmt(filteredTotal);
+    const filteredPersonTotals = {};
 
+selectedMonths.forEach(month => {
+  (month.rows || []).forEach(row => {
+    const name = (row.name || '').trim();
+    if (!name || name === '—') return;
+
+    filteredPersonTotals[name] =
+      (filteredPersonTotals[name] || 0) +
+      (Number(row.amount) || 0);
+  });
+});
+
+const filteredSortedPeople = Object.entries(filteredPersonTotals)
+  .sort((a, b) => b[1] - a[1])
+  .slice(0, 5);
+
+let filteredDonutStart = 0;
+
+const filteredDonutParts = filteredSortedPeople.map(([name, total], index) => {
+  const percent = filteredTotal ? (total / filteredTotal) * 100 : 0;
+  const start = filteredDonutStart;
+  const end = filteredDonutStart + percent;
+
+  filteredDonutStart = end;
+
+  return `${donutColors[index]} ${start}% ${end}%`;
+});
+
+const filteredDonutGradient = filteredDonutParts.length
+  ? `conic-gradient(${filteredDonutParts.join(',')})`
+  : '#eee';
+
+document.getElementById('dashboard-donut').style.background =
+  filteredDonutGradient;
   document.getElementById('dashboard-months-value').textContent =
     selectedMonths.length;
 
