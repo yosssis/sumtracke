@@ -2699,7 +2699,45 @@ function openDashboard() {
       if (name && name !== '—') uniqueNames.add(name);
     });
   });
+const personTotals = {};
 
+months.forEach(month => {
+  (month.rows || []).forEach(row => {
+    const name = (row.name || '').trim();
+    if (!name || name === '—') return;
+
+    personTotals[name] =
+      (personTotals[name] || 0) + (Number(row.amount) || 0);
+  });
+});
+
+const sortedPeople = Object.entries(personTotals)
+  .sort((a, b) => b[1] - a[1])
+  .slice(0, 5);
+
+const donutColors = [
+  '#ff6b35',
+  '#ff9f43',
+  '#ffc46b',
+  '#ffd8b4',
+  '#e8ddd4'
+];
+
+let donutStart = 0;
+
+const donutParts = sortedPeople.map(([name, total], index) => {
+  const percent = grandTotal ? (total / grandTotal) * 100 : 0;
+  const start = donutStart;
+  const end = donutStart + percent;
+  donutStart = end;
+
+  return `${donutColors[index]} ${start}% ${end}%`;
+});
+
+const donutGradient =
+  donutParts.length
+    ? `conic-gradient(${donutParts.join(',')})`
+    : '#eee';
   content.innerHTML = `
   
   <div style="
@@ -2835,6 +2873,57 @@ function openDashboard() {
         📥 ייצוא שנתי
       </button>
     </div>
+    <div style="
+  margin-top:22px;
+  padding-top:18px;
+  border-top:1px solid rgba(0,0,0,0.07);
+">
+  <div style="
+    font-weight:900;
+    font-size:0.9rem;
+    text-align:right;
+    margin-bottom:14px;
+  ">
+    🍩 חלוקת סכומים לפי אנשים
+  </div>
+
+  <div style="
+    display:flex;
+    justify-content:center;
+    align-items:center;
+  ">
+    <div style="
+      width:150px;
+      height:150px;
+      border-radius:50%;
+      background:${donutGradient};
+      position:relative;
+      box-shadow:0 6px 18px rgba(0,0,0,0.08);
+    ">
+      <div style="
+        position:absolute;
+        inset:32px;
+        background:#fff;
+        border-radius:50%;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        flex-direction:column;
+      ">
+        <div style="
+          font-size:0.68rem;
+          color:var(--muted);
+        ">סה״כ</div>
+
+        <div style="
+          font-size:0.82rem;
+          font-weight:900;
+          direction:ltr;
+        ">${fmt(grandTotal)}</div>
+      </div>
+    </div>
+  </div>
+</div>
   </div>
 
 </div>
