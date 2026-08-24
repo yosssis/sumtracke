@@ -367,15 +367,27 @@ body {
 }
 
 .card {
-  border-radius: 18px;
+  border-radius: 22px;
   border: 1px solid rgba(0,0,0,0.06);
+  background: #fff;
   box-shadow: 0 14px 40px rgba(0,0,0,0.07);
   overflow: hidden;
 }
 
 .add-section,
 .add-section-row2 {
-  background: rgba(255,255,255,0.92);
+  background: #fff;
+}
+
+.add-section {
+  padding: 22px 22px 12px;
+  gap: 12px;
+  border-bottom: none;
+}
+
+.add-section-row2 {
+  padding: 0 22px 22px;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
 }
 
 .add-section {
@@ -385,9 +397,13 @@ body {
 .add-section input,
 .inp-notes,
 .inp-search {
-  border: 1px solid rgba(0,0,0,0.09);
-  background: #fff;
-  box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);
+  height: 46px;
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 12px;
+  background: #fbfaf8;
+  box-shadow: none;
+  transition: all 0.2s;
+
 }
 
 .add-section input:focus,
@@ -398,9 +414,10 @@ body {
 }
 
 .btn-add {
-  min-width: 44px;
-  height: 42px;
+  min-width: 46px;
+  height: 46px;
   border-radius: 12px;
+  background: linear-gradient(135deg, #ff6b35, #ff914d);
   box-shadow: 0 6px 16px rgba(255,107,53,0.22);
 }
 
