@@ -2787,30 +2787,59 @@ function openDashboard() {
 </div>
     </div>
 <div style="
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-  margin:0 0 22px;
-  justify-content:flex-start;
+  display:grid;
+  grid-template-columns:minmax(0, 2fr) minmax(240px, 0.75fr);
+  gap:18px;
+  align-items:start;
+  margin-bottom:24px;
 ">
-  <button class="btn-action" onclick="closeDashboard(); setTimeout(() => document.getElementById('input-name').focus(), 100)">
-    ➕ הוספת רשומה
-  </button>
 
-  <button class="btn-action" onclick="sendEmail()">
-    ✉️ שליחת דוח
-  </button>
+  <div id="dashboard-months"></div>
 
-  <button class="btn-action" onclick="closeDashboard(); openAnnualReport()">
-    📊 דוח שנתי
-  </button>
+  <div style="
+    background:#fff;
+    border:1px solid rgba(0,0,0,0.06);
+    border-radius:18px;
+    padding:18px;
+    box-shadow:0 8px 24px rgba(0,0,0,0.05);
+    position:sticky;
+    top:10px;
+  ">
+    <div style="
+      font-weight:900;
+      font-size:1rem;
+      text-align:right;
+      margin-bottom:14px;
+    ">
+      ⚡ פעולות מהירות
+    </div>
 
-  <button class="btn-action export" onclick="exportAnnualExcel()">
-    📥 ייצוא שנתי
-  </button>
+    <div style="
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    ">
+      <button class="btn-action" style="justify-content:center;width:100%;" onclick="closeDashboard(); setTimeout(() => document.getElementById('input-name').focus(), 100)">
+        ➕ הוספת רשומה
+      </button>
+
+      <button class="btn-action" style="justify-content:center;width:100%;" onclick="sendEmail()">
+        ✉️ שליחת דוח
+      </button>
+
+      <button class="btn-action" style="justify-content:center;width:100%;" onclick="closeDashboard(); openAnnualReport()">
+        📊 דוח שנתי
+      </button>
+
+      <button class="btn-action export" style="justify-content:center;width:100%;" onclick="exportAnnualExcel()">
+        📥 ייצוא שנתי
+      </button>
+    </div>
+  </div>
+
 </div>
-    <div id="dashboard-months"></div>
-    <div id="dashboard-people"></div>
+
+<div id="dashboard-people"></div>
   `;
   const monthFilter = document.getElementById('dashboard-month-filter');
 
