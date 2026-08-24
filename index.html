@@ -1241,6 +1241,71 @@ body {
   let pendingDelete = null;
   let authToken = sessionStorage.getItem('authToken') || '';
 let pendingProtectedAction = null;
+  const AUTH_IDLE_TIMEOUT = 15 * 60 * 1000;
+let authIdleTimer = null;
+
+function expireAuth() {
+  authToken = '';
+  sessionStorage.removeItem('authToken');
+  sessionStorage.removeItem('authLastActivity');
+}
+
+function resetAuthIdleTimer() {
+  if (!authToken) return;
+
+  const now = Date.now();
+
+  sessionStorage.setItem(
+    'authLastActivity',
+    String(now)
+  );
+
+  clearTimeout(authIdleTimer);
+
+  authIdleTimer = setTimeout(() => {
+    expireAuth();
+  }, AUTH_IDLE_TIMEOUT);
+}
+
+function restoreAuthIdleTimer() {
+  if (!authToken) return;
+
+  const lastActivity =
+    Number(sessionStorage.getItem('authLastActivity')) || Date.now();
+
+  const elapsed =
+    Date.now() - lastActivity;
+
+  const remaining =
+    AUTH_IDLE_TIMEOUT - elapsed;
+
+  if (remaining <= 0) {
+    expireAuth();
+    return;
+  }
+
+  clearTimeout(authIdleTimer);
+
+  authIdleTimer = setTimeout(() => {
+    expireAuth();
+  }, remaining);
+}
+
+[
+  'click',
+  'keydown',
+  'input',
+  'touchstart',
+  'scroll'
+].forEach(eventName => {
+  document.addEventListener(
+    eventName,
+    resetAuthIdleTimer,
+    false
+  );
+});
+
+restoreAuthIdleTimer();
   let addButtonIndex = months.length;
 
   const tabsBar   = document.getElementById('tabs-bar');
@@ -2042,6 +2107,17 @@ editOverlay.addEventListener('click', e => {
     toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2500);
   }
 function requireAuth(action) {
+  const lastActivity =
+    Number(sessionStorage.getItem('authLastActivity')) || 0;
+
+  const inactiveTooLong =
+    !lastActivity ||
+    Date.now() - lastActivity >= AUTH_IDLE_TIMEOUT;
+
+  if (inactiveTooLong) {
+    expireAuth();
+  }
+
   if (authToken) {
     action();
     return;
@@ -2106,6 +2182,7 @@ async function submitLogin() {
 
     authToken = result.token;
     sessionStorage.setItem('authToken', authToken);
+    resetAuthIdleTimer();
 
     document.getElementById('login-overlay').classList.remove('show');
 
@@ -2261,9 +2338,12 @@ async function loadData() {
   }
 }
 
-  // save on title change
 document.getElementById('main-title').addEventListener('change', function() {
-  saveData('שינוי כותרת', this.value.trim());
+  const titleInput = this;
+
+  requireAuth(() => {
+    saveData('שינוי כותרת', titleInput.value.trim());
+  });
 });
 
 
