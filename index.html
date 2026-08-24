@@ -594,7 +594,47 @@ body {
 .toast {
   box-shadow: 0 10px 30px rgba(0,0,0,0.18);
 }
+.tabs-outer {
+  padding: 6px;
+  background: rgba(255,255,255,0.55);
+  border: 1px solid rgba(0,0,0,0.05);
+  border-radius: 16px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.035);
+}
 
+.tab {
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  height: 38px;
+  padding: 0 12px;
+  color: var(--muted);
+}
+
+.tab:hover {
+  background: rgba(255,107,53,0.06);
+  color: var(--text);
+}
+
+.tab.active {
+  height: 38px;
+  background: #fff;
+  border: 1px solid rgba(255,107,53,0.18);
+  color: var(--text);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.btn-add-tab {
+  height: 38px;
+  min-width: 38px;
+  border-radius: 10px;
+  border: 1px dashed rgba(255,107,53,0.28);
+  background: transparent;
+}
+
+.btn-add-tab:hover {
+  background: #fff7f2;
+}
     /* ===== DASHBOARD UI UPGRADE ===== */
 
 /* חלון הדשבורד - מבנה רחב */
