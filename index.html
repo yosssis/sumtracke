@@ -3270,19 +3270,143 @@ function getHebrewDateParts(date) {
 }
 
 
+let hebrewCalendarCursor = new Date();
+
+function hebrewYearLetters(year) {
+  let n = Number(year);
+
+  // בלוח עברי מקובל להציג תשפ"ו ולא ה'תשפ"ו
+  if (n >= 5000) n -= 5000;
+
+  const letters = [];
+
+  const values = [
+    [400, 'ת'],
+    [300, 'ש'],
+    [200, 'ר'],
+    [100, 'ק'],
+    [90, 'צ'],
+    [80, 'פ'],
+    [70, 'ע'],
+    [60, 'ס'],
+    [50, 'נ'],
+    [40, 'מ'],
+    [30, 'ל'],
+    [20, 'כ'],
+    [10, 'י'],
+    [9, 'ט'],
+    [8, 'ח'],
+    [7, 'ז'],
+    [6, 'ו'],
+    [5, 'ה'],
+    [4, 'ד'],
+    [3, 'ג'],
+    [2, 'ב'],
+    [1, 'א']
+  ];
+
+  // טיפול מיוחד בט"ו ובט"ז
+  function addUnder100(num) {
+    if (num === 15) {
+      letters.push('ט', 'ו');
+      return 0;
+    }
+
+    if (num === 16) {
+      letters.push('ט', 'ז');
+      return 0;
+    }
+
+    for (const [value, letter] of values) {
+      if (value >= 100) continue;
+
+      while (num >= value) {
+        letters.push(letter);
+        num -= value;
+      }
+    }
+
+    return num;
+  }
+
+  while (n >= 400) {
+    letters.push('ת');
+    n -= 400;
+  }
+
+  for (const [value, letter] of values) {
+    if (value >= 400 || value < 100) continue;
+
+    while (n >= value) {
+      letters.push(letter);
+      n -= value;
+    }
+  }
+
+  addUnder100(n);
+
+  if (letters.length === 1) {
+    return letters[0] + '׳';
+  }
+
+  return (
+    letters.slice(0, -1).join('') +
+    '״' +
+    letters[letters.length - 1]
+  );
+}
+
+
+function changeHebrewMonth(direction) {
+  const current = getHebrewDateParts(hebrewCalendarCursor);
+
+  const d = new Date(hebrewCalendarCursor);
+
+  // מתקדמים יום-יום עד שנכנסים לחודש העברי הבא/הקודם
+  for (let i = 0; i < 40; i++) {
+    d.setDate(d.getDate() + direction);
+
+    const h = getHebrewDateParts(d);
+
+    if (
+      h.month !== current.month ||
+      h.year !== current.year
+    ) {
+      hebrewCalendarCursor = d;
+      renderHebrewCalendar();
+      return;
+    }
+  }
+}
+
+
+function resetHebrewCalendar() {
+  hebrewCalendarCursor = new Date();
+  renderHebrewCalendar();
+}
+
+
 function renderHebrewCalendar() {
   const container = document.getElementById('hebrew-calendar');
   if (!container) return;
 
   const today = new Date();
-  const current = getHebrewDateParts(today);
+
+  const current =
+    getHebrewDateParts(hebrewCalendarCursor);
+
+  const todayHebrew =
+    getHebrewDateParts(today);
 
   const days = [];
 
-  // מחפשים את כל ימי החודש העברי הנוכחי
+  // אוספים את כל הימים של החודש העברי הנבחר
   for (let offset = -40; offset <= 40; offset++) {
-    const d = new Date(today);
-    d.setDate(today.getDate() + offset);
+    const d = new Date(hebrewCalendarCursor);
+
+    d.setDate(
+      hebrewCalendarCursor.getDate() + offset
+    );
 
     const h = getHebrewDateParts(d);
 
@@ -3316,7 +3440,8 @@ function renderHebrewCalendar() {
       item.date.getMonth() === today.getMonth() &&
       item.date.getDate() === today.getDate();
 
-    const isSaturday = item.date.getDay() === 6;
+    const isSaturday =
+      item.date.getDay() === 6;
 
     cells += `
       <div
@@ -3330,10 +3455,47 @@ function renderHebrewCalendar() {
     `;
   });
 
+  const yearText =
+    hebrewYearLetters(current.year);
+
+  const todayYearText =
+    hebrewYearLetters(todayHebrew.year);
+
   container.innerHTML = `
-    <div class="heb-cal-title">
-      📅 ${current.month} ${current.year}
+
+    <div class="heb-cal-nav">
+
+      <button
+        type="button"
+        class="heb-cal-nav-btn"
+        onclick="changeHebrewMonth(-1)"
+        title="חודש קודם"
+      >
+        ❮
+      </button>
+
+      <div class="heb-cal-title">
+        📅 ${current.month} ${yearText}
+      </div>
+
+      <button
+        type="button"
+        class="heb-cal-nav-btn"
+        onclick="changeHebrewMonth(1)"
+        title="חודש הבא"
+      >
+        ❯
+      </button>
+
     </div>
+
+    <button
+      type="button"
+      class="heb-cal-today-btn"
+      onclick="resetHebrewCalendar()"
+    >
+      היום
+    </button>
 
     <div class="heb-cal-weekdays">
       <span>א</span>
@@ -3350,26 +3512,13 @@ function renderHebrewCalendar() {
     </div>
 
     <div class="heb-cal-today-text">
-      היום: ${hebrewDayNumber(current.day)}
-      ${current.month} ${current.year}
+      היום:
+      ${hebrewDayNumber(todayHebrew.day)}
+      ${todayHebrew.month}
+      ${todayYearText}
     </div>
   `;
 }
-  // ── DASHBOARD ─────────────────────────────────────────
-function openDashboard() {
- document.body.classList.add('dashboard-side-open');
-  const overlay = document.getElementById('dashboard-overlay');
-  const content = document.getElementById('dashboard-content');
-
-  let grandTotal = 0;
-  let totalRows = 0;
-
-  months.forEach(month => {
-    (month.rows || []).forEach(row => {
-      grandTotal += Number(row.amount) || 0;
-      totalRows++;
-    });
-  });
 
   const uniqueNames = new Set();
 
