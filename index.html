@@ -3276,6 +3276,33 @@ document
       selectedValue === 'all' || monthId === selectedValue
         ? ''
         : 'none';
+    });
+    document
+  .querySelectorAll('#dashboard-people tbody tr')
+  .forEach(rowEl => {
+
+    if (selectedValue === 'all') {
+      rowEl.style.display = '';
+      return;
+    }
+
+    const nameCell = rowEl.querySelector('td:first-child');
+    if (!nameCell) return;
+
+    const personName = nameCell.textContent.trim();
+
+    let personAmount = 0;
+
+    selectedMonths.forEach(month => {
+      (month.rows || []).forEach(row => {
+        if ((row.name || '').trim() === personName) {
+          personAmount += Number(row.amount) || 0;
+        }
+      });
+    });
+
+    rowEl.style.display = personAmount > 0 ? '' : 'none';
+  });
   });
    
 });
