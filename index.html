@@ -1002,6 +1002,71 @@ body {
   .hebrew-calendar-card {
     display: none !important;
   }
+  /* ===== דשבורד צדדי במחשב ===== */
+
+@media (min-width: 1100px) {
+
+  /* כשהדשבורד פתוח - הרשימה עוברת לצד ימין */
+  body.dashboard-side-open .container {
+    width: 42vw;
+    max-width: 760px;
+    margin-right: 3vw;
+    margin-left: auto;
+    transition: width 0.3s ease, margin 0.3s ease;
+  }
+
+  /* שכבת הדשבורד כבר לא מכסה את המסך */
+  body.dashboard-side-open #dashboard-overlay {
+    background: transparent;
+    pointer-events: none;
+    opacity: 1;
+  }
+
+  /* הדשבורד עצמו הופך לפאנל שמאלי */
+  body.dashboard-side-open #dashboard-overlay .dialog {
+    position: fixed;
+    left: 2vw;
+    top: 20px;
+    bottom: 20px;
+
+    width: 50vw !important;
+    max-width: 900px !important;
+    max-height: none !important;
+
+    margin: 0 !important;
+    padding: 24px !important;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    pointer-events: auto;
+
+    border-radius: 24px !important;
+    box-shadow: 0 16px 50px rgba(0,0,0,0.15);
+
+    transform: translateX(-110%);
+    transition: transform 0.3s ease;
+  }
+
+  body.dashboard-side-open #dashboard-overlay.show .dialog {
+    transform: translateX(0);
+  }
+
+  /*
+    בתוך הפאנל השמאלי אין מספיק רוחב
+    לשני טורים פנימיים, לכן מסדרים אותם אחד מתחת לשני
+  */
+  body.dashboard-side-open
+  #dashboard-content > div:nth-child(3) {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* הפאנל של פעולות מהירות לא צריך sticky בתוך הפאנל */
+  body.dashboard-side-open
+  #dashboard-content > div:nth-child(3) > div:last-child {
+    position: static !important;
+  }
+}
 }  </style>
 </head>
 <body>
@@ -3295,6 +3360,9 @@ function renderHebrewCalendar() {
 }
   // ── DASHBOARD ─────────────────────────────────────────
 function openDashboard() {
+    if (window.innerWidth >= 1100) {
+    document.body.classList.add('dashboard-side-open');
+  }
   const overlay = document.getElementById('dashboard-overlay');
   const content = document.getElementById('dashboard-content');
 
@@ -4092,7 +4160,11 @@ personSearch.addEventListener('input', () => {
 }
 
 function closeDashboard() {
-  document.getElementById('dashboard-overlay').classList.remove('show');
+  document
+    .getElementById('dashboard-overlay')
+    .classList.remove('show');
+
+  document.body.classList.remove('dashboard-side-open');
 }
   // ── INIT ──────────────────────────────────────────────
 loadData();
