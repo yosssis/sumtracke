@@ -917,8 +917,92 @@ body {
 #dashboard-people tbody td:last-child {
   background: #fffaf7;
   font-weight: 900 !important;
+} 
+/* ===== לוח שנה עברי בדשבורד ===== */
+
+.hebrew-calendar-card {
+  margin-top: 18px;
+  padding: 18px;
+  background: #fff;
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 18px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+  direction: rtl;
 }
-  </style>
+
+.heb-cal-title {
+  font-size: 1rem;
+  font-weight: 900;
+  text-align: center;
+  margin-bottom: 14px;
+  color: var(--text);
+}
+
+.heb-cal-weekdays,
+.heb-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+}
+
+.heb-cal-weekdays {
+  margin-bottom: 6px;
+}
+
+.heb-cal-weekdays span {
+  text-align: center;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--muted);
+}
+
+.heb-cal-day,
+.heb-cal-empty {
+  min-height: 34px;
+}
+
+.heb-cal-day {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  transition: background 0.15s;
+}
+
+.heb-cal-day:hover {
+  background: #fff7f2;
+}
+
+.heb-cal-today {
+  background: var(--accent) !important;
+  color: #fff;
+  font-weight: 900;
+  box-shadow: 0 4px 12px rgba(255,107,53,0.25);
+}
+
+.heb-cal-shabbat:not(.heb-cal-today) {
+  color: var(--accent);
+  background: rgba(255,107,53,0.07);
+}
+
+.heb-cal-today-text {
+  margin-top: 14px;
+  padding-top: 11px;
+  border-top: 1px solid rgba(0,0,0,0.06);
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* במובייל לא מציגים את הלוח בכלל */
+@media (max-width: 700px) {
+  .hebrew-calendar-card {
+    display: none !important;
+  }
+}  </style>
 </head>
 <body>
 <div class="container">
@@ -3086,6 +3170,129 @@ function exportAnnualExcel() {
 
   showToast('✅ הדוח השנתי יוצא בהצלחה!');
 }
+  function hebrewDayNumber(n) {
+  const values = {
+    1:'א׳', 2:'ב׳', 3:'ג׳', 4:'ד׳', 5:'ה׳',
+    6:'ו׳', 7:'ז׳', 8:'ח׳', 9:'ט׳', 10:'י׳',
+    11:'י״א', 12:'י״ב', 13:'י״ג', 14:'י״ד', 15:'ט״ו',
+    16:'ט״ז', 17:'י״ז', 18:'י״ח', 19:'י״ט', 20:'כ׳',
+    21:'כ״א', 22:'כ״ב', 23:'כ״ג', 24:'כ״ד', 25:'כ״ה',
+    26:'כ״ו', 27:'כ״ז', 28:'כ״ח', 29:'כ״ט', 30:'ל׳'
+  };
+
+  return values[n] || n;
+}
+
+
+function getHebrewDateParts(date) {
+  const formatter = new Intl.DateTimeFormat(
+    'he-IL-u-ca-hebrew',
+    {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      timeZone: 'Asia/Jerusalem'
+    }
+  );
+
+  const parts = formatter.formatToParts(date);
+
+  const getPart = type =>
+    parts.find(p => p.type === type)?.value || '';
+
+  return {
+    day: Number(getPart('day')),
+    month: getPart('month'),
+    year: getPart('year')
+  };
+}
+
+
+function renderHebrewCalendar() {
+  const container = document.getElementById('hebrew-calendar');
+  if (!container) return;
+
+  const today = new Date();
+  const current = getHebrewDateParts(today);
+
+  const days = [];
+
+  // מחפשים את כל ימי החודש העברי הנוכחי
+  for (let offset = -40; offset <= 40; offset++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() + offset);
+
+    const h = getHebrewDateParts(d);
+
+    if (
+      h.month === current.month &&
+      h.year === current.year
+    ) {
+      days.push({
+        date: d,
+        hebrewDay: h.day
+      });
+    }
+  }
+
+  days.sort((a, b) => a.date - b.date);
+
+  if (!days.length) return;
+
+  const firstWeekDay = days[0].date.getDay();
+
+  let cells = '';
+
+  for (let i = 0; i < firstWeekDay; i++) {
+    cells += `<div class="heb-cal-empty"></div>`;
+  }
+
+  days.forEach(item => {
+
+    const isToday =
+      item.date.getFullYear() === today.getFullYear() &&
+      item.date.getMonth() === today.getMonth() &&
+      item.date.getDate() === today.getDate();
+
+    const isSaturday = item.date.getDay() === 6;
+
+    cells += `
+      <div
+        class="heb-cal-day
+          ${isToday ? 'heb-cal-today' : ''}
+          ${isSaturday ? 'heb-cal-shabbat' : ''}"
+        title="${item.date.toLocaleDateString('he-IL')}"
+      >
+        ${hebrewDayNumber(item.hebrewDay)}
+      </div>
+    `;
+  });
+
+  container.innerHTML = `
+    <div class="heb-cal-title">
+      📅 ${current.month} ${current.year}
+    </div>
+
+    <div class="heb-cal-weekdays">
+      <span>א</span>
+      <span>ב</span>
+      <span>ג</span>
+      <span>ד</span>
+      <span>ה</span>
+      <span>ו</span>
+      <span>ש</span>
+    </div>
+
+    <div class="heb-cal-grid">
+      ${cells}
+    </div>
+
+    <div class="heb-cal-today-text">
+      היום: ${hebrewDayNumber(current.day)}
+      ${current.month} ${current.year}
+    </div>
+  `;
+}
   // ── DASHBOARD ─────────────────────────────────────────
 function openDashboard() {
   const overlay = document.getElementById('dashboard-overlay');
@@ -3335,12 +3542,17 @@ const donutGradient =
     </div>
   </div>
 </div>
+<div
+  id="hebrew-calendar"
+  class="hebrew-calendar-card"
+></div>
   </div>
 
 </div>
 
 <div id="dashboard-people"></div>
   `;
+  renderHebrewCalendar();
   const monthFilter = document.getElementById('dashboard-month-filter');
 
 months.forEach(month => {
