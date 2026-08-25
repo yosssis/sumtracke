@@ -1006,68 +1006,64 @@ body {
   
   /* ===== דשבורד צדדי במחשב ===== */
 
-@media (min-width: 768px) {
+/* ===== דשבורד צדדי במחשב ===== */
+@media (min-width: 900px) {
 
-  /* כשהדשבורד פתוח - הרשימה עוברת לצד ימין */
-body.dashboard-side-open .container {
-  width: 52%;
-  max-width: none;
-  margin-right: 1%;
-  margin-left: auto;
-  transition: width 0.3s ease, margin 0.3s ease;
-}
-
-  /* שכבת הדשבורד כבר לא מכסה את המסך */
-  body.dashboard-side-open #dashboard-overlay {
-    background: transparent;
-    pointer-events: none;
-    opacity: 1;
+  /* הרשימה הראשית בצד ימין */
+  body:has(#dashboard-overlay.show) > .container {
+    width: 50vw !important;
+    max-width: none !important;
+    margin-right: 1vw !important;
+    margin-left: auto !important;
   }
 
-  /* הדשבורד עצמו הופך לפאנל שמאלי */
- body.dashboard-side-open #dashboard-overlay .dialog {
-  position: fixed;
-  left: 1%;
-  top: 20px;
-  bottom: 20px;
-
-  width: 45%;
-  max-width: none !important;
-  max-height: none !important;
-
-  margin: 0 !important;
-  padding: 24px !important;
-
-  overflow-y: auto;
-  overflow-x: hidden;
-  pointer-events: auto;
-
-  border-radius: 20px !important;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.08);
-
-  transform: translateX(-110%);
-  transition: transform 0.3s ease;
-}
-  body.dashboard-side-open #dashboard-overlay.show .dialog {
-    transform: translateX(0);
+  /* ה-overlay לא מחשיך ולא חוסם את הרשימה */
+  #dashboard-overlay.show {
+    background: transparent !important;
+    pointer-events: none !important;
+    display: block !important;
   }
 
-  /*
-    בתוך הפאנל השמאלי אין מספיק רוחב
-    לשני טורים פנימיים, לכן מסדרים אותם אחד מתחת לשני
-  */
-  body.dashboard-side-open
+  /* הדשבורד עצמו בצד שמאל בלבד */
+  #dashboard-overlay.show > .dialog {
+    position: fixed !important;
+
+    left: 1vw !important;
+    right: auto !important;
+
+    top: 20px !important;
+    bottom: 20px !important;
+
+    width: 46vw !important;
+    max-width: 46vw !important;
+    height: auto !important;
+    max-height: none !important;
+
+    margin: 0 !important;
+    padding: 24px !important;
+
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+
+    pointer-events: auto !important;
+
+    transform: none !important;
+
+    border-radius: 20px !important;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.10) !important;
+  }
+
+  /* תוכן הדשבורד בטור אחד */
+  #dashboard-overlay.show
   #dashboard-content > div:nth-child(3) {
     grid-template-columns: 1fr !important;
   }
 
-  /* הפאנל של פעולות מהירות לא צריך sticky בתוך הפאנל */
-  body.dashboard-side-open
+  #dashboard-overlay.show
   #dashboard-content > div:nth-child(3) > div:last-child {
     position: static !important;
   }
-  }
-
+}
   </style>
 </head>
 <body>
