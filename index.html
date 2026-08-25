@@ -1176,6 +1176,34 @@ body {
     </div>
   </div>
 </div>
+
+  <!-- History Dialog -->
+<div class="overlay" id="history-overlay">
+  <div class="dialog" style="max-width:460px;">
+    <div class="dialog-icon">🕘</div>
+
+    <div class="dialog-msg" id="history-title">
+      היסטוריית דיווחים
+    </div>
+
+    <div
+      id="history-list"
+      style="
+        text-align:right;
+        max-height:320px;
+        overflow-y:auto;
+        margin:14px 0 18px;
+      "
+    ></div>
+
+    <div class="dialog-btns">
+      <button class="btn-cancel" onclick="closeHistory()">
+        סגור
+      </button>
+    </div>
+  </div>
+</div>
+  
   <!-- Login Dialog -->
 <div class="overlay" id="login-overlay">
   <div class="dialog">
@@ -1594,6 +1622,21 @@ filteredRows.forEach((r, i) => {
 >
   📎 ${(r.documents || []).length}
 </button>
+<button
+  class="btn-history"
+  data-id="${r.id}"
+  title="היסטוריית דיווחים"
+  style="
+    background:none;
+    border:none;
+    cursor:pointer;
+    font-size:0.9rem;
+    color:var(--muted);
+    padding:0 4px;
+  "
+>
+  🕘
+</button>
   </div>
 
   <input
@@ -1670,6 +1713,9 @@ filteredRows.forEach((r, i) => {
     rowsList.querySelectorAll('.btn-edit').forEach(btn => {
   btn.addEventListener('click', () => editRow(+btn.dataset.id));
 });
+  rowsList.querySelectorAll('.btn-history').forEach(btn => {
+  btn.addEventListener('click', () => openHistory(+btn.dataset.id));
+});
   rowsList.querySelectorAll('.btn-docs').forEach(btn => {
   btn.addEventListener('click', () => openDocuments(+btn.dataset.id));
 });
@@ -1732,15 +1778,118 @@ function saveEditRow() {
     return;
   }
 
-  row.name = newName || '—';
+const oldAmount = Number(row.amount) || 0;
+
+row.name = newName || '—';
+row.notes = newNotes;
+
+if (oldAmount !== newAmount) {
+  if (!Array.isArray(row.history)) {
+    row.history = [];
+  }
+
+  const nowIso = new Date().toISOString();
+
+  row.history.push({
+    amount: newAmount,
+    date: nowIso,
+    source: 'site'
+  });
+
   row.amount = newAmount;
-  row.notes = newNotes;
+  row.updatedAt = nowIso;
+}
 
   closeEditDialog();
   renderRows();
   saveData('עריכת פריט', row.name);
   showToast('✅ הפריט עודכן');
   }
+  let historyRowId = null;
+
+function openHistory(rowId) {
+  const row = activeMonth().rows.find(r => r.id === rowId);
+  if (!row) return;
+
+  historyRowId = rowId;
+
+  document.getElementById('history-title').textContent =
+    `היסטוריית דיווחים — ${row.name}`;
+
+  const list = document.getElementById('history-list');
+
+  const history = Array.isArray(row.history)
+    ? [...row.history]
+    : [];
+
+  if (history.length === 0) {
+    list.innerHTML = `
+      <div style="
+        text-align:center;
+        color:var(--muted);
+        padding:20px;
+      ">
+        עדיין אין היסטוריית שינויים
+      </div>
+    `;
+
+    document.getElementById('history-overlay').classList.add('show');
+    return;
+  }
+
+  history.reverse();
+
+  list.innerHTML = history.map(item => {
+
+    const source =
+      item.source === 'phone'
+        ? '📞 טלפון'
+        : '✏️ שינוי באתר';
+
+    return `
+      <div style="
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        gap:12px;
+        padding:11px 6px;
+        border-bottom:1px solid var(--border);
+      ">
+
+        <div>
+          <div style="font-weight:800;">
+            ${fmt(Number(item.amount) || 0)}
+          </div>
+
+          <div style="
+            font-size:0.72rem;
+            color:var(--muted);
+            margin-top:2px;
+          ">
+            ${source}
+          </div>
+        </div>
+
+        <div style="
+          font-size:0.78rem;
+          color:var(--muted);
+          direction:rtl;
+          white-space:nowrap;
+        ">
+          ${formatReportedAt(item.date)}
+        </div>
+
+      </div>
+    `;
+  }).join('');
+
+  document.getElementById('history-overlay').classList.add('show');
+}
+
+function closeHistory() {
+  document.getElementById('history-overlay').classList.remove('show');
+  historyRowId = null;
+}
   // ── DOCUMENTS ────────────────────────────────────────────
 let documentsRowId = null;
 
