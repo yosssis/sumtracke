@@ -3679,7 +3679,12 @@ function closeDashboard() {
   document.getElementById('dashboard-overlay').classList.remove('show');
 }
   // ── INIT ──────────────────────────────────────────────
+loadData();
+
+// בדיקה אוטומטית לנתונים חדשים כל 5 שניות
+setInterval(() => {
   loadData();
+}, 5000);
 </script>
 </body>
 </html>
