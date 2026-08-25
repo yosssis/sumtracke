@@ -1557,7 +1557,7 @@ filteredRows.forEach((r, i) => {
       li.innerHTML = `
         <span class="row-num">${i+1}</span>
         <span class="row-info">
-  <div class="row-name" style="display:flex; align-items:center; gap:7px;">
+  <div class="row-name" style="display:flex; align-items:center; gap:7px; flex-wrap:wrap;">
     <input
       type="checkbox"
       class="row-mark"
@@ -1565,7 +1565,7 @@ filteredRows.forEach((r, i) => {
       ${r.marked ? 'checked' : ''}
       title="אל תכלול בדוח"
     />
-    <span>${esc(r.name)}</span>
+    <span style="white-space:nowrap; flex-shrink:0;">${esc(r.name)}</span>
     ${r.reportSource === 'phone'
   ? `<span style="
       font-size:0.72rem;
