@@ -3548,21 +3548,39 @@ function openDashboard() {
       if (name && name !== '—') uniqueNames.add(name);
     });
   });
-const personTotals = {};
+const personStats = {};
 
 months.forEach(month => {
   (month.rows || []).forEach(row => {
     const name = (row.name || '').trim();
-    if (!name || name === '—') return;
+    const amount = Number(row.amount) || 0;
 
-    personTotals[name] =
-      (personTotals[name] || 0) + (Number(row.amount) || 0);
+    if (!name || name === '—' || amount <= 0) return;
+
+    if (!personStats[name]) {
+      personStats[name] = {
+        total: 0,
+        months: new Set()
+      };
+    }
+
+    personStats[name].total += amount;
+    personStats[name].months.add(month.id);
   });
 });
 
-const sortedPeople = Object.entries(personTotals)
+const personAverages = Object.entries(personStats).map(([name, data]) => {
+  const average =
+    data.months.size > 0
+      ? data.total / data.months.size
+      : 0;
+
+  return [name, average];
+});
+
+const sortedPeople = personAverages
   .sort((a, b) => b[1] - a[1])
-  .slice(0, 5);
+  .slice(0, 10);
 
 const donutColors = [
   '#ff6b35',
@@ -3572,12 +3590,26 @@ const donutColors = [
   '#e8ddd4'
 ];
 
+const donutAverageTotal =
+  sortedPeople.reduce((sum, [, average]) => sum + average, 0);
+
+const peopleAverage =
+  personAverages.length
+    ? personAverages.reduce((sum, [, average]) => sum + average, 0) /
+      personAverages.length
+    : 0;
+
 let donutStart = 0;
 
-const donutParts = sortedPeople.map(([name, total], index) => {
-  const percent = grandTotal ? (total / grandTotal) * 100 : 0;
+const donutParts = sortedPeople.map(([name, average], index) => {
+  const percent =
+    donutAverageTotal
+      ? (average / donutAverageTotal) * 100
+      : 0;
+
   const start = donutStart;
   const end = donutStart + percent;
+
   donutStart = end;
 
   return `${donutColors[index]} ${start}% ${end}%`;
@@ -3760,16 +3792,36 @@ const donutGradient =
         justify-content:center;
         flex-direction:column;
       ">
-        <div style="
-          font-size:0.68rem;
-          color:var(--muted);
-        ">סה״כ</div>
+       <div
+  id="dashboard-donut-name"
+  style="
+    font-size:0.68rem;
+    color:var(--muted);
+    text-align:center;
+    max-width:85px;
+  "
+>
+  כל האנשים
+</div>
 
-        <div style="
-          font-size:0.82rem;
-          font-weight:900;
-          direction:ltr;
-        "><span id="dashboard-donut-total">${fmt(grandTotal)}</span></div>
+<div
+  id="dashboard-donut-total"
+  style="
+    font-size:0.82rem;
+    font-weight:900;
+    direction:ltr;
+  "
+>
+ ${fmt(peopleAverage)}
+</div>
+
+<div
+  id="dashboard-donut-percent"
+  style="
+    font-size:0.64rem;
+    color:var(--muted);
+  "
+></div>
       </div>
     </div>
   </div>
@@ -3819,40 +3871,80 @@ months.forEach(month => {
 
   document.getElementById('dashboard-total-value').textContent =
     fmt(filteredTotal);
-document.getElementById('dashboard-donut-total').textContent =
-  fmt(filteredTotal);
-    const filteredPersonTotals = {};
+const filteredPersonStats = {};
 
 selectedMonths.forEach(month => {
   (month.rows || []).forEach(row => {
     const name = (row.name || '').trim();
-    if (!name || name === '—') return;
+    const amount = Number(row.amount) || 0;
 
-    filteredPersonTotals[name] =
-      (filteredPersonTotals[name] || 0) +
-      (Number(row.amount) || 0);
+    if (!name || name === '—' || amount <= 0) return;
+
+    if (!filteredPersonStats[name]) {
+      filteredPersonStats[name] = {
+        total: 0,
+        months: new Set()
+      };
+    }
+
+    filteredPersonStats[name].total += amount;
+    filteredPersonStats[name].months.add(month.id);
   });
 });
 
-const filteredSortedPeople = Object.entries(filteredPersonTotals)
-  .sort((a, b) => b[1] - a[1])
-  .slice(0, 5);
+const filteredPersonAverages =
+  Object.entries(filteredPersonStats).map(([name, data]) => {
+    const average =
+      data.months.size > 0
+        ? data.total / data.months.size
+        : 0;
+
+    return [name, average];
+  });
+
+const filteredPeopleAverage =
+  filteredPersonAverages.length
+    ? filteredPersonAverages.reduce(
+        (sum, [, average]) => sum + average,
+        0
+      ) / filteredPersonAverages.length
+    : 0;
+
+document.getElementById('dashboard-donut-total').textContent =
+  fmt(filteredPeopleAverage);
+
+const filteredSortedPeople =
+  filteredPersonAverages
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5);
+
+const filteredDonutTotal =
+  filteredSortedPeople.reduce(
+    (sum, [, average]) => sum + average,
+    0
+  );
 
 let filteredDonutStart = 0;
 
-const filteredDonutParts = filteredSortedPeople.map(([name, total], index) => {
-  const percent = filteredTotal ? (total / filteredTotal) * 100 : 0;
-  const start = filteredDonutStart;
-  const end = filteredDonutStart + percent;
+const filteredDonutParts =
+  filteredSortedPeople.map(([name, average], index) => {
+    const percent =
+      filteredDonutTotal
+        ? (average / filteredDonutTotal) * 100
+        : 0;
 
-  filteredDonutStart = end;
+    const start = filteredDonutStart;
+    const end = filteredDonutStart + percent;
 
-  return `${donutColors[index]} ${start}% ${end}%`;
-});
+    filteredDonutStart = end;
 
-const filteredDonutGradient = filteredDonutParts.length
-  ? `conic-gradient(${filteredDonutParts.join(',')})`
-  : '#eee';
+    return `${donutColors[index]} ${start}% ${end}%`;
+  });
+
+const filteredDonutGradient =
+  filteredDonutParts.length
+    ? `conic-gradient(${filteredDonutParts.join(',')})`
+    : '#eee';
 
 document.getElementById('dashboard-donut').style.background =
   filteredDonutGradient;
