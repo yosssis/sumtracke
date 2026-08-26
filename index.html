@@ -979,12 +979,33 @@ body {
 
 .heb-cal-day {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   border-radius: 9px;
   font-size: 0.74rem;
   font-weight: 600;
   transition: background 0.15s;
+  min-height: 48px;
+  padding: 3px 2px;
+  text-align: center;
+}
+
+.heb-cal-day-number {
+  line-height: 1.1;
+}
+
+.heb-cal-holiday-name {
+  margin-top: 2px;
+  font-size: 0.52rem;
+  line-height: 1.05;
+  font-weight: 800;
+  color: #c8582e;
+  white-space: normal;
+}
+
+.heb-cal-today .heb-cal-holiday-name {
+  color: #fff;
 }
 
 .heb-cal-day:hover {
@@ -3333,6 +3354,328 @@ function getHebrewDateParts(date) {
     year: getPart('year')
   };
 }
+function getJewishHoliday(
+  hebrewDay,
+  hebrewMonth,
+  hebrewYear,
+  gregorianDate
+) {
+  const day = Number(hebrewDay);
+  const month = String(hebrewMonth || '').trim();
+
+  const date = new Date(gregorianDate);
+  const weekDay = date.getDay(); // 0=ראשון, 6=שבת
+
+  // פונקציה קטנה לבדיקת תאריך עברי של יום סמוך
+  function hebrewDateAfter(daysToAdd) {
+    const d = new Date(date);
+    d.setDate(d.getDate() + daysToAdd);
+    return getHebrewDateParts(d);
+  }
+
+  // ───────── תשרי ─────────
+
+  if (month === 'תשרי') {
+
+    if (day === 1 || day === 2) {
+      return 'ראש השנה';
+    }
+
+    // צום גדליה:
+    // ג׳ תשרי, ואם חל בשבת נדחה לד׳ תשרי
+    if (day === 3 && weekDay !== 6) {
+      return 'צום גדליה';
+    }
+
+    if (day === 4 && weekDay === 0) {
+      const yesterday = hebrewDateAfter(-1);
+
+      if (
+        yesterday.month === 'תשרי' &&
+        Number(yesterday.day) === 3
+      ) {
+        return 'צום גדליה';
+      }
+    }
+
+    if (day === 9) {
+      return 'ערב יום כיפור';
+    }
+
+    if (day === 10) {
+      return 'יום כיפור';
+    }
+
+    if (day === 14) {
+      return 'ערב סוכות';
+    }
+
+    if (day === 15) {
+      return 'סוכות';
+    }
+
+    if (day >= 16 && day <= 20) {
+      return 'חוה״מ סוכות';
+    }
+
+    if (day === 21) {
+      return 'הושענא רבה';
+    }
+
+    if (day === 22) {
+      return 'שמיני עצרת';
+    }
+
+    if (day === 23) {
+      return 'שמחת תורה';
+    }
+  }
+
+
+  // ───────── כסלו ─────────
+
+  if (month === 'כסלו') {
+    if (day >= 25) {
+      return 'חנוכה';
+    }
+  }
+
+
+  // ───────── טבת ─────────
+
+  if (month === 'טבת') {
+
+    if (day <= 3) {
+
+      // בודקים אם כסלו של אותה שנה היה 29 או 30 יום
+      const firstTevet = new Date(date);
+
+      firstTevet.setDate(
+        firstTevet.getDate() - (day - 1)
+      );
+
+      const lastKislevDate = new Date(firstTevet);
+
+      lastKislevDate.setDate(
+        lastKislevDate.getDate() - 1
+      );
+
+      const lastKislev =
+        getHebrewDateParts(lastKislevDate);
+
+      const kislevLength =
+        Number(lastKislev.day);
+
+      // כסלו 30 יום → חנוכה עד ב׳ טבת
+      // כסלו 29 יום → חנוכה עד ג׳ טבת
+      if (
+        day <= 2 ||
+        (day === 3 && kislevLength === 29)
+      ) {
+        return 'חנוכה';
+      }
+    }
+
+    if (day === 10) {
+      return 'עשרה בטבת';
+    }
+  }
+
+
+  // ───────── שבט ─────────
+
+  if (month === 'שבט') {
+    if (day === 15) {
+      return 'ט״ו בשבט';
+    }
+  }
+
+
+  // ───────── אדר שנה רגילה ─────────
+
+  if (month === 'אדר') {
+
+    // תענית אסתר
+    if (day === 13 && weekDay !== 6) {
+      return 'תענית אסתר';
+    }
+
+    // אם י״ג אדר חל בשבת,
+    // מקדימים את הצום ליום חמישי י״א אדר
+    if (day === 11 && weekDay === 4) {
+      const inTwoDays = hebrewDateAfter(2);
+
+      if (
+        inTwoDays.month === month &&
+        Number(inTwoDays.day) === 13
+      ) {
+        return 'תענית אסתר';
+      }
+    }
+
+    if (day === 14) {
+      return 'פורים';
+    }
+
+    if (day === 15) {
+      return 'שושן פורים';
+    }
+  }
+
+
+  // ───────── אדר א׳ ─────────
+
+  if (
+    month === 'אדר א׳' ||
+    month === 'אדר א'
+  ) {
+    if (day === 14) {
+      return 'פורים קטן';
+    }
+
+    if (day === 15) {
+      return 'שושן פורים קטן';
+    }
+  }
+
+
+  // ───────── אדר ב׳ ─────────
+
+  if (
+    month === 'אדר ב׳' ||
+    month === 'אדר ב'
+  ) {
+
+    if (day === 13 && weekDay !== 6) {
+      return 'תענית אסתר';
+    }
+
+    if (day === 11 && weekDay === 4) {
+      const inTwoDays = hebrewDateAfter(2);
+
+      if (
+        (inTwoDays.month === 'אדר ב׳' ||
+         inTwoDays.month === 'אדר ב') &&
+        Number(inTwoDays.day) === 13
+      ) {
+        return 'תענית אסתר';
+      }
+    }
+
+    if (day === 14) {
+      return 'פורים';
+    }
+
+    if (day === 15) {
+      return 'שושן פורים';
+    }
+  }
+
+
+  // ───────── ניסן ─────────
+
+  if (month === 'ניסן') {
+
+    if (day === 14) {
+      return 'ערב פסח';
+    }
+
+    if (day === 15) {
+      return 'פסח';
+    }
+
+    if (day >= 16 && day <= 20) {
+      return 'חוה״מ פסח';
+    }
+
+    if (day === 21) {
+      return 'שביעי של פסח';
+    }
+  }
+
+
+  // ───────── אייר ─────────
+
+  if (month === 'אייר') {
+
+    if (day === 14) {
+      return 'פסח שני';
+    }
+
+    if (day === 18) {
+      return 'ל״ג בעומר';
+    }
+  }
+
+
+  // ───────── סיוון ─────────
+
+  if (month === 'סיוון') {
+
+    if (day === 5) {
+      return 'ערב שבועות';
+    }
+
+    if (day === 6) {
+      return 'שבועות';
+    }
+  }
+
+
+  // ───────── תמוז ─────────
+
+  if (month === 'תמוז') {
+
+    // י״ז בתמוז
+    if (day === 17 && weekDay !== 6) {
+      return 'י״ז בתמוז';
+    }
+
+    // אם י״ז בתמוז חל בשבת,
+    // הצום נדחה לי״ח בתמוז
+    if (day === 18 && weekDay === 0) {
+      const yesterday = hebrewDateAfter(-1);
+
+      if (
+        yesterday.month === 'תמוז' &&
+        Number(yesterday.day) === 17
+      ) {
+        return 'י״ז בתמוז';
+      }
+    }
+  }
+
+
+  // ───────── אב ─────────
+
+  if (month === 'אב') {
+
+    // תשעה באב
+    if (day === 9 && weekDay !== 6) {
+      return 'תשעה באב';
+    }
+
+    // אם ט׳ באב חל בשבת,
+    // הצום נדחה לי׳ באב
+    if (day === 10 && weekDay === 0) {
+      const yesterday = hebrewDateAfter(-1);
+
+      if (
+        yesterday.month === 'אב' &&
+        Number(yesterday.day) === 9
+      ) {
+        return 'תשעה באב';
+      }
+    }
+
+    if (day === 15) {
+      return 'ט״ו באב';
+    }
+  }
+
+
+  return '';
+}
 
 
 let hebrewCalendarCursor = new Date();
@@ -3344,6 +3687,7 @@ function hebrewYearLetters(year) {
   if (n >= 5000) n -= 5000;
 
   const letters = [];
+
 
   const values = [
     [400, 'ת'],
@@ -3509,17 +3853,36 @@ function renderHebrewCalendar() {
     const isSaturday =  
       item.date.getDay() === 6;
 
-    cells += `
-      <div
-        class="heb-cal-day
-          ${isToday ? 'heb-cal-today' : ''}
-          ${isSaturday ? 'heb-cal-shabbat' : ''}"
-        title="${item.date.toLocaleDateString('he-IL')}"
-      >
-        ${hebrewDayNumber(item.hebrewDay)}
-      </div>
-    `;
-  });
+const holiday = getJewishHoliday(
+  item.hebrewDay,
+  current.month,
+  current.year,
+  item.date
+);
+
+cells += `
+  <div
+    class="heb-cal-day
+      ${isToday ? 'heb-cal-today' : ''}
+      ${isSaturday ? 'heb-cal-shabbat' : ''}
+      ${holiday ? 'heb-cal-holiday' : ''}"
+    title="${
+      holiday
+        ? holiday + ' — ' + item.date.toLocaleDateString('he-IL')
+        : item.date.toLocaleDateString('he-IL')
+    }"
+  >
+    <div class="heb-cal-day-number">
+      ${hebrewDayNumber(item.hebrewDay)}
+    </div>
+
+    ${
+      holiday
+        ? `<div class="heb-cal-holiday-name">${holiday}</div>`
+        : ''
+    }
+  </div>
+`;
 
   const yearText =
     hebrewYearLetters(current.year);
