@@ -1100,7 +1100,15 @@ body {
   #dashboard-content > div:nth-child(3) > div:last-child {
     position: static !important;
   }
+ }
+    .today-hebrew-date {
+  margin-top: 5px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--muted);
+  direction: rtl;
 }
+    
   </style>
 </head>
 <body>
@@ -1109,6 +1117,7 @@ body {
   <div class="title-wrap">
     <input type="text" id="main-title" value="מסכם חודשי" spellcheck="false" />
     <div class="title-hint">לחץ על הכותרת כדי לערוך</div>
+<div id="today-hebrew-date" class="today-hebrew-date"></div>
   </div>
 
   <div class="tabs-outer" id="tabs-bar"></div>
@@ -3763,7 +3772,21 @@ function hebrewYearLetters(year) {
     '״' +
     letters[letters.length - 1]
   );
+  }
+  function renderTodayHebrewDate() {
+  const el = document.getElementById('today-hebrew-date');
+
+  if (!el) return;
+
+  const today = new Date();
+  const h = getHebrewDateParts(today);
+
+  el.textContent =
+    `${hebrewDayNumber(h.day)} ב${h.month} ${hebrewYearLetters(h.year)}`;
 }
+
+renderTodayHebrewDate();
+
 
 
 function changeHebrewMonth(direction) {
