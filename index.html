@@ -3902,6 +3902,71 @@ const donutGradient =
 <div id="dashboard-people"></div>
   `;
   renderHebrewCalendar();
+  let activeDonutPeople = sortedPeople;
+let activeDonutTotal = donutAverageTotal;
+let activeDonutCenterValue = peopleAverage;
+
+const donutEl = document.getElementById('dashboard-donut');
+const donutNameEl = document.getElementById('dashboard-donut-name');
+const donutTotalEl = document.getElementById('dashboard-donut-total');
+const donutPercentEl = document.getElementById('dashboard-donut-percent');
+
+donutEl.addEventListener('mousemove', e => {
+  if (!activeDonutPeople.length || !activeDonutTotal) return;
+
+  const rect = donutEl.getBoundingClientRect();
+
+  const x = e.clientX - (rect.left + rect.width / 2);
+  const y = e.clientY - (rect.top + rect.height / 2);
+
+  const distance = Math.sqrt(x * x + y * y);
+
+  if (distance < 32) {
+    donutNameEl.textContent = 'כל האנשים';
+    donutTotalEl.textContent = fmt(activeDonutCenterValue);
+    donutPercentEl.textContent = '';
+    return;
+  }
+
+  let angle = Math.atan2(x, -y) * 180 / Math.PI;
+
+  if (angle < 0) {
+    angle += 360;
+  }
+
+  const mousePercent = angle / 360 * 100;
+
+  let start = 0;
+
+  for (const [name, average] of activeDonutPeople) {
+    const percent =
+      activeDonutTotal
+        ? (average / activeDonutTotal) * 100
+        : 0;
+
+    const end = start + percent;
+
+    if (
+      mousePercent >= start &&
+      mousePercent < end
+    ) {
+      donutNameEl.textContent = name;
+      donutTotalEl.textContent = fmt(average);
+      donutPercentEl.textContent =
+        percent.toFixed(1) + '%';
+
+      return;
+    }
+
+    start = end;
+  }
+});
+
+donutEl.addEventListener('mouseleave', () => {
+  donutNameEl.textContent = 'כל האנשים';
+  donutTotalEl.textContent = fmt(activeDonutCenterValue);
+  donutPercentEl.textContent = '';
+});
   const monthFilter = document.getElementById('dashboard-month-filter');
 
 months.forEach(month => {
@@ -4013,6 +4078,15 @@ const filteredDonutGradient =
 
 document.getElementById('dashboard-donut').style.background =
   filteredDonutGradient;
+    activeDonutPeople = filteredSortedPeople;
+activeDonutTotal = filteredDonutTotal;
+activeDonutCenterValue = filteredPeopleAverage;
+
+document.getElementById('dashboard-donut-name').textContent =
+  'כל האנשים';
+
+document.getElementById('dashboard-donut-percent').textContent =
+  '';
   document.getElementById('dashboard-months-value').textContent =
     selectedMonths.length;
 
