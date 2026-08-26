@@ -930,12 +930,28 @@ body {
   direction: rtl;
 }
 
+.heb-cal-nav {
+  display: grid;
+  grid-template-columns: 40px 1fr 40px;
+  align-items: center;
+  width: 100%;
+  gap: 8px;
+  direction: ltr;
+}
+
 .heb-cal-title {
   font-size: 1rem;
   font-weight: 900;
   text-align: center;
-  margin-bottom: 14px;
+  margin-bottom: 0;
   color: var(--text);
+  direction: rtl;
+}
+
+.heb-cal-nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .heb-cal-weekdays,
