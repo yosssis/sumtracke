@@ -2575,11 +2575,60 @@ async function submitLogin() {
     });
   }
 
-  function applyPayload(d) {
-    if (d.months)      months      = d.months;
-    if (d.nextMonthId) nextMonthId = d.nextMonthId;
-    if (d.title)       document.getElementById('main-title').value = d.title;
+function normalizeHebrewMonthName(name) {
+  const hebrewMonths = [
+    'תשרי',
+    'חשוון',
+    'כסלו',
+    'טבת',
+    'שבט',
+    'אדר',
+    'אדר א׳',
+    'אדר ב׳',
+    'ניסן',
+    'אייר',
+    'סיוון',
+    'תמוז',
+    'אב',
+    'אלול'
+  ];
+
+  const text = String(name || '').trim();
+
+  const match = text.match(/^(.+?)\s+(\d{4})$/);
+
+  if (!match) return text;
+
+  const monthName = match[1].trim();
+  const year = Number(match[2]);
+
+  if (!hebrewMonths.includes(monthName)) {
+    return text;
   }
+
+  if (year < 5000) {
+    return text;
+  }
+
+  return `${monthName} ${hebrewYearLetters(year)}`;
+}
+
+function applyPayload(d) {
+  if (d.months) {
+    months = d.months.map(month => ({
+      ...month,
+      name: normalizeHebrewMonthName(month.name)
+    }));
+  }
+
+  if (d.nextMonthId) {
+    nextMonthId = d.nextMonthId;
+  }
+
+  if (d.title) {
+    document.getElementById('main-title').value = d.title;
+  }
+}
 
   // save locally always, then push to Drive
 function saveData(auditAction = '', auditDetails = '') {
