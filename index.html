@@ -3419,6 +3419,7 @@ function renderHebrewCalendar() {
         hebrewDay: h.day
       });
     }
+    }
   
 
   days.sort((a, b) => a.date - b.date);
@@ -3440,7 +3441,7 @@ function renderHebrewCalendar() {
       item.date.getMonth() === today.getMonth() &&
       item.date.getDate() === today.getDate();
 
-    const isSaturday =
+    const isSaturday =  
       item.date.getDay() === 6;
 
     cells += `
