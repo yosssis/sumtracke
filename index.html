@@ -3519,6 +3519,25 @@ function renderHebrewCalendar() {
     </div>
   `;
 }
+// ── DASHBOARD ─────────────────────────────────────────
+function openDashboard() {
+
+  if (window.innerWidth >= 900) {
+    document.body.classList.add('dashboard-side-open');
+  }
+
+  const overlay = document.getElementById('dashboard-overlay');
+  const content = document.getElementById('dashboard-content');
+
+  let grandTotal = 0;
+  let totalRows = 0;
+
+  months.forEach(month => {
+    (month.rows || []).forEach(row => {
+      grandTotal += Number(row.amount) || 0;
+      totalRows++;
+    });
+  });
 
   const uniqueNames = new Set();
 
