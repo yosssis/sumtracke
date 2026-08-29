@@ -1146,9 +1146,31 @@ body {
       <input type="number" id="input-amount" class="inp-amount" placeholder="סכום" step="0.01" inputmode="decimal" />
       <button class="btn-add" onclick="addRow()">+</button>
     </div>
-    <div class="add-section-row2">
-      <input type="text" id="input-notes" class="inp-notes" placeholder="הערה (אופציונלי)" />
-    </div>
+   <div class="add-section-row2">
+  <input
+    type="text"
+    id="input-notes"
+    class="inp-notes"
+    placeholder="הערה (אופציונלי)"
+  />
+
+  <button
+    type="button"
+    class="btn-action"
+    onclick="openExtraExpense()"
+    style="
+      flex-shrink:0;
+      height:46px;
+      padding:0 16px;
+      white-space:nowrap;
+      color:var(--accent);
+      border-color:rgba(255,107,53,0.25);
+      font-weight:700;
+    "
+  >
+    ➕ הוצאה מזדמנת
+  </button>
+</div>
    
     <div class="list-header"><span>פריט</span><span>סכום</span></div>
     <ul class="rows-list" id="rows-list"></ul>
@@ -1328,6 +1350,110 @@ body {
       <button class="btn-cancel" onclick="closeTempEmail()">ביטול</button>
       <button class="btn-action" onclick="sendTempEmail()">שלח</button>
     </div>
+  </div>
+</div>
+  <!-- Extra Expense Dialog -->
+<div class="overlay" id="extra-expense-overlay">
+  <div class="dialog" style="max-width:460px;">
+
+    <div class="dialog-icon">🧾</div>
+
+    <div class="dialog-msg">
+      הוצאה מזדמנת
+    </div>
+
+    <input
+      type="date"
+      id="extra-expense-date"
+      style="
+        width:100%;
+        padding:10px;
+        margin:8px 0 6px;
+        border:1.5px solid #ddd;
+        border-radius:9px;
+        font-family:Heebo;
+      "
+    />
+
+    <input
+      type="text"
+      id="extra-expense-name"
+      placeholder="תיאור ההוצאה"
+      style="
+        width:100%;
+        padding:10px;
+        margin:6px 0;
+        border:1.5px solid #ddd;
+        border-radius:9px;
+        font-family:Heebo;
+      "
+    />
+
+    <input
+      type="number"
+      id="extra-expense-amount"
+      placeholder="סכום"
+      step="0.01"
+      style="
+        width:100%;
+        padding:10px;
+        margin:6px 0;
+        border:1.5px solid #ddd;
+        border-radius:9px;
+        font-family:Heebo;
+      "
+    />
+
+    <select
+      id="extra-expense-category"
+      style="
+        width:100%;
+        padding:10px;
+        margin:6px 0;
+        border:1.5px solid #ddd;
+        border-radius:9px;
+        font-family:Heebo;
+        background:#fff;
+      "
+    >
+      <option value="">בחר קטגוריה</option>
+      <option value="ציוד">ציוד</option>
+      <option value="תחזוקה">תחזוקה</option>
+      <option value="נסיעות">נסיעות</option>
+      <option value="שירותים">שירותים</option>
+      <option value="אחר">אחר</option>
+    </select>
+
+    <input
+      type="text"
+      id="extra-expense-notes"
+      placeholder="הערה (אופציונלי)"
+      style="
+        width:100%;
+        padding:10px;
+        margin:6px 0 16px;
+        border:1.5px solid #ddd;
+        border-radius:9px;
+        font-family:Heebo;
+      "
+    />
+
+    <div class="dialog-btns">
+      <button
+        class="btn-cancel"
+        onclick="closeExtraExpense()"
+      >
+        ביטול
+      </button>
+
+      <button
+        class="btn-action"
+        onclick="saveExtraExpense()"
+      >
+        שמור הוצאה
+      </button>
+    </div>
+
   </div>
 </div>
   <!-- Documents Dialog -->
@@ -1948,7 +2074,29 @@ function closeEditDialog() {
   document.getElementById('edit-overlay').classList.remove('show');
   editingRowId = null;
 }
+function openExtraExpense() {
+  document.getElementById('extra-expense-date').value =
+    new Date().toISOString().split('T')[0];
 
+  document.getElementById('extra-expense-name').value = '';
+  document.getElementById('extra-expense-amount').value = '';
+  document.getElementById('extra-expense-category').value = '';
+  document.getElementById('extra-expense-notes').value = '';
+
+  document
+    .getElementById('extra-expense-overlay')
+    .classList.add('show');
+}
+
+function closeExtraExpense() {
+  document
+    .getElementById('extra-expense-overlay')
+    .classList.remove('show');
+}
+
+function saveExtraExpense() {
+  showToast('בשלב הבא נחבר את שמירת ההוצאה');
+}
 function saveEditRow() {
   if (!authToken) {
   requireAuth(saveEditRow);
