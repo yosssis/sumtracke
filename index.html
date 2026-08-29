@@ -2755,7 +2755,77 @@ async function loadData() {
     setSyncStatus('offline');
   }
 }
+async function refreshPhoneUpdatesOnly() {
+  try {
+    const response = await fetch(API_URL + '?t=' + Date.now());
+    const d = await response.json();
 
+    if (!d || !Array.isArray(d.months)) return;
+
+    let changed = false;
+
+    d.months.forEach(serverMonth => {
+      const localMonth = months.find(
+        m => String(m.id) === String(serverMonth.id)
+      );
+
+      if (!localMonth) {
+        months.push({
+          ...serverMonth,
+          name: normalizeHebrewMonthName(serverMonth.name)
+        });
+        changed = true;
+        return;
+      }
+
+      (serverMonth.rows || []).forEach(serverRow => {
+        const localRow = (localMonth.rows || []).find(
+          r => String(r.id) === String(serverRow.id)
+        );
+
+        if (!localRow) {
+          localMonth.rows.push(serverRow);
+          changed = true;
+          return;
+        }
+
+        // מעדכנים רק נתונים שיכולים להגיע מהטלפון
+        if (
+          Number(localRow.amount) !== Number(serverRow.amount) ||
+          localRow.reportedAt !== serverRow.reportedAt ||
+          localRow.updatedAt !== serverRow.updatedAt
+        ) {
+          localRow.amount = serverRow.amount;
+          localRow.updatedAt = serverRow.updatedAt;
+          localRow.reportSource = serverRow.reportSource;
+          localRow.reportedAt = serverRow.reportedAt;
+          localRow.history = Array.isArray(serverRow.history)
+            ? serverRow.history
+            : localRow.history;
+
+          changed = true;
+        }
+      });
+    });
+
+    if (changed) {
+      localStorage.setItem(LOCAL_KEY, getPayload());
+
+      renderRows();
+
+      if (
+        document
+          .getElementById('dashboard-overlay')
+          ?.classList.contains('show')
+      ) {
+        openDashboard();
+      }
+    }
+
+  } catch (e) {
+    console.error('PHONE REFRESH ERROR:', e);
+  }
+}
 document.getElementById('main-title').addEventListener('change', function() {
   const titleInput = this;
 
@@ -4952,7 +5022,7 @@ loadData();
 
 // בדיקה אוטומטית לנתונים חדשים כל 5 שניות
 setInterval(() => {
-  loadData();
+refreshPhoneUpdatesOnly();
 }, 5000);
 </script>
 </body>
