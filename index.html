@@ -2306,6 +2306,40 @@ function saveExtraExpense() {
     return;
   }
 
+  // אם אנחנו במצב עריכה - מעדכנים את ההוצאה הקיימת
+  if (editingExtraExpenseId !== null) {
+
+    const expense = extraExpenses.find(
+      e => Number(e.id) === Number(editingExtraExpenseId)
+    );
+
+    if (!expense) {
+      showToast('❌ ההוצאה לא נמצאה');
+      return;
+    }
+
+    expense.name = name;
+    expense.amount = amount;
+    expense.category = category || 'אחר';
+    expense.notes = notes;
+    expense.hebrewDate = hebrewDate;
+    expense.updatedAt = new Date().toISOString();
+
+    saveData(
+      'עריכת הוצאה מזדמנת',
+      `${name} — ${amount}`
+    );
+
+    editingExtraExpenseId = null;
+
+    closeExtraExpense();
+
+    showToast('✅ ההוצאה עודכנה');
+
+    return;
+  }
+
+  // אם זו הוצאה חדשה - יוצרים רשומה חדשה
   const now = new Date();
   const h = getHebrewDateParts(now);
 
