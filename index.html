@@ -1603,6 +1603,7 @@ body {
   let pendingDelete = null;
   let extraExpenses = [];
   let editingExtraExpenseId = null;
+  let tempEmailExtraExpenseId = null;
   let authToken = sessionStorage.getItem('authToken') || '';
 let pendingProtectedAction = null;
   const AUTH_IDLE_TIMEOUT = 15 * 60 * 1000;
@@ -2216,6 +2217,19 @@ function renderExtraExpenses() {
   "
 >
   📎 ${(expense.documents || []).length}
+</button>
+<button
+  type="button"
+  title="שלח במייל מזדמן"
+  onclick="openExtraExpenseTempEmail(${expense.id})"
+  style="
+    border:none;
+    background:none;
+    cursor:pointer;
+    padding:4px;
+  "
+>
+  📧
 </button>
         <button
           type="button"
@@ -3563,7 +3577,22 @@ async function sendAnnualEmailNow(includeMarked) {
 
 let tempEmailType = null;
 let tempEmailAddress = '';
+function openExtraExpenseTempEmail(expenseId) {
+  requireAuth(() => {
+    const expense = extraExpenses.find(
+      e => Number(e.id) === Number(expenseId)
+    );
 
+    if (!expense) {
+      showToast('❌ ההוצאה לא נמצאה');
+      return;
+    }
+
+    tempEmailExtraExpenseId = expense.id;
+
+    openTempEmail('extraExpense');
+  });
+}
 function openTempEmail(type) {
   if (!authToken) {
   requireAuth(() => openTempEmail(type));
@@ -3599,7 +3628,10 @@ async function sendTempEmail() {
 
   tempEmailAddress = email;
   closeTempEmail();
-
+if (tempEmailType === 'extraExpense') {
+  await sendTempExtraExpenseEmailNow();
+  return;
+}
   // בודקים אם יש פריטים מסומנים
   let hasMarked = false;
 
@@ -3630,6 +3662,74 @@ async function sendTempEmail() {
     await sendTempMonthlyEmailNow(true);
   }
   }
+  async function sendTempExtraExpenseEmailNow() {
+  if (!authToken) {
+    requireAuth(sendTempExtraExpenseEmailNow);
+    return;
+  }
+
+  const expense = extraExpenses.find(
+    e => Number(e.id) === Number(tempEmailExtraExpenseId)
+  );
+
+  if (!expense) {
+    showToast('❌ ההוצאה לא נמצאה');
+    return;
+  }
+
+  try {
+    showToast('שולח הוצאה במייל...');
+
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      redirect: 'follow',
+      body: JSON.stringify({
+        action: 'sendTempExtraExpenseEmail',
+        token: authToken,
+        email: tempEmailAddress,
+        expense: expense
+      }),
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8'
+      }
+    });
+
+    const text = await res.text();
+    const result = text.trim();
+
+    if (
+      result === 'unauthorized' ||
+      res.status === 401 ||
+      res.status === 403
+    ) {
+      authToken = '';
+      sessionStorage.removeItem('authToken');
+
+      showToast('🔐 ההתחברות פגה — התחבר מחדש');
+
+      requireAuth(sendTempExtraExpenseEmailNow);
+      return;
+    }
+
+    if (!res.ok) {
+      throw new Error(
+        'HTTP ' + res.status + ': ' + result
+      );
+    }
+
+    if (result === 'temp extra expense email sent') {
+      showToast('✅ ההוצאה נשלחה במייל');
+      tempEmailExtraExpenseId = null;
+    } else {
+      console.error('SERVER RESPONSE:', result);
+      showToast('❌ המייל לא נשלח');
+    }
+
+  } catch (e) {
+    console.error('EXTRA EXPENSE EMAIL ERROR:', e);
+    showToast('❌ שגיאה בשליחת המייל');
+  }
+}
   async function sendTempMonthlyEmailNow(includeMarked) {
   const m = activeMonth();
 
