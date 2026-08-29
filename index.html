@@ -1362,18 +1362,23 @@ body {
       הוצאה מזדמנת
     </div>
 
-    <input
-      type="date"
-      id="extra-expense-date"
-      style="
-        width:100%;
-        padding:10px;
-        margin:8px 0 6px;
-        border:1.5px solid #ddd;
-        border-radius:9px;
-        font-family:Heebo;
-      "
-    />
+<input
+  type="text"
+  id="extra-expense-date"
+  placeholder="תאריך עברי"
+  readonly
+  style="
+    width:100%;
+    padding:10px;
+    margin:8px 0 6px;
+    border:1.5px solid #ddd;
+    border-radius:9px;
+    font-family:Heebo;
+    text-align:center;
+    direction:rtl;
+    background:#fbfaf8;
+  "
+/>
 
     <input
       type="text"
@@ -2075,8 +2080,11 @@ function closeEditDialog() {
   editingRowId = null;
 }
 function openExtraExpense() {
+  const today = new Date();
+  const h = getHebrewDateParts(today);
+
   document.getElementById('extra-expense-date').value =
-    new Date().toISOString().split('T')[0];
+    `${hebrewDayNumber(h.day)} ב${h.month} ${hebrewYearLetters(h.year)}`;
 
   document.getElementById('extra-expense-name').value = '';
   document.getElementById('extra-expense-amount').value = '';
