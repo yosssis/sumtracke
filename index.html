@@ -2545,7 +2545,11 @@ function saveExtraExpense() {
     expense.category = category || 'אחר';
     expense.notes = notes;
     expense.hebrewDate = hebrewDate;
+    expense.monthName = hebrewDate
+  .replace(/^[^ ]+\s+ב/, '')
+  .trim();
     expense.updatedAt = new Date().toISOString();
+    
 
     saveData(
       'עריכת הוצאה מזדמנת',
@@ -2561,24 +2565,23 @@ function saveExtraExpense() {
     return;
   }
 
-  // אם זו הוצאה חדשה - יוצרים רשומה חדשה
-  const now = new Date();
-  const h = getHebrewDateParts(now);
+const now = new Date();
 
-  const monthName =
-    `${h.month} ${hebrewYearLetters(h.year)}`;
+const monthName = hebrewDate
+  .replace(/^[^ ]+\s+ב/, '')
+  .trim();
 
-  extraExpenses.push({
-    id: Date.now(),
-    name,
-    amount,
-    category: category || 'אחר',
-    notes,
-    hebrewDate,
-    monthName,
-    createdAt: now.toISOString(),
-    documents: []
-  });
+extraExpenses.push({
+  id: Date.now(),
+  name,
+  amount,
+  category: category || 'אחר',
+  notes,
+  hebrewDate,
+  monthName,
+  createdAt: now.toISOString(),
+  documents: []
+});
 
   saveData(
     'הוספת הוצאה מזדמנת',
@@ -3490,6 +3493,7 @@ async function refreshPhoneUpdatesOnly() {
 
     d.months.forEach(serverMonth => {
       const localMonth = months.find(
+        
         m => String(m.id) === String(serverMonth.id)
       );
 
@@ -3531,7 +3535,27 @@ async function refreshPhoneUpdatesOnly() {
         }
       });
     });
+    // סנכרון הוצאות מזדמנות בלבד
+    if (Array.isArray(d.extraExpenses)) {
+      const serverExtraExpenses = d.extraExpenses;
 
+      const localJson = JSON.stringify(extraExpenses || []);
+      const serverJson = JSON.stringify(serverExtraExpenses);
+
+      if (localJson !== serverJson) {
+        extraExpenses = serverExtraExpenses;
+        changed = true;
+
+        // אם חלון ההוצאות המזדמנות פתוח - מעדכנים רק אותו
+        if (
+          document
+            .getElementById('extra-expense-overlay')
+            ?.classList.contains('show')
+        ) {
+          renderExtraExpenses();
+        }
+      }
+    }
     if (changed) {
       localStorage.setItem(LOCAL_KEY, getPayload());
 
