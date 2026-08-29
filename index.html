@@ -1442,7 +1442,17 @@ body {
         font-family:Heebo;
       "
     />
-
+<div
+  id="extra-expenses-list"
+  style="
+    margin:16px 0;
+    max-height:230px;
+    overflow-y:auto;
+    text-align:right;
+    border-top:1px solid var(--border);
+    padding-top:10px;
+  "
+></div>
     <div class="dialog-btns">
       <button
         class="btn-cancel"
@@ -1590,6 +1600,7 @@ body {
   let activeId = 1;
   let nextMonthId = 2;
   let pendingDelete = null;
+  let extraExpenses = [];
   let authToken = sessionStorage.getItem('authToken') || '';
 let pendingProtectedAction = null;
   const AUTH_IDLE_TIMEOUT = 15 * 60 * 1000;
@@ -2090,7 +2101,7 @@ function openExtraExpense() {
   document.getElementById('extra-expense-amount').value = '';
   document.getElementById('extra-expense-category').value = '';
   document.getElementById('extra-expense-notes').value = '';
-
+renderExtraExpenses();
   document
     .getElementById('extra-expense-overlay')
     .classList.add('show');
@@ -2101,9 +2112,131 @@ function closeExtraExpense() {
     .getElementById('extra-expense-overlay')
     .classList.remove('show');
 }
+function renderExtraExpenses() {
+  const list = document.getElementById('extra-expenses-list');
 
+  if (!list) return;
+
+  const items = [...extraExpenses]
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  if (items.length === 0) {
+    list.innerHTML = `
+      <div style="
+        text-align:center;
+        color:var(--muted);
+        font-size:0.82rem;
+        padding:12px;
+      ">
+        עדיין אין הוצאות מזדמנות
+      </div>
+    `;
+    return;
+  }
+
+  list.innerHTML = items.map(expense => `
+    <div style="
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      padding:10px 4px;
+      border-bottom:1px solid var(--border);
+    ">
+      <div style="min-width:0;">
+        <div style="font-weight:800;">
+          ${esc(expense.name)}
+        </div>
+
+        <div style="
+          font-size:0.72rem;
+          color:var(--muted);
+          margin-top:2px;
+        ">
+          ${esc(expense.hebrewDate || '')}
+          ·
+          ${esc(expense.category || 'אחר')}
+        </div>
+
+        ${
+          expense.notes
+            ? `<div style="
+                font-size:0.72rem;
+                color:var(--muted);
+                margin-top:2px;
+              ">${esc(expense.notes)}</div>`
+            : ''
+        }
+      </div>
+
+      <div style="
+        font-weight:900;
+        color:var(--accent);
+        white-space:nowrap;
+        direction:ltr;
+      ">
+        ${fmt(Number(expense.amount) || 0)}
+      </div>
+    </div>
+  `).join('');
+}
 function saveExtraExpense() {
-  showToast('בשלב הבא נחבר את שמירת ההוצאה');
+  if (!authToken) {
+    requireAuth(saveExtraExpense);
+    return;
+  }
+
+  const name =
+    document.getElementById('extra-expense-name').value.trim();
+
+  const amount =
+    parseFloat(document.getElementById('extra-expense-amount').value);
+
+  const category =
+    document.getElementById('extra-expense-category').value;
+
+  const notes =
+    document.getElementById('extra-expense-notes').value.trim();
+
+  const hebrewDate =
+    document.getElementById('extra-expense-date').value;
+
+  if (!name) {
+    showToast('⚠️ הזן תיאור להוצאה');
+    return;
+  }
+
+  if (isNaN(amount) || amount <= 0) {
+    showToast('⚠️ הזן סכום תקין');
+    return;
+  }
+
+  const now = new Date();
+  const h = getHebrewDateParts(now);
+
+  const monthName =
+    `${h.month} ${hebrewYearLetters(h.year)}`;
+
+  extraExpenses.push({
+    id: Date.now(),
+    name,
+    amount,
+    category: category || 'אחר',
+    notes,
+    hebrewDate,
+    monthName,
+    createdAt: now.toISOString(),
+    documents: []
+  });
+
+  saveData(
+    'הוספת הוצאה מזדמנת',
+    `${name} — ${amount}`
+  );
+
+  closeExtraExpense();
+
+  showToast('✅ ההוצאה המזדמנת נשמרה');
 }
 function saveEditRow() {
   if (!authToken) {
@@ -2753,13 +2886,15 @@ async function submitLogin() {
     const s = states[status] || {};
     el.textContent = s.text; el.style.color = s.color;
   }
-
-  function getPayload() {
-    return JSON.stringify({
-      months, activeId, nextMonthId,
-      title: document.getElementById('main-title').value
-    });
-  }
+function getPayload() {
+  return JSON.stringify({
+    months,
+    activeId,
+    nextMonthId,
+    extraExpenses,
+    title: document.getElementById('main-title').value
+  });
+}
 
 function normalizeHebrewMonthName(name) {
   const hebrewMonths = [
@@ -2810,6 +2945,9 @@ function applyPayload(d) {
   if (d.nextMonthId) {
     nextMonthId = d.nextMonthId;
   }
+  if (Array.isArray(d.extraExpenses)) {
+  extraExpenses = d.extraExpenses;
+}
 
   if (d.title) {
     document.getElementById('main-title').value = d.title;
