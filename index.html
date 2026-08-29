@@ -1461,12 +1461,13 @@ body {
         ביטול
       </button>
 
-      <button
-        class="btn-action"
-        onclick="saveExtraExpense()"
-      >
-        שמור הוצאה
-      </button>
+    <button
+  id="extra-expense-save-btn"
+  class="btn-action"
+  onclick="saveExtraExpense()"
+>
+  שמור הוצאה
+</button>
     </div>
 
   </div>
@@ -1601,6 +1602,7 @@ body {
   let nextMonthId = 2;
   let pendingDelete = null;
   let extraExpenses = [];
+  let editingExtraExpenseId = null;
   let authToken = sessionStorage.getItem('authToken') || '';
 let pendingProtectedAction = null;
   const AUTH_IDLE_TIMEOUT = 15 * 60 * 1000;
@@ -2091,6 +2093,8 @@ function closeEditDialog() {
   editingRowId = null;
 }
 function openExtraExpense() {
+  editingExtraExpenseId = null;
+
   const today = new Date();
   const h = getHebrewDateParts(today);
 
@@ -2101,7 +2105,12 @@ function openExtraExpense() {
   document.getElementById('extra-expense-amount').value = '';
   document.getElementById('extra-expense-category').value = '';
   document.getElementById('extra-expense-notes').value = '';
-renderExtraExpenses();
+
+  document.getElementById('extra-expense-save-btn').textContent =
+    'שמור הוצאה';
+
+  renderExtraExpenses();
+
   document
     .getElementById('extra-expense-overlay')
     .classList.add('show');
@@ -2143,7 +2152,8 @@ function renderExtraExpenses() {
       padding:10px 4px;
       border-bottom:1px solid var(--border);
     ">
-      <div style="min-width:0;">
+
+      <div style="min-width:0; flex:1;">
         <div style="font-weight:800;">
           ${esc(expense.name)}
         </div>
@@ -2177,8 +2187,93 @@ function renderExtraExpenses() {
       ">
         ${fmt(Number(expense.amount) || 0)}
       </div>
+
+      <div style="
+        display:flex;
+        gap:3px;
+        flex-shrink:0;
+      ">
+        <button
+          type="button"
+          title="ערוך"
+          onclick="editExtraExpense(${expense.id})"
+          style="
+            border:none;
+            background:none;
+            cursor:pointer;
+            padding:4px;
+          "
+        >✏️</button>
+
+        <button
+          type="button"
+          title="מחק"
+          onclick="deleteExtraExpense(${expense.id})"
+          style="
+            border:none;
+            background:none;
+            cursor:pointer;
+            padding:4px;
+          "
+        >🗑️</button>
+      </div>
+
     </div>
   `).join('');
+}
+function editExtraExpense(id) {
+  const expense = extraExpenses.find(
+    e => Number(e.id) === Number(id)
+  );
+
+  if (!expense) return;
+
+  editingExtraExpenseId = expense.id;
+
+  document.getElementById('extra-expense-date').value =
+    expense.hebrewDate || '';
+
+  document.getElementById('extra-expense-name').value =
+    expense.name || '';
+
+  document.getElementById('extra-expense-amount').value =
+    expense.amount ?? '';
+
+  document.getElementById('extra-expense-category').value =
+    expense.category || 'אחר';
+
+  document.getElementById('extra-expense-notes').value =
+    expense.notes || '';
+
+  document.getElementById('extra-expense-save-btn').textContent =
+    'שמור שינויים';
+}
+
+function deleteExtraExpense(id) {
+  requireAuth(() => {
+    const expense = extraExpenses.find(
+      e => Number(e.id) === Number(id)
+    );
+
+    if (!expense) return;
+
+    if (!confirm(`למחוק את ההוצאה "${expense.name}"?`)) {
+      return;
+    }
+
+    extraExpenses = extraExpenses.filter(
+      e => Number(e.id) !== Number(id)
+    );
+
+    saveData(
+      'מחיקת הוצאה מזדמנת',
+      expense.name
+    );
+
+    renderExtraExpenses();
+
+    showToast('✅ ההוצאה נמחקה');
+  });
 }
 function saveExtraExpense() {
   if (!authToken) {
