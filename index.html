@@ -2204,7 +2204,19 @@ function renderExtraExpenses() {
             padding:4px;
           "
         >✏️</button>
-
+<button
+  type="button"
+  title="מסמכים"
+  onclick="openExtraExpenseDocuments(${expense.id})"
+  style="
+    border:none;
+    background:none;
+    cursor:pointer;
+    padding:4px;
+  "
+>
+  📎 ${(expense.documents || []).length}
+</button>
         <button
           type="button"
           title="מחק"
@@ -2502,14 +2514,17 @@ function closeHistory() {
 }
   // ── DOCUMENTS ────────────────────────────────────────────
 let documentsRowId = null;
-
+let documentsExtraExpenseId = null;
 function openDocuments(rowId) {
-  const row = activeMonth().rows.find(r => r.id === rowId);
+  const row = activeMonth().rows.find(
+    r => Number(r.id) === Number(rowId)
+  );
+
   if (!row) return;
 
   documentsRowId = rowId;
+  documentsExtraExpenseId = null;
 
-  // תמיכה גם בפריטים ישנים שנוצרו לפני שהוספנו מסמכים
   if (!Array.isArray(row.documents)) {
     row.documents = [];
   }
@@ -2521,29 +2536,64 @@ function openDocuments(rowId) {
 
   renderDocuments();
 
-  document.getElementById('documents-overlay').classList.add('show');
+  document
+    .getElementById('documents-overlay')
+    .classList.add('show');
 }
+function openExtraExpenseDocuments(expenseId) {
+  const expense = extraExpenses.find(
+    e => Number(e.id) === Number(expenseId)
+  );
 
+  if (!expense) return;
+
+  documentsExtraExpenseId = expenseId;
+  documentsRowId = null;
+
+  if (!Array.isArray(expense.documents)) {
+    expense.documents = [];
+  }
+
+  document.getElementById('documents-title').textContent =
+    `מסמכים — ${expense.name}`;
+
+  document.getElementById('document-file-input').value = '';
+
+  renderDocuments();
+
+  document
+    .getElementById('documents-overlay')
+    .classList.add('show');
+}
 function closeDocuments() {
   document.getElementById('documents-overlay').classList.remove('show');
   document.getElementById('document-file-input').value = '';
   documentsRowId = null;
+  documentsExtraExpenseId = null;
 }
 
 function renderDocuments() {
   const list = document.getElementById('documents-list');
 
-  const row = activeMonth().rows.find(
-    r => r.id === documentsRowId
-  );
+  let item = null;
 
-  if (!row) {
+  if (documentsExtraExpenseId !== null) {
+    item = extraExpenses.find(
+      e => Number(e.id) === Number(documentsExtraExpenseId)
+    );
+  } else if (documentsRowId !== null) {
+    item = activeMonth().rows.find(
+      r => Number(r.id) === Number(documentsRowId)
+    );
+  }
+
+  if (!item) {
     list.innerHTML = '';
     return;
   }
 
-  const documents = Array.isArray(row.documents)
-    ? row.documents
+  const documents = Array.isArray(item.documents)
+    ? item.documents
     : [];
 
   if (documents.length === 0) {
@@ -2623,11 +2673,12 @@ deleteBtn.addEventListener('click', () => {
     list.appendChild(item);
   });
 }
-  async function uploadDocument() {
-    if (!authToken) {
-  requireAuth(uploadDocument);
-  return;
-}
+async function uploadDocument() {
+  if (!authToken) {
+    requireAuth(uploadDocument);
+    return;
+  }
+
   const input = document.getElementById('document-file-input');
   const file = input.files[0];
 
@@ -2636,9 +2687,19 @@ deleteBtn.addEventListener('click', () => {
     return;
   }
 
-  const row = activeMonth().rows.find(r => r.id === documentsRowId);
+  let item = null;
 
-  if (!row) {
+  if (documentsExtraExpenseId !== null) {
+    item = extraExpenses.find(
+      e => Number(e.id) === Number(documentsExtraExpenseId)
+    );
+  } else if (documentsRowId !== null) {
+    item = activeMonth().rows.find(
+      r => Number(r.id) === Number(documentsRowId)
+    );
+  }
+
+  if (!item) {
     showToast('❌ הפריט לא נמצא');
     return;
   }
@@ -2678,11 +2739,11 @@ deleteBtn.addEventListener('click', () => {
       throw new Error(result.error || 'Upload failed');
     }
 
-    if (!Array.isArray(row.documents)) {
-      row.documents = [];
+    if (!Array.isArray(item.documents)) {
+      item.documents = [];
     }
 
-    row.documents.push({
+    item.documents.push({
       id: result.id,
       name: result.name,
       url: result.url
@@ -2691,8 +2752,17 @@ deleteBtn.addEventListener('click', () => {
     input.value = '';
 
     renderDocuments();
-    renderRows();
-    saveData();
+
+    if (documentsExtraExpenseId !== null) {
+      renderExtraExpenses();
+    } else {
+      renderRows();
+    }
+
+    saveData(
+      'העלאת מסמך',
+      item.name || ''
+    );
 
     showToast('✅ המסמך הועלה ונשמר');
 
@@ -2707,14 +2777,26 @@ async function deleteDocument(fileId) {
     return;
   }
 
-  const row = activeMonth().rows.find(r => r.id === documentsRowId);
+  let item = null;
 
-  if (!row) {
+  if (documentsExtraExpenseId !== null) {
+    item = extraExpenses.find(
+      e => Number(e.id) === Number(documentsExtraExpenseId)
+    );
+  } else if (documentsRowId !== null) {
+    item = activeMonth().rows.find(
+      r => Number(r.id) === Number(documentsRowId)
+    );
+  }
+
+  if (!item) {
     showToast('❌ הפריט לא נמצא');
     return;
   }
 
-  const doc = (row.documents || []).find(d => d.id === fileId);
+  const doc = (item.documents || []).find(
+    d => String(d.id) === String(fileId)
+  );
 
   if (!doc) {
     showToast('❌ המסמך לא נמצא');
@@ -2747,13 +2829,22 @@ async function deleteDocument(fileId) {
       throw new Error(result.error || 'Delete failed');
     }
 
-    row.documents = (row.documents || []).filter(
-      d => d.id !== fileId
+    item.documents = (item.documents || []).filter(
+      d => String(d.id) !== String(fileId)
     );
 
     renderDocuments();
-    renderRows();
-    saveData();
+
+    if (documentsExtraExpenseId !== null) {
+      renderExtraExpenses();
+    } else {
+      renderRows();
+    }
+
+    saveData(
+      'מחיקת מסמך',
+      doc.name || ''
+    );
 
     showToast('✅ המסמך נמחק');
 
