@@ -1366,6 +1366,8 @@ body {
   type="text"
   id="extra-expense-date"
   placeholder="תאריך עברי"
+  onclick="openExtraExpenseDatePicker()"
+readonly
 
   style="
     width:100%;
@@ -1470,6 +1472,45 @@ body {
 </button>
     </div>
 
+  </div>
+</div>
+  <!-- Extra Expense Hebrew Date Picker -->
+<div
+  class="overlay"
+  id="extra-expense-date-overlay"
+  style="z-index:220;"
+>
+  <div
+    class="dialog"
+    style="
+      max-width:420px;
+      width:94%;
+      padding:18px;
+    "
+  >
+    <div class="dialog-icon">📅</div>
+
+    <div class="dialog-msg">
+      בחירת תאריך
+    </div>
+
+    <div
+      id="extra-expense-hebrew-calendar"
+      class="hebrew-calendar-card"
+      style="
+        display:block !important;
+        margin-top:10px;
+      "
+    ></div>
+
+    <div class="dialog-btns" style="margin-top:14px;">
+      <button
+        class="btn-cancel"
+        onclick="closeExtraExpenseDatePicker()"
+      >
+        ביטול
+      </button>
+    </div>
   </div>
 </div>
   <!-- Documents Dialog -->
@@ -1604,6 +1645,7 @@ body {
   let extraExpenses = [];
   let editingExtraExpenseId = null;
   let tempEmailExtraExpenseId = null;
+  let extraExpenseDateCursor = new Date();
   let authToken = sessionStorage.getItem('authToken') || '';
 let pendingProtectedAction = null;
   const AUTH_IDLE_TIMEOUT = 15 * 60 * 1000;
@@ -2092,6 +2134,160 @@ function editRow(rowId) {
 function closeEditDialog() {
   document.getElementById('edit-overlay').classList.remove('show');
   editingRowId = null;
+}
+  function openExtraExpenseDatePicker() {
+  extraExpenseDateCursor = new Date();
+
+  renderExtraExpenseDatePicker();
+
+  document
+    .getElementById('extra-expense-date-overlay')
+    .classList.add('show');
+}
+
+function closeExtraExpenseDatePicker() {
+  document
+    .getElementById('extra-expense-date-overlay')
+    .classList.remove('show');
+}
+
+function changeExtraExpenseHebrewMonth(direction) {
+  const current =
+    getHebrewDateParts(extraExpenseDateCursor);
+
+  const d = new Date(extraExpenseDateCursor);
+
+  for (let i = 0; i < 40; i++) {
+    d.setDate(d.getDate() + direction);
+
+    const h = getHebrewDateParts(d);
+
+    if (
+      h.month !== current.month ||
+      h.year !== current.year
+    ) {
+      extraExpenseDateCursor = d;
+      renderExtraExpenseDatePicker();
+      return;
+    }
+  }
+}
+
+function selectExtraExpenseDate(timestamp) {
+  const date = new Date(Number(timestamp));
+  const h = getHebrewDateParts(date);
+
+  document.getElementById('extra-expense-date').value =
+    `${hebrewDayNumber(h.day)} ב${h.month} ${hebrewYearLetters(h.year)}`;
+
+  closeExtraExpenseDatePicker();
+}
+
+function renderExtraExpenseDatePicker() {
+  const container =
+    document.getElementById('extra-expense-hebrew-calendar');
+
+  if (!container) return;
+
+  const current =
+    getHebrewDateParts(extraExpenseDateCursor);
+
+  const days = [];
+
+  for (let offset = -40; offset <= 40; offset++) {
+    const d = new Date(extraExpenseDateCursor);
+
+    d.setDate(
+      extraExpenseDateCursor.getDate() + offset
+    );
+
+    const h = getHebrewDateParts(d);
+
+    if (
+      h.month === current.month &&
+      h.year === current.year
+    ) {
+      days.push({
+        date: d,
+        hebrewDay: h.day
+      });
+    }
+  }
+
+  days.sort((a, b) => a.date - b.date);
+
+  if (!days.length) return;
+
+  const firstWeekDay = days[0].date.getDay();
+
+  let cells = '';
+
+  for (let i = 0; i < firstWeekDay; i++) {
+    cells += `<div class="heb-cal-empty"></div>`;
+  }
+
+  days.forEach(item => {
+    const timestamp = item.date.getTime();
+
+    cells += `
+      <button
+        type="button"
+        class="heb-cal-day"
+        onclick="selectExtraExpenseDate(${timestamp})"
+        style="
+          border:none;
+          cursor:pointer;
+          background:transparent;
+          font-family:Heebo;
+        "
+      >
+        <div class="heb-cal-day-number">
+          ${hebrewDayNumber(item.hebrewDay)}
+        </div>
+      </button>
+    `;
+  });
+
+  container.innerHTML = `
+    <div class="heb-cal-nav">
+
+      <button
+        type="button"
+        class="heb-cal-nav-btn"
+        onclick="changeExtraExpenseHebrewMonth(-1)"
+      >
+        ❮
+      </button>
+
+      <div class="heb-cal-title">
+        📅 ${current.month}
+        ${hebrewYearLetters(current.year)}
+      </div>
+
+      <button
+        type="button"
+        class="heb-cal-nav-btn"
+        onclick="changeExtraExpenseHebrewMonth(1)"
+      >
+        ❯
+      </button>
+
+    </div>
+
+    <div class="heb-cal-weekdays">
+      <span>א</span>
+      <span>ב</span>
+      <span>ג</span>
+      <span>ד</span>
+      <span>ה</span>
+      <span>ו</span>
+      <span>ש</span>
+    </div>
+
+    <div class="heb-cal-grid">
+      ${cells}
+    </div>
+  `;
 }
 function openExtraExpense() {
   editingExtraExpenseId = null;
