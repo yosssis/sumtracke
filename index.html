@@ -1217,6 +1217,15 @@ body.auth-locked #login-overlay .btn-action {
     <input type="text" id="main-title" value="מסכם חודשי" spellcheck="false" />
  
 <div id="today-hebrew-date" class="today-hebrew-date"></div>
+    <div
+  id="logged-in-user"
+  style="
+    margin-top:6px;
+    font-size:0.82rem;
+    font-weight:700;
+    color:var(--muted);
+  "
+></div>
   </div>
 
   <div class="tabs-outer" id="tabs-bar"></div>
@@ -3884,6 +3893,14 @@ async function submitLogin() {
     authToken = result.token;
     sessionStorage.setItem('authToken', authToken);
     resetAuthIdleTimer();
+    sessionStorage.setItem('loggedInUsername', username);
+
+const userEl =
+  document.getElementById('logged-in-user');
+
+if (userEl) {
+  userEl.textContent = '👤 מחובר כעת: ' + username;
+}
 const wasInitialLogin = initialLoginRequired;
 
 initialLoginRequired = false;
