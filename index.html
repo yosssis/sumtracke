@@ -1814,25 +1814,7 @@ readonly
       <button class="btn-cancel" onclick="closeLogin()">ביטול</button>
       <button class="btn-action" onclick="submitLogin()">כניסה</button>
     </div>
-      <button
-  type="button"
-  id="biometric-login-btn"
-  onclick="biometricLogin()"
-  style="
-    display:none;
-    width:100%;
-    margin-top:12px;
-    padding:11px;
-    border:1.5px solid #ddd;
-    border-radius:10px;
-    background:#fff;
-    font-family:Heebo;
-    font-weight:700;
-    cursor:pointer;
-  "
->
-  👆 כניסה ביומטרית
-</button>
+
   </div>
 </div>
 
@@ -3844,37 +3826,7 @@ function openInitialLogin() {
     document.getElementById('login-username').focus();
   }, 50);
 }
-async function checkBiometricSupport() {
-  const btn = document.getElementById('biometric-login-btn');
 
-  if (!btn) return;
-
-  if (
-    !window.PublicKeyCredential ||
-    !navigator.credentials
-  ) {
-    btn.style.display = 'none';
-    return;
-  }
-
-  try {
-    const available =
-      await PublicKeyCredential
-        .isUserVerifyingPlatformAuthenticatorAvailable();
-
-    btn.style.display = available ? 'block' : 'none';
-
-  } catch (err) {
-    console.error('Biometric check error:', err);
-    btn.style.display = 'none';
-  }
-}
-
-async function biometricLogin() {
-  showToast('🔐 בשלב הבא נחבר את הכניסה הביומטרית');
-}
-
-checkBiometricSupport();
 
 function startApp() {
   if (appStarted) return;
