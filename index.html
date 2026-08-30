@@ -1108,10 +1108,12 @@ body {
   color: var(--muted);
   direction: rtl;
 }
-    
+    body.auth-locked > .container {
+  display: none !important;
+}
   </style>
 </head>
-<body>
+<body class="auth-locked">
 <div class="container">
 
   <div class="title-wrap">
@@ -1622,7 +1624,44 @@ readonly
     </div>
   </div>
 </div>
-  
+  <!-- Idle Warning Dialog -->
+<div
+  class="overlay"
+  id="idle-warning-overlay"
+  style="z-index:300;"
+>
+  <div class="dialog">
+
+    <div class="dialog-icon">⏳</div>
+
+    <div class="dialog-msg">
+      שמנו לב שאין פעילות
+    </div>
+
+    <div class="dialog-sub">
+      האם תרצה להמשיך לעבוד במערכת או להתנתק?
+    </div>
+
+    <div class="dialog-btns">
+
+      <button
+        class="btn-cancel"
+        onclick="logoutFromIdle()"
+      >
+        התנתק
+      </button>
+
+      <button
+        class="btn-action"
+        onclick="continueSession()"
+      >
+        המשך
+      </button>
+
+    </div>
+
+  </div>
+</div>
   <!-- Login Dialog -->
 <div class="overlay" id="login-overlay">
   <div class="dialog">
@@ -1692,13 +1731,50 @@ readonly
   let extraExpenseDateCursor = new Date();
   let authToken = sessionStorage.getItem('authToken') || '';
 let pendingProtectedAction = null;
-  const AUTH_IDLE_TIMEOUT = 15 * 60 * 1000;
+  let initialLoginRequired = false;
+let appStarted = false;
+let syncTimer = null;
+const AUTH_IDLE_WARNING = 20 * 1000;
+const AUTH_IDLE_TIMEOUT = 40 * 1000;
+
+let authWarningTimer = null;
 let authIdleTimer = null;
 
 function expireAuth() {
   authToken = '';
+
   sessionStorage.removeItem('authToken');
   sessionStorage.removeItem('authLastActivity');
+
+  clearTimeout(authWarningTimer);
+  clearTimeout(authIdleTimer);
+
+  document
+    .getElementById('idle-warning-overlay')
+    ?.classList.remove('show');
+}
+
+function logoutFromIdle() {
+  expireAuth();
+
+  if (syncTimer) {
+    clearInterval(syncTimer);
+    syncTimer = null;
+  }
+
+  appStarted = false;
+
+  document.body.classList.add('auth-locked');
+
+  openInitialLogin();
+}
+
+function continueSession() {
+  document
+    .getElementById('idle-warning-overlay')
+    ?.classList.remove('show');
+
+  resetAuthIdleTimer();
 }
 
 function resetAuthIdleTimer() {
@@ -1711,10 +1787,27 @@ function resetAuthIdleTimer() {
     String(now)
   );
 
+  clearTimeout(authWarningTimer);
   clearTimeout(authIdleTimer);
 
+  document
+    .getElementById('idle-warning-overlay')
+    ?.classList.remove('show');
+
+  authWarningTimer = setTimeout(() => {
+    if (!authToken) return;
+
+    document
+      .getElementById('idle-warning-overlay')
+      ?.classList.add('show');
+
+  }, AUTH_IDLE_WARNING);
+
   authIdleTimer = setTimeout(() => {
-    expireAuth();
+    if (!authToken) return;
+
+    logoutFromIdle();
+
   }, AUTH_IDLE_TIMEOUT);
 }
 
@@ -1722,24 +1815,42 @@ function restoreAuthIdleTimer() {
   if (!authToken) return;
 
   const lastActivity =
-    Number(sessionStorage.getItem('authLastActivity')) || Date.now();
+    Number(
+      sessionStorage.getItem('authLastActivity')
+    ) || Date.now();
 
   const elapsed =
     Date.now() - lastActivity;
 
-  const remaining =
-    AUTH_IDLE_TIMEOUT - elapsed;
-
-  if (remaining <= 0) {
-    expireAuth();
+  if (elapsed >= AUTH_IDLE_TIMEOUT) {
+    logoutFromIdle();
     return;
   }
 
+  clearTimeout(authWarningTimer);
   clearTimeout(authIdleTimer);
 
+  const warningRemaining =
+    AUTH_IDLE_WARNING - elapsed;
+
+  const logoutRemaining =
+    AUTH_IDLE_TIMEOUT - elapsed;
+
+  if (warningRemaining <= 0) {
+    document
+      .getElementById('idle-warning-overlay')
+      ?.classList.add('show');
+  } else {
+    authWarningTimer = setTimeout(() => {
+      document
+        .getElementById('idle-warning-overlay')
+        ?.classList.add('show');
+    }, warningRemaining);
+  }
+
   authIdleTimer = setTimeout(() => {
-    expireAuth();
-  }, remaining);
+    logoutFromIdle();
+  }, logoutRemaining);
 }
 
 [
@@ -3585,9 +3696,51 @@ function requireAuth(action) {
     document.getElementById('login-username').focus();
   }, 50);
 }
+function openInitialLogin() {
+  initialLoginRequired = true;
+  pendingProtectedAction = null;
 
+  document.getElementById('login-username').value = '';
+  document.getElementById('login-password').value = '';
+
+  const cancelBtn =
+    document.querySelector('#login-overlay .btn-cancel');
+
+  if (cancelBtn) {
+    cancelBtn.style.display = 'none';
+  }
+
+  document
+    .getElementById('login-overlay')
+    .classList.add('show');
+
+  setTimeout(() => {
+    document.getElementById('login-username').focus();
+  }, 50);
+}
+
+function startApp() {
+  if (appStarted) return;
+
+  appStarted = true;
+
+  document.body.classList.remove('auth-locked');
+
+  loadData();
+
+  syncTimer = setInterval(() => {
+    refreshPhoneUpdatesOnly();
+  }, 5000);
+}
 function closeLogin() {
-  document.getElementById('login-overlay').classList.remove('show');
+  if (initialLoginRequired) {
+    return;
+  }
+
+  document
+    .getElementById('login-overlay')
+    .classList.remove('show');
+
   pendingProtectedAction = null;
 }
 function togglePassword() {
@@ -3634,8 +3787,20 @@ async function submitLogin() {
     authToken = result.token;
     sessionStorage.setItem('authToken', authToken);
     resetAuthIdleTimer();
+const wasInitialLogin = initialLoginRequired;
 
+initialLoginRequired = false;
+
+const cancelBtn =
+  document.querySelector('#login-overlay .btn-cancel');
+
+if (cancelBtn) {
+  cancelBtn.style.display = '';
+}
     document.getElementById('login-overlay').classList.remove('show');
+    if (wasInitialLogin) {
+  startApp();
+}
 
     showToast('✅ ההתחברות הצליחה');
 
@@ -6226,13 +6391,10 @@ function closeDashboard() {
 
   document.body.classList.remove('dashboard-side-open');
 }
-  // ── INIT ──────────────────────────────────────────────
-loadData();
+// ── INIT ──────────────────────────────────────────────
+expireAuth();
+openInitialLogin();
 
-// בדיקה אוטומטית לנתונים חדשים כל 5 שניות
-setInterval(() => {
-refreshPhoneUpdatesOnly();
-}, 5000);
 </script>
 </body>
 </html>
