@@ -1470,8 +1470,52 @@ readonly
 >
   שמור הוצאה
 </button>
+      <button
+  type="button"
+  class="btn-action"
+  onclick="openExtraExpenseDashboard()"
+>
+  📊 דשבורד
+</button>
     </div>
 
+  </div>
+</div>
+  <!-- Extra Expense Dashboard -->
+<div
+  class="overlay"
+  id="extra-expense-dashboard-overlay"
+  style="z-index:210;"
+>
+  <div
+    class="dialog"
+    style="
+      max-width:700px;
+      width:94%;
+      max-height:85vh;
+      overflow-y:auto;
+      padding:22px;
+    "
+  >
+    <div class="dialog-icon">📊</div>
+
+    <div class="dialog-msg">
+      דשבורד הוצאות מזדמנות
+    </div>
+
+    <div
+      id="extra-expense-dashboard-content"
+      style="margin-top:16px;"
+    ></div>
+
+    <div class="dialog-btns" style="margin-top:18px;">
+      <button
+        class="btn-cancel"
+        onclick="closeExtraExpenseDashboard()"
+      >
+        סגור
+      </button>
+    </div>
   </div>
 </div>
   <!-- Extra Expense Hebrew Date Picker -->
@@ -2317,6 +2361,337 @@ function closeExtraExpense() {
   document
     .getElementById('extra-expense-overlay')
     .classList.remove('show');
+}
+  function openExtraExpenseDashboard() {
+  renderExtraExpenseDashboard();
+
+  document
+    .getElementById('extra-expense-dashboard-overlay')
+    .classList.add('show');
+}
+
+function closeExtraExpenseDashboard() {
+  document
+    .getElementById('extra-expense-dashboard-overlay')
+    .classList.remove('show');
+}
+
+function renderExtraExpenseDashboard() {
+  const content =
+    document.getElementById('extra-expense-dashboard-content');
+
+  if (!content) return;
+
+  const total = extraExpenses.reduce(
+    (sum, expense) =>
+      sum + (Number(expense.amount) || 0),
+    0
+  );
+
+  const count = extraExpenses.length;
+
+  const average =
+    count > 0
+      ? total / count
+      : 0;
+
+
+  // סיכום לפי חודש
+  const monthTotals = {};
+
+  extraExpenses.forEach(expense => {
+    let monthName = expense.monthName || '';
+
+    // תמיכה גם בהוצאות ישנות שאין להן monthName
+    if (!monthName && expense.hebrewDate) {
+      monthName = expense.hebrewDate
+        .replace(/^[^ ]+\s+ב/, '')
+        .trim();
+    }
+
+    if (!monthName) {
+      monthName = 'ללא חודש';
+    }
+
+    if (!monthTotals[monthName]) {
+      monthTotals[monthName] = {
+        total: 0,
+        count: 0
+      };
+    }
+
+    monthTotals[monthName].total +=
+      Number(expense.amount) || 0;
+
+    monthTotals[monthName].count++;
+  });
+
+
+  // סיכום לפי קטגוריה
+  const categoryTotals = {};
+
+  extraExpenses.forEach(expense => {
+    const category =
+      expense.category || 'אחר';
+
+    if (!categoryTotals[category]) {
+      categoryTotals[category] = {
+        total: 0,
+        count: 0
+      };
+    }
+
+    categoryTotals[category].total +=
+      Number(expense.amount) || 0;
+
+    categoryTotals[category].count++;
+  });
+
+
+  const monthsHtml =
+    Object.entries(monthTotals)
+      .map(([monthName, data]) => `
+        <div style="
+          display:flex;
+          justify-content:space-between;
+          align-items:center;
+          padding:10px 12px;
+          border-bottom:1px solid var(--border);
+        ">
+          <div>
+            <div style="font-weight:800;">
+              ${esc(monthName)}
+            </div>
+
+            <div style="
+              font-size:0.72rem;
+              color:var(--muted);
+            ">
+              ${data.count} הוצאות
+            </div>
+          </div>
+
+          <div style="
+            font-weight:900;
+            color:var(--accent);
+            direction:ltr;
+          ">
+            ${fmt(data.total)}
+          </div>
+        </div>
+      `)
+      .join('');
+
+
+  const categoriesHtml =
+    Object.entries(categoryTotals)
+      .sort((a, b) => b[1].total - a[1].total)
+      .map(([category, data]) => {
+
+        const percent =
+          total > 0
+            ? (data.total / total) * 100
+            : 0;
+
+        return `
+          <div style="
+            margin-bottom:12px;
+          ">
+
+            <div style="
+              display:flex;
+              justify-content:space-between;
+              align-items:center;
+              margin-bottom:5px;
+            ">
+              <span style="font-weight:800;">
+                ${esc(category)}
+              </span>
+
+              <span style="
+                font-weight:900;
+                direction:ltr;
+              ">
+                ${fmt(data.total)}
+              </span>
+            </div>
+
+            <div style="
+              height:8px;
+              background:#eee;
+              border-radius:20px;
+              overflow:hidden;
+            ">
+              <div style="
+                width:${percent}%;
+                height:100%;
+                background:linear-gradient(
+                  90deg,
+                  #ff9f43,
+                  var(--accent)
+                );
+                border-radius:20px;
+              "></div>
+            </div>
+
+            <div style="
+              margin-top:3px;
+              font-size:0.68rem;
+              color:var(--muted);
+            ">
+              ${data.count} הוצאות ·
+              ${percent.toFixed(1)}%
+            </div>
+
+          </div>
+        `;
+      })
+      .join('');
+
+
+  content.innerHTML = `
+
+    <div style="
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:10px;
+      margin-bottom:22px;
+    ">
+
+      <div style="
+        background:#fff9f5;
+        border-radius:12px;
+        padding:14px;
+      ">
+        <div style="
+          font-size:0.75rem;
+          color:var(--muted);
+        ">
+          סה"כ הוצאות
+        </div>
+
+        <div style="
+          font-size:1.2rem;
+          font-weight:900;
+          color:var(--accent);
+          direction:ltr;
+        ">
+          ${fmt(total)}
+        </div>
+      </div>
+
+
+      <div style="
+        background:#fff9f5;
+        border-radius:12px;
+        padding:14px;
+      ">
+        <div style="
+          font-size:0.75rem;
+          color:var(--muted);
+        ">
+          מספר הוצאות
+        </div>
+
+        <div style="
+          font-size:1.2rem;
+          font-weight:900;
+        ">
+          ${count}
+        </div>
+      </div>
+
+
+      <div style="
+        background:#fff9f5;
+        border-radius:12px;
+        padding:14px;
+      ">
+        <div style="
+          font-size:0.75rem;
+          color:var(--muted);
+        ">
+          ממוצע להוצאה
+        </div>
+
+        <div style="
+          font-size:1.2rem;
+          font-weight:900;
+          direction:ltr;
+        ">
+          ${fmt(average)}
+        </div>
+      </div>
+
+    </div>
+
+
+    <div style="
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:16px;
+      text-align:right;
+    ">
+
+      <div style="
+        background:#fff;
+        border:1px solid var(--border);
+        border-radius:14px;
+        overflow:hidden;
+      ">
+
+        <div style="
+          font-weight:900;
+          padding:12px;
+          background:#fff9f5;
+          border-bottom:1px solid var(--border);
+        ">
+          📅 הוצאות לפי חודש
+        </div>
+
+        ${
+          monthsHtml ||
+          `<div style="
+             padding:20px;
+             text-align:center;
+             color:var(--muted);
+           ">
+             אין נתונים
+           </div>`
+        }
+
+      </div>
+
+
+      <div style="
+        background:#fff;
+        border:1px solid var(--border);
+        border-radius:14px;
+        padding:12px;
+      ">
+
+        <div style="
+          font-weight:900;
+          margin-bottom:14px;
+        ">
+          🗂️ חלוקה לפי קטגוריה
+        </div>
+
+        ${
+          categoriesHtml ||
+          `<div style="
+             padding:20px;
+             text-align:center;
+             color:var(--muted);
+           ">
+             אין נתונים
+           </div>`
+        }
+
+      </div>
+
+    </div>
+  `;
 }
 function renderExtraExpenses() {
   const list = document.getElementById('extra-expenses-list');
