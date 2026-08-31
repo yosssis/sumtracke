@@ -1295,7 +1295,7 @@ body.auth-locked #login-overlay .btn-action {
 /* חלון תוצאות */
 
 #global-search-overlay {
-  z-index: 350;
+  z-index: 250;
   background: rgba(26,26,46,0.28);
   backdrop-filter: blur(3px);
 }
@@ -1532,6 +1532,177 @@ body.auth-locked #login-overlay .btn-action {
 
   .global-search-result-type {
     display: none;
+  }
+}
+    /* ===== CHANGES SINCE LAST LOGIN ===== */
+
+.login-changes-popup {
+  position: fixed;
+  top: 22px;
+  left: 50%;
+  transform: translate(-50%, -25px);
+  width: min(430px, calc(100vw - 28px));
+  padding: 16px;
+  background: rgba(255,255,255,0.97);
+  border: 1px solid rgba(0,0,0,0.07);
+  border-radius: 18px;
+  box-shadow: 0 18px 55px rgba(26,26,46,0.17);
+  backdrop-filter: blur(10px);
+  z-index: 500;
+
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease,
+    visibility 0.25s;
+}
+
+.login-changes-popup.show {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translate(-50%, 0);
+}
+
+.login-changes-popup-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.92rem;
+  color: var(--text);
+}
+
+.login-changes-popup-head strong {
+  flex: 1;
+  text-align: right;
+  font-weight: 900;
+}
+
+.login-changes-popup-head button {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.login-changes-popup-head button:hover {
+  background: #fff1eb;
+  color: var(--accent);
+}
+
+.login-changes-content {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: 8px;
+}
+
+.login-change-item {
+  padding: 10px 11px;
+  border-radius: 11px;
+  background: #faf9f7;
+  border: 1px solid rgba(0,0,0,0.05);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-align: right;
+}
+
+.login-change-item strong {
+  color: var(--accent);
+  font-weight: 900;
+}
+
+
+/* הכפתור שנשאר בצד שמאל */
+
+.login-changes-dock {
+  position: fixed;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%) translateX(-80px);
+
+  min-width: 52px;
+  height: 52px;
+
+  border: 1px solid rgba(255,107,53,0.18);
+  border-radius: 16px;
+
+  background: #fff;
+  box-shadow: 0 9px 28px rgba(0,0,0,0.12);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+
+  font-family: Heebo, sans-serif;
+  cursor: pointer;
+
+  z-index: 450;
+
+  opacity: 0;
+  visibility: hidden;
+
+  transition:
+    transform 0.28s ease,
+    opacity 0.28s ease,
+    visibility 0.28s;
+}
+
+.login-changes-dock.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(-50%) translateX(0);
+}
+
+#login-changes-badge {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 20px;
+
+  background: var(--accent);
+  color: #fff;
+
+  font-size: 0.68rem;
+  font-weight: 900;
+}
+
+
+/* מובייל */
+
+@media (max-width: 600px) {
+
+  .login-changes-popup {
+    top: 12px;
+    width: calc(100vw - 20px);
+  }
+
+  .login-changes-content {
+    grid-template-columns: 1fr;
+  }
+
+  .login-changes-dock {
+    left: 9px;
+    top: auto;
+    bottom: 18px;
+    transform: translateX(-80px);
+  }
+
+  .login-changes-dock.show {
+    transform: translateX(0);
   }
 }
   </style>
@@ -2359,7 +2530,42 @@ readonly
 
   </div>
 </div>
+<!-- Changes Since Last Login -->
+<div id="login-changes-popup" class="login-changes-popup">
 
+  <div class="login-changes-popup-head">
+    <span>🔔</span>
+    <strong id="login-changes-title">
+      שינויים מאז החיבור האחרון
+    </strong>
+
+    <button
+      type="button"
+      onclick="collapseLoginChanges()"
+      title="מזער"
+    >
+      ✕
+    </button>
+  </div>
+
+  <div
+    id="login-changes-content"
+    class="login-changes-content"
+  ></div>
+
+</div>
+
+
+<button
+  type="button"
+  id="login-changes-dock"
+  class="login-changes-dock"
+  onclick="openLoginChanges()"
+  title="שינויים מאז החיבור האחרון"
+>
+  <span>🔔</span>
+  <span id="login-changes-badge">0</span>
+</button>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -5204,6 +5410,205 @@ function togglePassword() {
     passwordInput.type = 'password';
   }
 }
+  // ── CHANGES SINCE LAST LOGIN ─────────────────────────
+
+let lastLoginChangesInfo = null;
+let loginChangesTimer = null;
+
+function showLoginChanges(loginInfo) {
+  if (!loginInfo) return;
+
+  lastLoginChangesInfo = loginInfo;
+
+  const popup =
+    document.getElementById('login-changes-popup');
+
+  const content =
+    document.getElementById('login-changes-content');
+
+  const badge =
+    document.getElementById('login-changes-badge');
+
+  const dock =
+    document.getElementById('login-changes-dock');
+
+  const title =
+    document.getElementById('login-changes-title');
+
+  if (!popup || !content || !badge || !dock) {
+    return;
+  }
+
+  const changes =
+    Array.isArray(loginInfo.changes)
+      ? loginInfo.changes
+      : [];
+
+  const count =
+    Number(loginInfo.changesCount) || 0;
+
+  badge.textContent = count;
+
+  // כניסה ראשונה של המשתמש
+  if (loginInfo.firstLogin) {
+
+    if (title) {
+      title.textContent =
+        'ברוך הבא למערכת';
+    }
+
+    content.innerHTML = `
+      <div
+        class="login-change-item"
+        style="grid-column:1 / -1;"
+      >
+        👋 זו הכניסה הראשונה שלך למערכת
+      </div>
+    `;
+
+  } else if (count === 0) {
+
+    if (title) {
+      title.textContent =
+        'שינויים מאז החיבור האחרון';
+    }
+
+    content.innerHTML = `
+      <div
+        class="login-change-item"
+        style="grid-column:1 / -1;"
+      >
+        ✅ אין שינויים חדשים מאז הכניסה האחרונה
+      </div>
+    `;
+
+  } else {
+
+    if (title) {
+      title.textContent =
+        `${count} שינויים מאז החיבור האחרון`;
+    }
+
+    content.innerHTML =
+      changes
+        .slice(-8)
+        .reverse()
+        .map(change => {
+
+          const action =
+            change.action ||
+            'שינוי במערכת';
+
+          const details =
+            change.details || '';
+
+          const username =
+            change.username || '';
+
+          const date =
+            change.date
+              ? formatReportedAt(change.date)
+              : '';
+
+          return `
+            <div class="login-change-item">
+
+              <div style="
+                font-weight:900;
+                margin-bottom:3px;
+              ">
+                ${esc(action)}
+              </div>
+
+              ${
+                details
+                  ? `
+                    <div style="
+                      font-size:0.72rem;
+                      color:var(--text);
+                    ">
+                      ${esc(details)}
+                    </div>
+                  `
+                  : ''
+              }
+
+              <div style="
+                margin-top:5px;
+                font-size:0.66rem;
+                color:var(--muted);
+              ">
+                ${
+                  username
+                    ? '👤 ' + esc(username)
+                    : ''
+                }
+
+                ${
+                  date
+                    ? ' · ' + esc(date)
+                    : ''
+                }
+              </div>
+
+            </div>
+          `;
+        })
+        .join('');
+  }
+
+  popup.classList.add('show');
+  dock.classList.remove('show');
+
+  clearTimeout(loginChangesTimer);
+
+  loginChangesTimer =
+    setTimeout(() => {
+      collapseLoginChanges();
+    }, 2000);
+}
+
+
+function collapseLoginChanges() {
+  const popup =
+    document.getElementById('login-changes-popup');
+
+  const dock =
+    document.getElementById('login-changes-dock');
+
+  if (popup) {
+    popup.classList.remove('show');
+  }
+
+  if (dock) {
+    dock.classList.add('show');
+  }
+
+  clearTimeout(loginChangesTimer);
+}
+
+
+function openLoginChanges() {
+  if (!lastLoginChangesInfo) {
+    return;
+  }
+
+  const popup =
+    document.getElementById('login-changes-popup');
+
+  const dock =
+    document.getElementById('login-changes-dock');
+
+  if (dock) {
+    dock.classList.remove('show');
+  }
+
+  if (popup) {
+    popup.classList.add('show');
+  }
+
+  clearTimeout(loginChangesTimer);
+}
 async function submitLogin() {
   const username = document.getElementById('login-username').value.trim();
   const password = document.getElementById('login-password').value;
@@ -5261,7 +5666,11 @@ if (cancelBtn) {
     if (wasInitialLogin) {
   startApp();
 }
-
+if (result.loginInfo) {
+  setTimeout(() => {
+    showLoginChanges(result.loginInfo);
+  }, 350);
+}
     showToast('✅ ההתחברות הצליחה');
 
     const action = pendingProtectedAction;
