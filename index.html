@@ -1208,6 +1208,332 @@ body.auth-locked #login-overlay .btn-action {
   border: 1px solid #ff6b35;
   box-shadow: 0 6px 18px rgba(255,107,53,0.25);
 }
+    /* ===== GLOBAL SEARCH ===== */
+
+.global-search-wrap {
+  max-width: 620px;
+  margin: 18px auto 22px;
+  position: relative;
+}
+
+.global-search-launcher {
+  width: 100%;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  border: 1px solid rgba(0,0,0,0.07);
+  border-radius: 16px;
+  background: rgba(255,255,255,0.92);
+  box-shadow:
+    0 7px 22px rgba(0,0,0,0.055),
+    inset 0 1px 0 rgba(255,255,255,0.8);
+  font-family: Heebo, sans-serif;
+  cursor: text;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.global-search-launcher:hover,
+.global-search-launcher:focus-within {
+  border-color: rgba(255,107,53,0.30);
+  box-shadow:
+    0 9px 26px rgba(0,0,0,0.075),
+    0 0 0 4px rgba(255,107,53,0.07);
+  transform: translateY(-1px);
+}
+
+.global-search-icon {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(
+    135deg,
+    #fff1e9,
+    #fff8f4
+  );
+  color: var(--accent);
+  font-size: 1rem;
+}
+
+#global-search-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text);
+  font-family: Heebo, sans-serif;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+#global-search-input::placeholder {
+  color: #aaa9b2;
+  font-weight: 500;
+}
+
+.global-search-hint {
+  flex-shrink: 0;
+  font-size: 0.67rem;
+  font-weight: 700;
+  color: var(--muted);
+  background: #f5f3f0;
+  border: 1px solid rgba(0,0,0,0.05);
+  border-radius: 8px;
+  padding: 4px 7px;
+}
+
+
+/* חלון תוצאות */
+
+#global-search-overlay {
+  z-index: 350;
+  background: rgba(26,26,46,0.28);
+  backdrop-filter: blur(3px);
+}
+
+#global-search-overlay .global-search-dialog {
+  width: min(720px, calc(100vw - 28px));
+  max-width: 720px;
+  max-height: min(78vh, 720px);
+  padding: 0;
+  overflow: hidden;
+  border-radius: 22px;
+  background: #fcfbf9;
+  border: 1px solid rgba(0,0,0,0.055);
+  box-shadow: 0 28px 80px rgba(26,26,46,0.20);
+  text-align: right;
+}
+
+.global-search-head {
+  padding: 18px 20px 14px;
+  background: #fff;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+
+.global-search-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 13px;
+}
+
+.global-search-title {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.global-search-close {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+
+.global-search-close:hover {
+  background: #fff1eb;
+  color: var(--accent);
+}
+
+.global-search-box {
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  background: #faf9f7;
+  border: 1px solid rgba(0,0,0,0.07);
+  border-radius: 14px;
+  transition: all 0.2s;
+}
+
+.global-search-box:focus-within {
+  background: #fff;
+  border-color: rgba(255,107,53,0.40);
+  box-shadow: 0 0 0 4px rgba(255,107,53,0.08);
+}
+
+#global-search-modal-input {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: Heebo, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+#global-search-results {
+  padding: 10px;
+  overflow-y: auto;
+  max-height: calc(78vh - 135px);
+}
+
+.global-search-result {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 13px;
+  margin-bottom: 6px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: transparent;
+  text-align: right;
+  font-family: Heebo, sans-serif;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.global-search-result:hover {
+  background: #fff;
+  border-color: rgba(255,107,53,0.13);
+  box-shadow: 0 5px 16px rgba(0,0,0,0.045);
+  transform: translateY(-1px);
+}
+
+.global-search-result-icon {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: #fff5ef;
+  font-size: 1.05rem;
+}
+
+.global-search-result-content {
+  min-width: 0;
+  flex: 1;
+}
+
+.global-search-result-title {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.global-search-result-sub {
+  margin-top: 2px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.global-search-result-type {
+  flex-shrink: 0;
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: var(--accent);
+  background: #fff3ed;
+  border-radius: 20px;
+  padding: 4px 8px;
+}
+
+.global-search-empty {
+  padding: 42px 15px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.global-search-empty-icon {
+  font-size: 2rem;
+  margin-bottom: 8px;
+  opacity: 0.45;
+}
+
+.global-search-count {
+  padding: 0 4px 8px;
+  font-size: 0.70rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+
+/* הדגשת פריט שאליו הגענו מהחיפוש */
+
+.global-search-highlight {
+  animation: globalSearchPulse 2.2s ease;
+}
+
+@keyframes globalSearchPulse {
+  0% {
+    background: #fff3e9;
+    box-shadow: 0 0 0 0 rgba(255,107,53,0.32);
+  }
+
+  35% {
+    background: #fff7f2;
+    box-shadow: 0 0 0 5px rgba(255,107,53,0.10);
+  }
+
+  100% {
+    background: #fff;
+    box-shadow: inherit;
+  }
+}
+
+@media (max-width: 600px) {
+  .global-search-wrap {
+    margin: 14px auto 17px;
+  }
+
+  .global-search-launcher {
+    min-height: 48px;
+    border-radius: 14px;
+  }
+
+  .global-search-hint {
+    display: none;
+  }
+
+  #global-search-overlay .global-search-dialog {
+    width: calc(100vw - 18px);
+    max-height: 84vh;
+    border-radius: 18px;
+  }
+
+  #global-search-results {
+    max-height: calc(84vh - 135px);
+  }
+
+  .global-search-result {
+    padding: 11px 9px;
+  }
+
+  .global-search-result-type {
+    display: none;
+  }
+}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
@@ -1262,7 +1588,26 @@ body.auth-locked #login-overlay .btn-action {
 </button>
    
   </div>
+<div class="global-search-wrap">
+  <div
+    class="global-search-launcher"
+    onclick="openGlobalSearch()"
+  >
+    <div class="global-search-icon">🔎</div>
 
+    <input
+      id="global-search-input"
+      type="text"
+      placeholder="חיפוש בכל המערכת..."
+      autocomplete="off"
+      readonly
+    />
+
+    <span class="global-search-hint">
+      Ctrl + K
+    </span>
+  </div>
+</div>
   <div class="tabs-outer" id="tabs-bar"></div>
 
   <div class="card">
@@ -1338,7 +1683,62 @@ body.auth-locked #login-overlay .btn-action {
   </div>
 
 </div>
+<!-- Global Search -->
+<div
+  class="overlay"
+  id="global-search-overlay"
+>
+  <div class="global-search-dialog">
 
+    <div class="global-search-head">
+
+      <div class="global-search-title-row">
+
+        <div class="global-search-title">
+          <span>🔎</span>
+          <span>חיפוש בכל המערכת</span>
+        </div>
+
+        <button
+          type="button"
+          class="global-search-close"
+          onclick="closeGlobalSearch()"
+          title="סגור"
+        >
+          ✕
+        </button>
+
+      </div>
+
+      <div class="global-search-box">
+
+        <span>🔍</span>
+
+        <input
+          id="global-search-modal-input"
+          type="text"
+          placeholder="שם, חודש, סכום, הערה, מסמך, קטגוריה, תאריך..."
+          autocomplete="off"
+        />
+
+      </div>
+
+    </div>
+
+    <div id="global-search-results">
+
+      <div class="global-search-empty">
+        <div class="global-search-empty-icon">
+          🔎
+        </div>
+
+        התחל להקליד כדי לחפש בכל המערכת
+      </div>
+
+    </div>
+
+  </div>
+</div>
 <!-- Confirm Dialog -->
 <div class="overlay" id="overlay">
   <div class="dialog">
@@ -2322,7 +2722,668 @@ tabsBar.addEventListener('drop', e => {
   const dialogIcon= document.getElementById('dialog-icon');
   const toastEl   = document.getElementById('toast');
   const searchInput = document.getElementById('search-input');
+  // ── GLOBAL SEARCH ─────────────────────────────────────
 
+const globalSearchOverlay =
+  document.getElementById('global-search-overlay');
+
+const globalSearchInput =
+  document.getElementById('global-search-modal-input');
+
+const globalSearchResults =
+  document.getElementById('global-search-results');
+
+function normalizeGlobalSearchValue(value) {
+  return String(value ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ');
+}
+
+
+function buildGlobalSearchIndex() {
+  const index = [];
+
+  // ── חודשים + פריטים ────────────────────────────────
+
+  months.forEach(month => {
+
+    // גם שם החודש עצמו ניתן לחיפוש
+    index.push({
+      type: 'month',
+      icon: '📅',
+      typeLabel: 'חודש',
+
+      title: month.name || 'חודש',
+
+      subtitle:
+        `${(month.rows || []).length} פריטים`,
+
+      monthId: month.id,
+
+      searchable: [
+        month.name
+      ]
+    });
+
+
+    (month.rows || []).forEach(row => {
+
+      // הפריט עצמו
+      index.push({
+        type: 'row',
+        icon:
+          row.reportSource === 'phone'
+            ? '📞'
+            : '👤',
+
+        typeLabel: 'פריט',
+
+        title:
+          row.name || 'פריט',
+
+        subtitle:
+          `${month.name} · ${fmt(Number(row.amount) || 0)}` +
+          (row.notes
+            ? ` · ${row.notes}`
+            : ''),
+
+        monthId: month.id,
+        rowId: row.id,
+
+        searchable: [
+          row.name,
+          row.notes,
+          row.amount,
+          month.name,
+          row.reportSource,
+          row.reportedAt,
+          row.updatedAt
+        ]
+      });
+
+
+      // ── היסטוריית דיווחים ─────────────────────────
+
+      (row.history || []).forEach(historyItem => {
+
+        index.push({
+          type: 'history',
+          icon: '🕘',
+          typeLabel: 'היסטוריה',
+
+          title:
+            `היסטוריה — ${row.name || 'פריט'}`,
+
+          subtitle:
+            `${month.name} · ` +
+            `${fmt(Number(historyItem.amount) || 0)} · ` +
+            `${
+              historyItem.source === 'phone'
+                ? 'דיווח טלפוני'
+                : 'שינוי באתר'
+            }`,
+
+          monthId: month.id,
+          rowId: row.id,
+
+          searchable: [
+            row.name,
+            month.name,
+            historyItem.amount,
+            historyItem.date,
+            historyItem.source,
+            'טלפון',
+            'היסטוריה',
+            'שינוי באתר'
+          ]
+        });
+
+      });
+
+
+      // ── מסמכים של פריט ────────────────────────────
+
+      (row.documents || []).forEach(doc => {
+
+        index.push({
+          type: 'document',
+          icon: '📎',
+          typeLabel: 'מסמך',
+
+          title:
+            doc.name || 'מסמך',
+
+          subtitle:
+            `${row.name || 'פריט'} · ${month.name}`,
+
+          monthId: month.id,
+          rowId: row.id,
+          documentId: doc.id,
+
+          searchable: [
+            doc.name,
+            row.name,
+            row.notes,
+            month.name,
+            'מסמך',
+            'קובץ'
+          ]
+        });
+
+      });
+
+    });
+
+  });
+
+
+  // ── הוצאות מזדמנות ────────────────────────────────
+
+  (extraExpenses || []).forEach(expense => {
+
+    index.push({
+      type: 'extraExpense',
+      icon: '🧾',
+      typeLabel: 'הוצאה',
+
+      title:
+        expense.name || 'הוצאה מזדמנת',
+
+      subtitle:
+        `${expense.hebrewDate || ''}` +
+        `${expense.category ? ' · ' + expense.category : ''}` +
+        ` · ${fmt(Number(expense.amount) || 0)}`,
+
+      expenseId: expense.id,
+
+      searchable: [
+        expense.name,
+        expense.amount,
+        expense.notes,
+        expense.category,
+        expense.hebrewDate,
+        expense.monthName,
+        expense.createdAt,
+        expense.updatedAt,
+        'הוצאה',
+        'הוצאה מזדמנת'
+      ]
+    });
+
+
+    // ── מסמכים של הוצאה מזדמנת ─────────────────────
+
+    (expense.documents || []).forEach(doc => {
+
+      index.push({
+        type: 'extraExpenseDocument',
+        icon: '📎',
+        typeLabel: 'מסמך הוצאה',
+
+        title:
+          doc.name || 'מסמך',
+
+        subtitle:
+          `${expense.name || 'הוצאה מזדמנת'} · ` +
+          `${expense.hebrewDate || ''}`,
+
+        expenseId: expense.id,
+        documentId: doc.id,
+
+        searchable: [
+          doc.name,
+          expense.name,
+          expense.notes,
+          expense.category,
+          expense.hebrewDate,
+          expense.monthName,
+          'מסמך',
+          'קובץ',
+          'הוצאה'
+        ]
+      });
+
+    });
+
+  });
+
+
+  return index.map(item => ({
+    ...item,
+
+    searchText:
+      normalizeGlobalSearchValue(
+        (item.searchable || [])
+          .filter(value =>
+            value !== null &&
+            value !== undefined
+          )
+          .join(' ')
+      )
+  }));
+}
+function openGlobalSearch() {
+  if (!globalSearchOverlay || !globalSearchInput) return;
+
+  globalSearchOverlay.classList.add('show');
+
+  globalSearchInput.value = '';
+
+  globalSearchResults.innerHTML = `
+    <div class="global-search-empty">
+      <div class="global-search-empty-icon">🔎</div>
+      התחל להקליד כדי לחפש בכל המערכת
+    </div>
+  `;
+
+  setTimeout(() => {
+    globalSearchInput.focus();
+  }, 50);
+}
+
+
+function closeGlobalSearch() {
+  if (!globalSearchOverlay) return;
+
+  globalSearchOverlay.classList.remove('show');
+
+  if (globalSearchInput) {
+    globalSearchInput.value = '';
+  }
+}
+
+
+function renderGlobalSearchResults() {
+  const query =
+    normalizeGlobalSearchValue(
+      globalSearchInput.value
+    );
+
+  if (!query) {
+    globalSearchResults.innerHTML = `
+      <div class="global-search-empty">
+        <div class="global-search-empty-icon">🔎</div>
+        התחל להקליד כדי לחפש בכל המערכת
+      </div>
+    `;
+    return;
+  }
+
+  const results =
+    buildGlobalSearchIndex()
+      .filter(item =>
+        item.searchText.includes(query)
+      )
+      .slice(0, 100);
+
+  if (results.length === 0) {
+    globalSearchResults.innerHTML = `
+      <div class="global-search-empty">
+        <div class="global-search-empty-icon">🤷</div>
+        לא נמצאו תוצאות עבור
+        <strong>${esc(globalSearchInput.value)}</strong>
+      </div>
+    `;
+    return;
+  }
+
+  globalSearchResults.innerHTML = `
+    <div class="global-search-count">
+      נמצאו ${results.length} תוצאות
+    </div>
+  `;
+
+  results.forEach((result, index) => {
+    const button = document.createElement('button');
+
+    button.type = 'button';
+    button.className = 'global-search-result';
+
+    button.innerHTML = `
+      <div class="global-search-result-icon">
+        ${result.icon}
+      </div>
+
+      <div class="global-search-result-content">
+
+        <div class="global-search-result-title">
+          ${esc(result.title)}
+        </div>
+
+        <div class="global-search-result-sub">
+          ${esc(result.subtitle || '')}
+        </div>
+
+      </div>
+
+      <div class="global-search-result-type">
+        ${esc(result.typeLabel)}
+      </div>
+    `;
+
+    button.addEventListener('click', () => {
+      goToGlobalSearchResult(result);
+    });
+
+    globalSearchResults.appendChild(button);
+  });
+}
+function goToGlobalSearchResult(result) {
+  if (!result) return;
+
+  closeGlobalSearch();
+
+  // חודש
+  if (result.type === 'month') {
+    activeId = result.monthId;
+
+    searchInput.value = '';
+
+    renderTabs();
+    renderRows();
+
+    setTimeout(() => {
+      const activeTab =
+        tabsBar.querySelector('.tab.active');
+
+      if (activeTab) {
+        activeTab.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+          inline: 'center'
+        });
+
+        activeTab.classList.add(
+          'global-search-highlight'
+        );
+
+        setTimeout(() => {
+          activeTab.classList.remove(
+            'global-search-highlight'
+          );
+        }, 2300);
+      }
+    }, 80);
+
+    return;
+  }
+
+
+  // פריט רגיל
+  if (result.type === 'row') {
+    activeId = result.monthId;
+
+    searchInput.value = '';
+
+    renderTabs();
+    renderRows();
+
+    setTimeout(() => {
+      const rowElement =
+        rowsList.querySelector(
+          `.row-mark[data-id="${result.rowId}"]`
+        )?.closest('.row-item');
+
+      if (!rowElement) {
+        showToast('⚠️ הפריט לא נמצא');
+        return;
+      }
+
+      rowElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+      });
+
+      rowElement.classList.add(
+        'global-search-highlight'
+      );
+
+      setTimeout(() => {
+        rowElement.classList.remove(
+          'global-search-highlight'
+        );
+      }, 2300);
+    }, 80);
+
+    return;
+  }
+
+
+  // היסטוריה
+  if (result.type === 'history') {
+    activeId = result.monthId;
+
+    searchInput.value = '';
+
+    renderTabs();
+    renderRows();
+
+    setTimeout(() => {
+      openHistory(result.rowId);
+    }, 80);
+
+    return;
+  }
+
+
+  // מסמך של פריט
+  if (result.type === 'document') {
+    activeId = result.monthId;
+
+    searchInput.value = '';
+
+    renderTabs();
+    renderRows();
+
+    setTimeout(() => {
+      openDocuments(result.rowId);
+
+      setTimeout(() => {
+        highlightGlobalSearchDocument(
+          result.documentId
+        );
+      }, 80);
+
+    }, 80);
+
+    return;
+  }
+
+
+  // הוצאה מזדמנת
+  if (result.type === 'extraExpense') {
+    openExtraExpense();
+
+    setTimeout(() => {
+      const expense =
+        extraExpenses.find(
+          e =>
+            String(e.id) ===
+            String(result.expenseId)
+        );
+
+      if (!expense) {
+        showToast('⚠️ ההוצאה לא נמצאה');
+        return;
+      }
+
+      editExtraExpense(expense.id);
+
+      const nameInput =
+        document.getElementById(
+          'extra-expense-name'
+        );
+
+      if (nameInput) {
+        nameInput.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
+        });
+
+        nameInput.classList.add(
+          'global-search-highlight'
+        );
+
+        setTimeout(() => {
+          nameInput.classList.remove(
+            'global-search-highlight'
+          );
+        }, 2300);
+      }
+    }, 80);
+
+    return;
+  }
+
+
+  // מסמך של הוצאה מזדמנת
+  if (
+    result.type ===
+    'extraExpenseDocument'
+  ) {
+    openExtraExpenseDocuments(
+      result.expenseId
+    );
+
+    setTimeout(() => {
+      highlightGlobalSearchDocument(
+        result.documentId
+      );
+    }, 80);
+
+    return;
+  }
+}
+
+
+function highlightGlobalSearchDocument(
+  documentId
+) {
+  const links =
+    document.querySelectorAll(
+      '#documents-list a'
+    );
+
+  links.forEach(link => {
+    const href =
+      String(link.href || '');
+
+    const item =
+      link.closest('div');
+
+    if (!item) return;
+
+    let matched = false;
+
+    // מחפשים לפי רשימת המסמכים הפעילה
+    let documents = [];
+
+    if (
+      documentsExtraExpenseId !== null
+    ) {
+      const expense =
+        extraExpenses.find(
+          e =>
+            String(e.id) ===
+            String(
+              documentsExtraExpenseId
+            )
+        );
+
+      documents =
+        expense?.documents || [];
+
+    } else if (
+      documentsRowId !== null
+    ) {
+      const row =
+        activeMonth()?.rows.find(
+          r =>
+            String(r.id) ===
+            String(documentsRowId)
+        );
+
+      documents =
+        row?.documents || [];
+    }
+
+    const documentItem =
+      documents.find(
+        doc =>
+          String(doc.id) ===
+          String(documentId)
+      );
+
+    if (
+      documentItem &&
+      href === documentItem.url
+    ) {
+      matched = true;
+    }
+
+    if (!matched) return;
+
+    item.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center'
+    });
+
+    item.classList.add(
+      'global-search-highlight'
+    );
+
+    setTimeout(() => {
+      item.classList.remove(
+        'global-search-highlight'
+      );
+    }, 2300);
+  });
+}
+
+globalSearchInput.addEventListener(
+  'input',
+  renderGlobalSearchResults
+);
+
+
+globalSearchOverlay.addEventListener(
+  'click',
+  e => {
+    if (e.target === globalSearchOverlay) {
+      closeGlobalSearch();
+    }
+  }
+);
+
+
+document.addEventListener('keydown', e => {
+
+  if (
+    (e.ctrlKey || e.metaKey) &&
+    e.key.toLowerCase() === 'k'
+  ) {
+    e.preventDefault();
+
+    if (
+      globalSearchOverlay.classList.contains('show')
+    ) {
+      closeGlobalSearch();
+    } else {
+      openGlobalSearch();
+    }
+
+    return;
+  }
+
+  if (
+    e.key === 'Escape' &&
+    globalSearchOverlay.classList.contains('show')
+  ) {
+    closeGlobalSearch();
+  }
+
+});
 searchInput.addEventListener('input', () => {
   renderRows();
 });
