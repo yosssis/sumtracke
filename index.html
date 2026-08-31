@@ -1649,6 +1649,7 @@ body.auth-locked #login-overlay .btn-action {
 
   opacity: 0;
   visibility: hidden;
+  pointer-events: none;
 
   transition:
     transform 0.28s ease,
@@ -1659,6 +1660,8 @@ body.auth-locked #login-overlay .btn-action {
 .login-changes-dock.show {
   opacity: 1;
   visibility: visible;
+  pointer-events: auto !important;
+  z-index: 9999 !important;
   transform: translateY(-50%) translateX(0);
 }
 
@@ -5749,7 +5752,7 @@ async function openLoginChanges() {
   if (!lastLoginChangesInfo) {
     return;
   }
-renderLoginChangesContent(lastLoginChangesInfo);
+showLoginChanges(lastLoginChangesInfo);
   const popup =
     document.getElementById('login-changes-popup');
 
