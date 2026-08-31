@@ -5712,12 +5712,7 @@ function collapseLoginChanges() {
 function goToLoginChange(change) {
   if (!change) return;
 
-  const popup =
-    document.getElementById('login-changes-popup');
-
-  if (popup) {
-    popup.classList.remove('show');
-  }
+collapseLoginChanges();
 
   // שינוי בפריט רגיל / דיווח טלפוני
   if (
