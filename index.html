@@ -5784,17 +5784,12 @@ try {
 
       const result = await response.json();
 
-      if (result.ok) {
-        lastLoginChangesInfo.changesCount = 0;
-
-        if (badge) {
-          badge.textContent = '0';
-          badge.style.display = 'none';
-        }
-
-        saveLoginChangesToSession();
-      }
-
+    if (result.ok) {
+  if (badge) {
+    badge.textContent = '0';
+    badge.style.display = 'none';
+  }
+}
     } catch (err) {
       console.error(
         'MARK CHANGES AS READ ERROR:',
