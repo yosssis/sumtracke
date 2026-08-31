@@ -5565,7 +5565,7 @@ function showLoginChanges(loginInfo) {
   loginChangesTimer =
     setTimeout(() => {
       collapseLoginChanges();
-    }, 2000);
+    }, 3000);
 }
 
 
@@ -5599,6 +5599,15 @@ function openLoginChanges() {
   const dock =
     document.getElementById('login-changes-dock');
 
+  const badge =
+    document.getElementById('login-changes-badge');
+
+  // המשתמש פתח את השינויים — מאפסים את הסימון שלא נקרא
+  if (badge) {
+    badge.textContent = '0';
+    badge.style.display = 'none';
+  }
+
   if (dock) {
     dock.classList.remove('show');
   }
@@ -5608,8 +5617,7 @@ function openLoginChanges() {
   }
 
   clearTimeout(loginChangesTimer);
-}
-async function submitLogin() {
+}async function submitLogin() {
   const username = document.getElementById('login-username').value.trim();
   const password = document.getElementById('login-password').value;
 
