@@ -1209,6 +1209,7 @@ body.auth-locked #login-overlay .btn-action {
   box-shadow: 0 6px 18px rgba(255,107,53,0.25);
 }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body class="auth-locked">
 <div class="container">
@@ -4570,7 +4571,8 @@ async function confirmEmailChoice(includeMarked) {
 
   if (type === 'annual') {
     await sendAnnualEmailNow(includeMarked);
-
+} else if (type === 'annualExcel') {
+  exportAnnualExcelNow(includeMarked);
   } else if (type === 'tempAnnual') {
     await sendTempAnnualEmailNow(includeMarked);
 
@@ -5115,57 +5117,136 @@ function closeAnnualReport() {
   document.getElementById('annual-overlay').classList.remove('show');
 }
 function exportAnnualExcel() {
-    if (!authToken) {
+  if (!authToken) {
     requireAuth(exportAnnualExcel);
     return;
   }
+
   if (!months || months.length === 0) {
     showToast('אין נתונים לייצוא');
     return;
   }
 
+  const hasMarked = months.some(month =>
+    (month.rows || []).some(row => row.marked)
+  );
+
+  if (hasMarked) {
+    window.emailChoiceType = 'annualExcel';
+
+    document
+      .getElementById('email-choice-overlay')
+      .classList.add('show');
+
+    return;
+  }
+
+  exportAnnualExcelNow(true);
+}
+
+
+function exportAnnualExcelNow(includeMarked) {
+  if (typeof XLSX === 'undefined') {
+    showToast('❌ ספריית Excel לא נטענה');
+    return;
+  }
+
   const title =
-    document.getElementById('main-title').value || 'מסכם חודשי';
+    document.getElementById('main-title').value ||
+    'מסכם חודשי';
 
-  let grandTotal = 0;
+  const workbook = XLSX.utils.book_new();
 
-  // BOM כדי שאקסל יציג עברית כמו שצריך
-  let csv = '\uFEFF';
+  let sheetsAdded = 0;
 
-  csv += `"${title} — דוח שנתי"\r\n`;
-  csv += `\r\n`;
-  csv += `"#","חודש","מספר פריטים","סה״כ"\r\n`;
+  months.forEach(month => {
+    const rows = includeMarked
+      ? [...(month.rows || [])]
+      : (month.rows || []).filter(row => !row.marked);
 
-  months.forEach((month, index) => {
-    const monthTotal = month.rows.reduce(
-      (sum, row) => sum + (Number(row.amount) || 0),
+    if (rows.length === 0) {
+      return;
+    }
+
+    const total = rows.reduce(
+      (sum, row) =>
+        sum + (Number(row.amount) || 0),
       0
     );
 
-    grandTotal += monthTotal;
+    const data = [
+      [`${title} — ${month.name}`],
+      [],
+      ['#', 'שם / תיאור', 'הערה', 'סכום']
+    ];
 
-    csv += `"${index + 1}","${month.name.replace(/"/g, '""')}","${month.rows.length}","${monthTotal}"\r\n`;
+    rows.forEach((row, index) => {
+      data.push([
+        index + 1,
+        row.name || '',
+        row.notes || '',
+        Number(row.amount) || 0
+      ]);
+    });
+
+    data.push([]);
+    data.push(['', 'סה״כ', '', total]);
+
+    const worksheet =
+      XLSX.utils.aoa_to_sheet(data);
+
+    worksheet['!cols'] = [
+      { wch: 6 },
+      { wch: 28 },
+      { wch: 35 },
+      { wch: 14 }
+    ];
+
+    let sheetName =
+      String(month.name || 'חודש')
+        .replace(/[\\\/\?\*\[\]\:]/g, '')
+        .trim()
+        .substring(0, 31);
+
+    if (!sheetName) {
+      sheetName = 'חודש';
+    }
+
+    let uniqueName = sheetName;
+    let counter = 2;
+
+    while (
+      workbook.SheetNames.includes(uniqueName)
+    ) {
+      const suffix = ` ${counter}`;
+
+      uniqueName =
+        sheetName.substring(
+          0,
+          31 - suffix.length
+        ) + suffix;
+
+      counter++;
+    }
+
+    XLSX.utils.book_append_sheet(
+      workbook,
+      worksheet,
+      uniqueName
+    );
+
+    sheetsAdded++;
   });
 
-  csv += `\r\n`;
-  csv += `"","סה״כ שנתי","","${grandTotal}"\r\n`;
+  if (sheetsAdded === 0) {
+    showToast('אין פריטים לייצוא');
+    return;
+  }
 
-  const blob = new Blob(
-    [csv],
-    { type: 'text/csv;charset=utf-8;' }
+  XLSX.writeFile(
+    workbook,
+    `${title}_דוח_שנתי.xlsx`
   );
-
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-
-  a.href = url;
-  a.download = `${title}_דוח_שנתי.csv`;
-
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-
-  URL.revokeObjectURL(url);
 
   showToast('✅ הדוח השנתי יוצא בהצלחה!');
 }
@@ -5178,7 +5259,6 @@ function exportAnnualExcel() {
     21:'כ״א', 22:'כ״ב', 23:'כ״ג', 24:'כ״ד', 25:'כ״ה',
     26:'כ״ו', 27:'כ״ז', 28:'כ״ח', 29:'כ״ט', 30:'ל׳'
   };
-
   return values[n] || n;
 }
 
