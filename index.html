@@ -1226,6 +1226,22 @@ body.auth-locked #login-overlay .btn-action {
     color:var(--muted);
   "
 ></div>
+    <button
+  type="button"
+  onclick="logoutUser()"
+  style="
+    margin-top:8px;
+    border:none;
+    background:transparent;
+    color:var(--delete);
+    font-family:Heebo;
+    font-size:0.78rem;
+    font-weight:700;
+    cursor:pointer;
+  "
+>
+  🚪 התנתק
+</button>
   </div>
 
   <div class="tabs-outer" id="tabs-bar"></div>
@@ -1774,6 +1790,16 @@ readonly
     <div class="dialog-icon">🔐</div>
     <div class="dialog-msg">כניסה למערכת</div>
     <div class="dialog-sub">ברוכים הבאים למסכם החודשי<br>הזן שם משתמש וסיסמה כדי להמשיך</div>
+    <div
+  id="login-date-time"
+  style="
+    margin:8px 0 14px;
+    font-size:0.82rem;
+    font-weight:700;
+    color:var(--muted);
+    line-height:1.6;
+  "
+></div>
 
     <input
       type="text"
@@ -1809,7 +1835,22 @@ readonly
     "
   >👁️</button>
 </div>
-
+<button
+  type="button"
+  onclick="forgotPassword()"
+  style="
+    border:none;
+    background:none;
+    color:var(--accent);
+    font-family:Heebo;
+    font-size:0.78rem;
+    font-weight:700;
+    cursor:pointer;
+    margin-bottom:12px;
+  "
+>
+  שכחתי סיסמה
+</button>
     <div class="dialog-btns">
       <button class="btn-cancel" onclick="closeLogin()">ביטול</button>
       <button class="btn-action" onclick="submitLogin()">כניסה</button>
@@ -1847,7 +1888,61 @@ const AUTH_IDLE_TIMEOUT = 15 * 60 * 1000;
 
 let authWarningTimer = null;
 let authIdleTimer = null;
+function updateLoginDateTime() {
+  const el = document.getElementById('login-date-time');
 
+  if (!el) return;
+
+  const now = new Date();
+
+  const date = now.toLocaleDateString('he-IL', {
+    timeZone: 'Asia/Jerusalem',
+    weekday: 'long',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
+
+  const time = now.toLocaleTimeString('he-IL', {
+    timeZone: 'Asia/Jerusalem',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  });
+
+  el.innerHTML =
+    `📅 ${date}<br>🕒 ${time}`;
+}
+
+setInterval(updateLoginDateTime, 1000);
+updateLoginDateTime();
+  function logoutUser() {
+  expireAuth();
+
+  sessionStorage.removeItem('loggedInUsername');
+
+  const userEl =
+    document.getElementById('logged-in-user');
+
+  if (userEl) {
+    userEl.textContent = '';
+  }
+
+  if (syncTimer) {
+    clearInterval(syncTimer);
+    syncTimer = null;
+  }
+
+  appStarted = false;
+
+  document.body.classList.add('auth-locked');
+
+  openInitialLogin();
+}
+
+function forgotPassword() {
+  showToast('🔐 לאיפוס סיסמה יש לפנות למנהל המערכת');
+}
 function expireAuth() {
   authToken = '';
 
