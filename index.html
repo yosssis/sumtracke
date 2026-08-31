@@ -2625,7 +2625,32 @@ setInterval(updateLoginDateTime, 1000);
 updateLoginDateTime();
   function logoutUser() {
   expireAuth();
+  // מסתירים ומנקים את חלון השינויים בזמן התנתקות
+  const changesPopup =
+    document.getElementById('login-changes-popup');
 
+  const changesDock =
+    document.getElementById('login-changes-dock');
+
+  const changesBadge =
+    document.getElementById('login-changes-badge');
+
+  if (changesPopup) {
+    changesPopup.classList.remove('show');
+  }
+
+  if (changesDock) {
+    changesDock.classList.remove('show');
+  }
+
+  if (changesBadge) {
+    changesBadge.textContent = '0';
+    changesBadge.style.display = 'none';
+  }
+
+  clearTimeout(loginChangesTimer);
+
+  lastLoginChangesInfo = null;
   sessionStorage.removeItem('loggedInUsername');
 
   const userEl =
