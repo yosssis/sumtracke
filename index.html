@@ -5622,12 +5622,12 @@ function showLoginChanges(loginInfo) {
 <div
   class="login-change-item"
   ${
-    change.type
+   change.targetType
       ? `onclick="goToLoginChange(lastLoginChangesInfo.changes.slice(-8).reverse()[${changeIndex}])"`
       : ''
   }
   ${
-    change.type
+   change.targetType
       ? 'style="cursor:pointer;"'
       : ''
   }
@@ -5718,7 +5718,7 @@ function goToLoginChange(change) {
 
   // שינוי בפריט רגיל / דיווח טלפוני
   if (
-    change.type === 'row' &&
+   change.targetType === 'row' &&
     change.monthId &&
     change.rowId
   ) {
@@ -5733,7 +5733,7 @@ function goToLoginChange(change) {
 
   // שינוי בהוצאה מזדמנת
   if (
-    change.type === 'extraExpense' &&
+    change.targetType === 'extraExpense' &&
     change.expenseId
   ) {
     goToGlobalSearchResult({
@@ -5749,7 +5749,7 @@ async function openLoginChanges() {
   if (!lastLoginChangesInfo) {
     return;
   }
-
+renderLoginChangesContent(lastLoginChangesInfo);
   const popup =
     document.getElementById('login-changes-popup');
 
@@ -5768,13 +5768,8 @@ async function openLoginChanges() {
   }
 
   clearTimeout(loginChangesTimer);
-
-  // מסמנים בשרת שהמשתמש קרא את השינויים
-  if (
-    authToken &&
-    Number(lastLoginChangesInfo.changesCount) > 0
-  ) {
-    try {
+if (authToken) {
+try {
       const response = await fetch(API_URL, {
         method: 'POST',
         redirect: 'follow',
