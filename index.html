@@ -2510,6 +2510,11 @@ readonly
     "
   >👁️</button>
 </div>
+<div class="dialog-btns">
+  <button class="btn-cancel" onclick="closeLogin()">ביטול</button>
+  <button class="btn-action" onclick="submitLogin()">כניסה</button>
+</div>
+
 <button
   type="button"
   onclick="forgotPassword()"
@@ -2521,18 +2526,12 @@ readonly
     font-size:0.78rem;
     font-weight:700;
     cursor:pointer;
-    margin-bottom:12px;
+    margin-top:12px;
   "
 >
   שכחתי סיסמה
 </button>
-    <div class="dialog-btns">
-      <button class="btn-cancel" onclick="closeLogin()">ביטול</button>
-      <button class="btn-action" onclick="submitLogin()">כניסה</button>
-    </div>
-
   </div>
-</div>
 <!-- Changes Since Last Login -->
 <div id="login-changes-popup" class="login-changes-popup">
 
