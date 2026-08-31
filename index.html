@@ -1242,6 +1242,24 @@ body.auth-locked #login-overlay .btn-action {
 >
   🚪 התנתק
 </button>
+      <button
+  type="button"
+  onclick="openChangePassword()"
+  style="
+    margin-top:8px;
+    margin-right:10px;
+    border:none;
+    background:transparent;
+    color:var(--accent);
+    font-family:Heebo;
+    font-size:0.78rem;
+    font-weight:700;
+    cursor:pointer;
+  "
+>
+  🔑 החלף סיסמה
+</button>
+   
   </div>
 
   <div class="tabs-outer" id="tabs-bar"></div>
@@ -1784,6 +1802,83 @@ readonly
 
   </div>
 </div>
+  <!-- Change Password Dialog -->
+<div class="overlay" id="change-password-overlay" style="z-index:320;">
+  <div class="dialog">
+
+    <div class="dialog-icon">🔑</div>
+
+    <div class="dialog-msg">
+      החלפת סיסמה
+    </div>
+
+    <div class="dialog-sub">
+      הזן סיסמה נוכחית וסיסמה חדשה
+    </div>
+
+    <input
+      type="password"
+      id="current-password"
+      placeholder="סיסמה נוכחית"
+      autocomplete="current-password"
+      style="
+        width:100%;
+        padding:10px;
+        margin:6px 0;
+        border:1.5px solid #ddd;
+        border-radius:9px;
+        font-family:Heebo;
+      "
+    />
+
+    <input
+      type="password"
+      id="new-password"
+      placeholder="סיסמה חדשה"
+      autocomplete="new-password"
+      style="
+        width:100%;
+        padding:10px;
+        margin:6px 0;
+        border:1.5px solid #ddd;
+        border-radius:9px;
+        font-family:Heebo;
+      "
+    />
+
+    <input
+      type="password"
+      id="confirm-new-password"
+      placeholder="אימות סיסמה חדשה"
+      autocomplete="new-password"
+      style="
+        width:100%;
+        padding:10px;
+        margin:6px 0 16px;
+        border:1.5px solid #ddd;
+        border-radius:9px;
+        font-family:Heebo;
+      "
+    />
+
+    <div class="dialog-btns">
+      <button
+        class="btn-cancel"
+        onclick="closeChangePassword()"
+      >
+        ביטול
+      </button>
+
+      <button
+        class="btn-action"
+        onclick="submitChangePassword()"
+      >
+        שמור סיסמה
+      </button>
+    </div>
+
+  </div>
+</div>
   <!-- Login Dialog -->
 <div class="overlay" id="login-overlay">
   <div class="dialog">
@@ -1947,6 +2042,92 @@ updateLoginDateTime();
 
 function forgotPassword() {
   showToast('🔐 לאיפוס סיסמה יש לפנות למנהל המערכת');
+}
+  function openChangePassword() {
+  document.getElementById('current-password').value = '';
+  document.getElementById('new-password').value = '';
+  document.getElementById('confirm-new-password').value = '';
+
+  document
+    .getElementById('change-password-overlay')
+    .classList.add('show');
+
+  setTimeout(() => {
+    document.getElementById('current-password').focus();
+  }, 50);
+}
+
+function closeChangePassword() {
+  document
+    .getElementById('change-password-overlay')
+    .classList.remove('show');
+}
+
+async function submitChangePassword() {
+  const currentPassword =
+    document.getElementById('current-password').value;
+
+  const newPassword =
+    document.getElementById('new-password').value;
+
+  const confirmPassword =
+    document.getElementById('confirm-new-password').value;
+
+  if (!currentPassword || !newPassword || !confirmPassword) {
+    showToast('⚠️ יש למלא את כל השדות');
+    return;
+  }
+
+  if (newPassword !== confirmPassword) {
+    showToast('⚠️ הסיסמאות החדשות אינן תואמות');
+    return;
+  }
+
+  if (newPassword.length < 6) {
+    showToast('⚠️ הסיסמה החדשה חייבת להכיל לפחות 6 תווים');
+    return;
+  }
+
+ try {
+  showToast('🔄 מעדכן סיסמה...');
+
+  const response = await fetch(API_URL, {
+    method: 'POST',
+    body: JSON.stringify({
+      action: 'changePassword',
+      token: authToken,
+      currentPassword: currentPassword,
+      newPassword: newPassword
+    })
+  });
+
+  const result = await response.json();
+
+  if (!result.ok) {
+    if (result.error === 'wrong_current_password') {
+      showToast('❌ הסיסמה הנוכחית אינה נכונה');
+      return;
+    }
+
+    if (result.error === 'unauthorized') {
+      showToast('❌ ההתחברות פגה. יש להתחבר מחדש');
+      closeChangePassword();
+      logoutUser();
+      return;
+    }
+
+    showToast('❌ לא ניתן לעדכן את הסיסמה');
+    return;
+  }
+
+  closeChangePassword();
+
+  showToast('✅ הסיסמה הוחלפה בהצלחה');
+
+} catch (err) {
+  console.error('CHANGE PASSWORD ERROR:', err);
+  showToast('❌ שגיאה בעדכון הסיסמה');
+}
 }
 function expireAuth() {
   authToken = '';
