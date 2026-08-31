@@ -1787,19 +1787,24 @@ readonly
   <!-- Login Dialog -->
 <div class="overlay" id="login-overlay">
   <div class="dialog">
-    <div class="dialog-icon">🔐</div>
-    <div class="dialog-msg">כניסה למערכת</div>
-    <div class="dialog-sub">ברוכים הבאים למסכם החודשי<br>הזן שם משתמש וסיסמה כדי להמשיך</div>
     <div
   id="login-date-time"
   style="
-    margin:8px 0 14px;
+    width:100%;
+    margin:0 0 14px;
+    padding-bottom:10px;
+    border-bottom:1px solid #eee;
     font-size:0.82rem;
     font-weight:700;
     color:var(--muted);
     line-height:1.6;
   "
 ></div>
+    <div class="dialog-icon">🔐</div>
+    <div class="dialog-msg">כניסה למערכת</div>
+    <div class="dialog-sub">ברוכים הבאים למסכם החודשי<br>הזן שם משתמש וסיסמה כדי להמשיך</div>
+    <div
+
 
     <input
       type="text"
