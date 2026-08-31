@@ -5601,7 +5601,7 @@ function showLoginChanges(loginInfo) {
       changes
         .slice(-8)
         .reverse()
-        .map(change => {
+        .map((change, changeIndex) => {
 
           const action =
             change.action ||
@@ -5619,7 +5619,19 @@ function showLoginChanges(loginInfo) {
               : '';
 
           return `
-            <div class="login-change-item">
+<div
+  class="login-change-item"
+  ${
+    change.type
+      ? `onclick="goToLoginChange(lastLoginChangesInfo.changes.slice(-8).reverse()[${changeIndex}])"`
+      : ''
+  }
+  ${
+    change.type
+      ? 'style="cursor:pointer;"'
+      : ''
+  }
+>
 
               <div style="
                 font-weight:900;
@@ -5694,7 +5706,44 @@ function collapseLoginChanges() {
 
   clearTimeout(loginChangesTimer);
 }
+function goToLoginChange(change) {
+  if (!change) return;
 
+  const popup =
+    document.getElementById('login-changes-popup');
+
+  if (popup) {
+    popup.classList.remove('show');
+  }
+
+  // שינוי בפריט רגיל / דיווח טלפוני
+  if (
+    change.type === 'row' &&
+    change.monthId &&
+    change.rowId
+  ) {
+    goToGlobalSearchResult({
+      type: 'row',
+      monthId: change.monthId,
+      rowId: change.rowId
+    });
+
+    return;
+  }
+
+  // שינוי בהוצאה מזדמנת
+  if (
+    change.type === 'extraExpense' &&
+    change.expenseId
+  ) {
+    goToGlobalSearchResult({
+      type: 'extraExpense',
+      expenseId: change.expenseId
+    });
+
+    return;
+  }
+}
 
 async function openLoginChanges() {
   if (!lastLoginChangesInfo) {
