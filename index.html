@@ -5414,7 +5414,90 @@ function togglePassword() {
 
 let lastLoginChangesInfo = null;
 let loginChangesTimer = null;
+function saveLoginChangesToSession() {
+  const username =
+    sessionStorage.getItem('loggedInUsername') || '';
 
+  if (!username || !lastLoginChangesInfo) {
+    return;
+  }
+
+  try {
+    sessionStorage.setItem(
+      'loginChangesInfo_' +
+        username.trim().toLowerCase(),
+      JSON.stringify(lastLoginChangesInfo)
+    );
+  } catch (err) {
+    console.error(
+      'SAVE LOGIN CHANGES SESSION ERROR:',
+      err
+    );
+  }
+}
+
+
+function restoreLoginChangesFromSession() {
+  const username =
+    sessionStorage.getItem('loggedInUsername') || '';
+
+  if (!username) {
+    return;
+  }
+
+  try {
+    const raw =
+      sessionStorage.getItem(
+        'loginChangesInfo_' +
+          username.trim().toLowerCase()
+      );
+
+    if (!raw) {
+      return;
+    }
+
+    const loginInfo =
+      JSON.parse(raw);
+
+    if (!loginInfo) {
+      return;
+    }
+
+    lastLoginChangesInfo = loginInfo;
+
+    const dock =
+      document.getElementById(
+        'login-changes-dock'
+      );
+
+    const badge =
+      document.getElementById(
+        'login-changes-badge'
+      );
+
+    const count =
+      Number(loginInfo.changesCount) || 0;
+
+    if (badge) {
+      badge.textContent = count;
+
+      badge.style.display =
+        count > 0
+          ? 'flex'
+          : 'none';
+    }
+
+    if (dock) {
+      dock.classList.add('show');
+    }
+
+  } catch (err) {
+    console.error(
+      'RESTORE LOGIN CHANGES SESSION ERROR:',
+      err
+    );
+  }
+}
 function showLoginChanges(loginInfo) {
   if (!loginInfo) return;
 
@@ -5588,7 +5671,7 @@ function collapseLoginChanges() {
 }
 
 
-function openLoginChanges() {
+async function openLoginChanges() {
   if (!lastLoginChangesInfo) {
     return;
   }
@@ -5602,12 +5685,6 @@ function openLoginChanges() {
   const badge =
     document.getElementById('login-changes-badge');
 
-  // המשתמש פתח את השינויים — מאפסים את הסימון שלא נקרא
-  if (badge) {
-    badge.textContent = '0';
-    badge.style.display = 'none';
-  }
-
   if (dock) {
     dock.classList.remove('show');
   }
@@ -5617,7 +5694,48 @@ function openLoginChanges() {
   }
 
   clearTimeout(loginChangesTimer);
-}async function submitLogin() {
+
+  // מסמנים בשרת שהמשתמש קרא את השינויים
+  if (
+    authToken &&
+    Number(lastLoginChangesInfo.changesCount) > 0
+  ) {
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        redirect: 'follow',
+        body: JSON.stringify({
+          action: 'markChangesAsRead',
+          token: authToken
+        }),
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8'
+        }
+      });
+
+      const result = await response.json();
+
+      if (result.ok) {
+        lastLoginChangesInfo.changesCount = 0;
+
+        if (badge) {
+          badge.textContent = '0';
+          badge.style.display = 'none';
+        }
+
+        saveLoginChangesToSession();
+      }
+
+    } catch (err) {
+      console.error(
+        'MARK CHANGES AS READ ERROR:',
+        err
+      );
+    }
+  }
+
+}
+  async function submitLogin() {
   const username = document.getElementById('login-username').value.trim();
   const password = document.getElementById('login-password').value;
 
@@ -5675,6 +5793,12 @@ if (cancelBtn) {
   startApp();
 }
 if (result.loginInfo) {
+
+  lastLoginChangesInfo =
+    result.loginInfo;
+
+  saveLoginChangesToSession();
+
   setTimeout(() => {
     showLoginChanges(result.loginInfo);
   }, 350);
@@ -8361,7 +8485,7 @@ if (authToken) {
   }
 
   startApp();
-
+restoreLoginChangesFromSession();
 } else {
   openInitialLogin();
 }
