@@ -6790,8 +6790,23 @@ function closeDashboard() {
   document.body.classList.remove('dashboard-side-open');
 }
 // ── INIT ──────────────────────────────────────────────
-expireAuth();
-openInitialLogin();
+if (authToken) {
+  const savedUsername =
+    sessionStorage.getItem('loggedInUsername') || '';
+
+  const userEl =
+    document.getElementById('logged-in-user');
+
+  if (userEl && savedUsername) {
+    userEl.textContent =
+      '👤 מחובר כעת: ' + savedUsername;
+  }
+
+  startApp();
+
+} else {
+  openInitialLogin();
+}
 
 </script>
 </body>
