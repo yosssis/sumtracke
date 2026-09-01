@@ -5331,19 +5331,29 @@ async function deleteDocument(fileId) {
     renderRows();
     saveData('מחיקת פריט', deletedRow.name);
 
-    showDeleteUndo(
-      deletedRow,
-      deletedIndex,
-      month.id
-    );
+
   }
 } else if (type === 'month') {
-      const deletedMonth = months.find(m => m.id === pendingDelete.monthId);
-      months = months.filter(m => m.id !== pendingDelete.monthId);
-      saveData('מחיקת חודש', deletedMonth ? deletedMonth.name : '');
-      if (activeId === pendingDelete.monthId) activeId = months[months.length - 1].id;
-      renderTabs(); renderRows();
-    } else if (type === 'clearMonth') {
+  const deletedMonth = months.find(
+    m => m.id === pendingDelete.monthId
+  );
+
+  months = months.filter(
+    m => m.id !== pendingDelete.monthId
+  );
+
+  if (activeId === pendingDelete.monthId) {
+    activeId = months[months.length - 1].id;
+  }
+
+  saveData(
+    'מחיקת חודש',
+    deletedMonth ? deletedMonth.name : ''
+  );
+
+  renderTabs();
+  renderRows();  
+ } else if (type === 'clearMonth') {
     const clearedMonthName = activeMonth().name;
 activeMonth().rows = [];
 renderRows();
@@ -5374,68 +5384,241 @@ editOverlay.addEventListener('click', e => {
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2500);
   }
-  let deleteUndoTimer = null;
+ // ── GLOBAL UNDO ────────────────────────────────────────
 
-function showDeleteUndo(deletedRow, deletedIndex, monthId) {
-  clearTimeout(deleteUndoTimer);
+let undoCommittedState = null;
+let undoSnapshot = null;
+let undoActionName = '';
+let undoTimer = null;
+let undoInProgress = false;
 
-  toastEl.innerHTML = `
-    <span>🗑️ הפריט נמחק</span>
-    <button
-      type="button"
-      id="undo-delete-btn"
-      style="
-        margin-right:12px;
-        border:none;
-        background:transparent;
-        color:#ffb08f;
-        font-family:Heebo;
-        font-weight:900;
-        cursor:pointer;
-        text-decoration:underline;
-      "
-    >
-      ↩ ביטול מחיקה
-    </button>
-  `;
+const UNDO_EXCLUDED_ACTIONS = new Set([
+  'העלאת מסמך',
+  'מחיקת מסמך',
+  'ביטול פעולה'
+]);
 
-  toastEl.classList.add('show');
+function getUndoState() {
+  return JSON.stringify({
+    months,
+    activeId,
+    nextMonthId,
+    extraExpenses,
+    title:
+      document.getElementById('main-title')?.value || ''
+  });
+}
 
-  const undoBtn =
-    document.getElementById('undo-delete-btn');
+function restoreUndoState(snapshot) {
+  const d = JSON.parse(snapshot);
 
-  undoBtn.onclick = () => {
-    clearTimeout(deleteUndoTimer);
+  if (Array.isArray(d.months)) {
+    months = d.months.map(month => ({
+      ...month,
+      name: normalizeHebrewMonthName(month.name)
+    }));
+  }
 
-    const month =
-      months.find(m => String(m.id) === String(monthId));
+  if (d.activeId !== undefined) {
+    activeId = d.activeId;
+  }
 
-    if (!month) return;
+  if (d.nextMonthId !== undefined) {
+    nextMonthId = d.nextMonthId;
+  }
 
-    month.rows.splice(
-      deletedIndex,
-      0,
-      deletedRow
-    );
+  if (Array.isArray(d.extraExpenses)) {
+    extraExpenses = d.extraExpenses;
+  }
 
-    activeId = month.id;
+  if (typeof d.title === 'string') {
+    document.getElementById('main-title').value = d.title;
+  }
 
-    renderTabs();
-    renderRows();
+  if (
+    !months.some(
+      m => String(m.id) === String(activeId)
+    )
+  ) {
+    activeId =
+      months.length > 0
+        ? months[months.length - 1].id
+        : 1;
+  }
+
+  if (addButtonIndex > months.length) {
+    addButtonIndex = months.length;
+  }
+
+  renderTabs();
+  renderRows();
+  updateNameSuggestions();
+
+  if (
+    document
+      .getElementById('extra-expense-overlay')
+      ?.classList.contains('show')
+  ) {
+    renderExtraExpenses();
+  }
+
+  if (
+    document
+      .getElementById('dashboard-overlay')
+      ?.classList.contains('show')
+  ) {
+    openDashboard();
+  }
+}
+
+function clearUndoOffer() {
+  clearTimeout(undoTimer);
+
+  undoSnapshot = null;
+  undoActionName = '';
+
+  const bar =
+    document.getElementById('global-undo-bar');
+
+  if (bar) {
+    bar.remove();
+  }
+}
+
+function showUndoOffer(snapshot, actionName) {
+  clearTimeout(undoTimer);
+
+  undoSnapshot = snapshot;
+  undoActionName = actionName;
+
+  let bar =
+    document.getElementById('global-undo-bar');
+
+  if (!bar) {
+    bar = document.createElement('div');
+
+    bar.id = 'global-undo-bar';
+
+    Object.assign(bar.style, {
+      position: 'fixed',
+      bottom: '24px',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      zIndex: '10000',
+      background: '#1a1a2e',
+      color: '#fff',
+      padding: '11px 18px',
+      borderRadius: '24px',
+      boxShadow: '0 10px 30px rgba(0,0,0,0.22)',
+      fontFamily: 'Heebo, sans-serif',
+      fontSize: '0.85rem',
+      fontWeight: '600',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '14px',
+      whiteSpace: 'nowrap',
+      direction: 'rtl'
+    });
+
+    document.body.appendChild(bar);
+  }
+
+  bar.innerHTML = '';
+
+  const text = document.createElement('span');
+  text.textContent = `✅ ${actionName}`;
+
+  const button = document.createElement('button');
+
+  button.type = 'button';
+  button.textContent = '↩ ביטול';
+
+  Object.assign(button.style, {
+    border: 'none',
+    background: 'transparent',
+    color: '#ffb08f',
+    fontFamily: 'Heebo, sans-serif',
+    fontWeight: '900',
+    cursor: 'pointer',
+    textDecoration: 'underline'
+  });
+
+  button.onclick = undoLastAction;
+
+  bar.appendChild(text);
+  bar.appendChild(button);
+
+  undoTimer = setTimeout(() => {
+    clearUndoOffer();
+  }, 5000);
+}
+
+function registerUndoForSave(currentState, auditAction) {
+  if (undoCommittedState === null) {
+    undoCommittedState = currentState;
+    return;
+  }
+
+  if (currentState === undoCommittedState) {
+    return;
+  }
+
+  const previousState = undoCommittedState;
+
+  undoCommittedState = currentState;
+
+  if (undoInProgress) {
+    clearUndoOffer();
+    return;
+  }
+
+  if (
+    !auditAction ||
+    UNDO_EXCLUDED_ACTIONS.has(auditAction)
+  ) {
+    clearUndoOffer();
+    return;
+  }
+
+  showUndoOffer(
+    previousState,
+    auditAction
+  );
+}
+
+function undoLastAction() {
+  if (!undoSnapshot) {
+    return;
+  }
+
+  const snapshot = undoSnapshot;
+  const actionName = undoActionName;
+
+  clearUndoOffer();
+
+  try {
+    undoInProgress = true;
+
+    restoreUndoState(snapshot);
 
     saveData(
-      'ביטול מחיקת פריט',
-      deletedRow.name
+      'ביטול פעולה',
+      actionName
     );
 
-    toastEl.classList.remove('show');
+    undoInProgress = false;
 
-    showToast('↩️ המחיקה בוטלה');
-  };
+    showToast(
+      `↩️ הפעולה "${actionName}" בוטלה`
+    );
 
-  deleteUndoTimer = setTimeout(() => {
-    toastEl.classList.remove('show');
-  }, 5000);
+  } catch (e) {
+    undoInProgress = false;
+
+    console.error('UNDO ERROR:', e);
+
+    showToast('❌ לא ניתן לבטל את הפעולה');
+  }
 }
 function requireAuth(action) {
   const lastActivity =
@@ -6077,7 +6260,8 @@ function applyPayload(d) {
   // save locally always, then push to Drive
 function saveData(auditAction = '', auditDetails = '') {
   const payload = getPayload();
-
+  const currentUndoState = getUndoState();
+  registerUndoForSave(currentUndoState, auditAction);
   try {
     localStorage.setItem(LOCAL_KEY, payload);
   } catch(e) {}
@@ -6168,6 +6352,7 @@ async function loadData() {
     console.error('LOAD ERROR:', e);
     setSyncStatus('offline');
   }
+    undoCommittedState = getUndoState();
 }
 async function refreshPhoneUpdatesOnly() {
   try {
@@ -6245,7 +6430,8 @@ async function refreshPhoneUpdatesOnly() {
     }
     if (changed) {
       localStorage.setItem(LOCAL_KEY, getPayload());
-
+undoCommittedState = getUndoState();
+clearUndoOffer();
       renderRows();
 
       if (
