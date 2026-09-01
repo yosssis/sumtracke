@@ -3697,9 +3697,13 @@ addBtn.addEventListener('dragstart', e => {
     return;
   }
 
-  m.name = inp.value.trim() || m.name;
+ const newName = inp.value.trim() || m.name;
+
+if (newName !== m.name) {
+  m.name = newName;
   renderTabs();
-saveData('שינוי שם חודש', m.name);
+  saveData('שינוי שם חודש', m.name);
+}
 });      inp.addEventListener('keydown', e => { if (e.key === 'Enter') inp.blur(); });
 
       const delBtn = document.createElement('button');
