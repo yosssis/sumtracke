@@ -5193,35 +5193,167 @@ async function deleteDocument(fileId) {
     return;
   }
 
+  // משאירים את שאלת האישור הקיימת
   if (!confirm(`למחוק את המסמך "${doc.name}"?`)) {
     return;
   }
 
-  try {
-    showToast('⏳ מוחק מסמך...');
+  const originalIndex = (item.documents || []).findIndex(
+    d => String(d.id) === String(fileId)
+  );
 
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      redirect: 'follow',
-      body: JSON.stringify({
-        action: 'deleteDocument',
-        token: authToken,
-        fileId: fileId
-      }),
-      headers: {
-        'Content-Type': 'text/plain;charset=utf-8'
-      }
-    });
+  // מורידים כרגע רק מהמסך ומהנתונים המקומיים
+  item.documents = (item.documents || []).filter(
+    d => String(d.id) !== String(fileId)
+  );
 
-    const result = await response.json();
+  renderDocuments();
 
-    if (!result.ok) {
-      throw new Error(result.error || 'Delete failed');
+  if (documentsExtraExpenseId !== null) {
+    renderExtraExpenses();
+  } else {
+    renderRows();
+  }
+
+  let deleteCommitted = false;
+
+  // פס ביטול נפרד
+  let bar = document.getElementById('document-delete-undo-bar');
+
+  if (bar) {
+    bar.remove();
+  }
+
+  bar = document.createElement('div');
+  bar.id = 'document-delete-undo-bar';
+
+  Object.assign(bar.style, {
+    position: 'fixed',
+    bottom: '24px',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    zIndex: '10000',
+    background: '#1a1a2e',
+    color: '#fff',
+    padding: '11px 18px',
+    borderRadius: '24px',
+    boxShadow: '0 10px 30px rgba(0,0,0,0.22)',
+    fontFamily: 'Heebo, sans-serif',
+    fontSize: '0.85rem',
+    fontWeight: '600',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '14px',
+    whiteSpace: 'nowrap',
+    direction: 'rtl'
+  });
+
+  const text = document.createElement('span');
+  text.textContent = `🗑️ ${doc.name} נמחק`;
+
+  const undoBtn = document.createElement('button');
+  undoBtn.type = 'button';
+  undoBtn.textContent = '↩ ביטול';
+
+  Object.assign(undoBtn.style, {
+    border: 'none',
+    background: 'transparent',
+    color: '#ffb08f',
+    fontFamily: 'Heebo, sans-serif',
+    fontWeight: '900',
+    cursor: 'pointer',
+    textDecoration: 'underline'
+  });
+
+  bar.appendChild(text);
+  bar.appendChild(undoBtn);
+  document.body.appendChild(bar);
+
+  const commitDelete = async () => {
+    if (deleteCommitted) return;
+
+    deleteCommitted = true;
+
+    if (bar && bar.isConnected) {
+      bar.remove();
     }
 
-    item.documents = (item.documents || []).filter(
-      d => String(d.id) !== String(fileId)
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        redirect: 'follow',
+        body: JSON.stringify({
+          action: 'deleteDocument',
+          token: authToken,
+          fileId: fileId
+        }),
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8'
+        }
+      });
+
+      const result = await response.json();
+
+      if (!result.ok) {
+        throw new Error(result.error || 'Delete failed');
+      }
+
+      saveData(
+        'מחיקת מסמך',
+        doc.name || ''
+      );
+
+      showToast('✅ המסמך נמחק');
+
+    } catch (err) {
+      console.error('DELETE DOCUMENT ERROR:', err);
+
+      // אם המחיקה בשרת נכשלה – מחזירים את המסמך
+      if (!item.documents) {
+        item.documents = [];
+      }
+
+      item.documents.splice(
+        Math.max(0, originalIndex),
+        0,
+        doc
+      );
+
+      renderDocuments();
+
+      if (documentsExtraExpenseId !== null) {
+        renderExtraExpenses();
+      } else {
+        renderRows();
+      }
+
+      showToast('❌ מחיקת המסמך נכשלה');
+    }
+  };
+
+  const timer = setTimeout(() => {
+    commitDelete();
+  }, 5000);
+
+  undoBtn.onclick = () => {
+    if (deleteCommitted) return;
+
+    clearTimeout(timer);
+    deleteCommitted = true;
+
+    if (!item.documents) {
+      item.documents = [];
+    }
+
+    item.documents.splice(
+      Math.max(0, originalIndex),
+      0,
+      doc
     );
+
+    if (bar && bar.isConnected) {
+      bar.remove();
+    }
 
     renderDocuments();
 
@@ -5231,17 +5363,8 @@ async function deleteDocument(fileId) {
       renderRows();
     }
 
-    saveData(
-      'מחיקת מסמך',
-      doc.name || ''
-    );
-
-    showToast('✅ המסמך נמחק');
-
-  } catch (err) {
-    console.error('DELETE DOCUMENT ERROR:', err);
-    showToast('❌ מחיקת המסמך נכשלה');
-  }
+    showToast('↩️ מחיקת המסמך בוטלה');
+  };
 }
   function clearCurrent() {
     
