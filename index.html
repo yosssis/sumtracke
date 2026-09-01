@@ -1709,6 +1709,135 @@ body.auth-locked #login-overlay .btn-action {
     transform: translateX(0);
   }
 }
+    /* ===== ONLINE USERS ===== */
+
+#online-users-panel {
+  position: fixed;
+  top: 140px;
+  right: 18px;
+
+  width: 190px;
+  padding: 14px;
+
+  background: rgba(255,255,255,0.96);
+
+  border:
+    1px solid rgba(0,0,0,0.07);
+
+  border-radius: 16px;
+
+  box-shadow:
+    0 8px 28px rgba(0,0,0,0.08);
+
+  z-index: 90;
+
+  font-family: Heebo, sans-serif;
+  direction: rtl;
+}
+
+
+.online-users-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+
+  padding-bottom: 9px;
+  margin-bottom: 7px;
+
+  border-bottom:
+    1px solid rgba(0,0,0,0.06);
+
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+
+.online-main-dot {
+  width: 9px;
+  height: 9px;
+
+  border-radius: 50%;
+
+  background: #2ecc71;
+
+  box-shadow:
+    0 0 0 4px rgba(46,204,113,0.12);
+
+  flex-shrink: 0;
+}
+
+
+#online-users-count {
+  margin-right: auto;
+
+  min-width: 20px;
+  height: 20px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 20px;
+
+  background: #edf9f1;
+  color: #27ae60;
+
+  font-size: 0.68rem;
+  font-weight: 900;
+}
+
+
+.online-user-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 7px 5px;
+
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+
+.online-user-dot {
+  width: 8px;
+  height: 8px;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  background: #2ecc71;
+}
+
+
+.online-users-loading,
+.online-users-empty {
+  padding: 7px 4px;
+
+  color: var(--muted);
+
+  font-size: 0.72rem;
+}
+
+
+body.auth-locked #online-users-panel {
+  display: none;
+}
+
+
+@media (max-width: 900px) {
+  #online-users-panel {
+    top: auto;
+    bottom: 14px;
+    right: 10px;
+
+    width: 165px;
+    max-height: 190px;
+
+    overflow-y: auto;
+  }
+}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
@@ -2572,7 +2701,23 @@ margin:12px auto 0;
   <span id="login-changes-badge">0</span>
 </button>
 <div class="toast" id="toast"></div>
+<div id="online-users-panel">
+  <div class="online-users-title">
+    <span class="online-main-dot"></span>
 
+    <span>
+      מחוברים עכשיו
+    </span>
+
+    <span id="online-users-count">0</span>
+  </div>
+
+  <div id="online-users-list">
+    <div class="online-users-loading">
+      בודק...
+    </div>
+  </div>
+</div>
 <script>
   const MONTHS_HE = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני',
                      'יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
@@ -2595,6 +2740,8 @@ let pendingProtectedAction = null;
   let initialLoginRequired = false;
 let appStarted = false;
 let syncTimer = null;
+  let onlineUsersTimer = null;
+let onlineUsersBusy = false;
 const AUTH_IDLE_WARNING = 8 * 60 * 1000;
 const AUTH_IDLE_TIMEOUT = 15 * 60 * 1000;
 
@@ -2628,7 +2775,15 @@ function updateLoginDateTime() {
 
 setInterval(updateLoginDateTime, 1000);
 updateLoginDateTime();
-  function logoutUser() {
+function logoutUser() {
+  const tokenToClose = authToken;
+
+  notifyOnlineLogout(
+    tokenToClose
+  );
+
+  stopOnlineUsers();
+
   expireAuth();
   // מסתירים ומנקים את חלון השינויים בזמן התנתקות
   const changesPopup =
@@ -2781,6 +2936,14 @@ function expireAuth() {
 }
 
 function logoutFromIdle() {
+  const tokenToClose = authToken;
+
+  notifyOnlineLogout(
+    tokenToClose
+  );
+
+  stopOnlineUsers();
+
   expireAuth();
 
   if (syncTimer) {
@@ -5794,7 +5957,161 @@ function openInitialLogin() {
   }, 50);
 }
 
+async function refreshOnlineUsers() {
+  if (!authToken || onlineUsersBusy) {
+    return;
+  }
 
+  onlineUsersBusy = true;
+
+  try {
+    const response =
+      await fetch(API_URL, {
+        method: 'POST',
+        redirect: 'follow',
+
+        body: JSON.stringify({
+          action: 'onlineHeartbeat',
+          token: authToken
+        }),
+
+        headers: {
+          'Content-Type':
+            'text/plain;charset=utf-8'
+        }
+      });
+
+    const text =
+      await response.text();
+
+    if (text.trim() === 'unauthorized') {
+      return;
+    }
+
+    const result =
+      JSON.parse(text);
+
+    if (!result.ok) {
+      return;
+    }
+
+    renderOnlineUsers(
+      result.users || []
+    );
+
+  } catch (err) {
+    console.error(
+      'ONLINE USERS ERROR:',
+      err
+    );
+
+  } finally {
+    onlineUsersBusy = false;
+  }
+}
+
+
+function renderOnlineUsers(users) {
+  const list =
+    document.getElementById(
+      'online-users-list'
+    );
+
+  const count =
+    document.getElementById(
+      'online-users-count'
+    );
+
+  if (!list || !count) {
+    return;
+  }
+
+  count.textContent =
+    users.length;
+
+  if (users.length === 0) {
+    list.innerHTML = `
+      <div class="online-users-empty">
+        אין משתמשים מחוברים
+      </div>
+    `;
+
+    return;
+  }
+
+  list.innerHTML =
+    users.map(user => `
+      <div class="online-user-item">
+        <span class="online-user-dot"></span>
+
+        <span>
+          ${esc(user.username)}
+        </span>
+      </div>
+    `).join('');
+}
+
+
+function startOnlineUsers() {
+  clearInterval(
+    onlineUsersTimer
+  );
+
+  refreshOnlineUsers();
+
+  onlineUsersTimer =
+    setInterval(
+      refreshOnlineUsers,
+      20000
+    );
+}
+
+
+function stopOnlineUsers() {
+  clearInterval(
+    onlineUsersTimer
+  );
+
+  onlineUsersTimer = null;
+
+  const list =
+    document.getElementById(
+      'online-users-list'
+    );
+
+  const count =
+    document.getElementById(
+      'online-users-count'
+    );
+
+  if (count) {
+    count.textContent = '0';
+  }
+
+  if (list) {
+    list.innerHTML = '';
+  }
+}
+
+
+function notifyOnlineLogout(token) {
+  if (!token) return;
+
+  fetch(API_URL, {
+    method: 'POST',
+    redirect: 'follow',
+
+    body: JSON.stringify({
+      action: 'onlineLogout',
+      token: token
+    }),
+
+    headers: {
+      'Content-Type':
+        'text/plain;charset=utf-8'
+    }
+  }).catch(() => {});
+}
 function startApp() {
   if (appStarted) return;
 
@@ -5803,7 +6120,7 @@ function startApp() {
   document.body.classList.remove('auth-locked');
 
   loadData();
-
+startOnlineUsers();
   syncTimer = setInterval(() => {
     refreshPhoneUpdatesOnly();
   }, 5000);
