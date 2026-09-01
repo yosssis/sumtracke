@@ -2513,7 +2513,7 @@ readonly
 </div>
 <div class="dialog-btns">
   <button class="btn-cancel" onclick="closeLogin()">ביטול</button>
-  <button class="btn-action" onclick="submitLogin()"><span style="display:inline-block; transform:translateX(-20px);">כניסה</span></button>
+  <button class="btn-action" onclick="submitLogin()"><span style="display:inline-block; transform:translateX(-23px);">כניסה</span></button>
 </div>
 
 <button
@@ -5317,12 +5317,27 @@ async function deleteDocument(fileId) {
   }
     if (!pendingDelete) return closeDialog();
     const { type } = pendingDelete;
-    if (type === 'row') {
-      const deletedRow = activeMonth().rows.find(r => r.id === pendingDelete.rowId);
-      activeMonth().rows = activeMonth().rows.filter(r => r.id !== pendingDelete.rowId);
-      saveData('מחיקת פריט', deletedRow ? deletedRow.name : '');
-      renderRows();
-    } else if (type === 'month') {
+ if (type === 'row') {
+  const month = activeMonth();
+  const deletedIndex = month.rows.findIndex(
+    r => r.id === pendingDelete.rowId
+  );
+
+  const deletedRow = month.rows[deletedIndex];
+
+  if (deletedRow && deletedIndex !== -1) {
+    month.rows.splice(deletedIndex, 1);
+
+    renderRows();
+    saveData('מחיקת פריט', deletedRow.name);
+
+    showDeleteUndo(
+      deletedRow,
+      deletedIndex,
+      month.id
+    );
+  }
+} else if (type === 'month') {
       const deletedMonth = months.find(m => m.id === pendingDelete.monthId);
       months = months.filter(m => m.id !== pendingDelete.monthId);
       saveData('מחיקת חודש', deletedMonth ? deletedMonth.name : '');
@@ -5359,6 +5374,69 @@ editOverlay.addEventListener('click', e => {
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2500);
   }
+  let deleteUndoTimer = null;
+
+function showDeleteUndo(deletedRow, deletedIndex, monthId) {
+  clearTimeout(deleteUndoTimer);
+
+  toastEl.innerHTML = `
+    <span>🗑️ הפריט נמחק</span>
+    <button
+      type="button"
+      id="undo-delete-btn"
+      style="
+        margin-right:12px;
+        border:none;
+        background:transparent;
+        color:#ffb08f;
+        font-family:Heebo;
+        font-weight:900;
+        cursor:pointer;
+        text-decoration:underline;
+      "
+    >
+      ↩ ביטול מחיקה
+    </button>
+  `;
+
+  toastEl.classList.add('show');
+
+  const undoBtn =
+    document.getElementById('undo-delete-btn');
+
+  undoBtn.onclick = () => {
+    clearTimeout(deleteUndoTimer);
+
+    const month =
+      months.find(m => String(m.id) === String(monthId));
+
+    if (!month) return;
+
+    month.rows.splice(
+      deletedIndex,
+      0,
+      deletedRow
+    );
+
+    activeId = month.id;
+
+    renderTabs();
+    renderRows();
+
+    saveData(
+      'ביטול מחיקת פריט',
+      deletedRow.name
+    );
+
+    toastEl.classList.remove('show');
+
+    showToast('↩️ המחיקה בוטלה');
+  };
+
+  deleteUndoTimer = setTimeout(() => {
+    toastEl.classList.remove('show');
+  }, 5000);
+}
 function requireAuth(action) {
   const lastActivity =
     Number(sessionStorage.getItem('authLastActivity')) || 0;
