@@ -5544,38 +5544,100 @@ async function deleteDocument(fileId) {
   }
 
   // ── EXPORT TO EXCEL ───────────────────────────────────
-  function exportExcel() {
-      if (!authToken) {
+function exportExcel() {
+  if (!authToken) {
     requireAuth(exportExcel);
     return;
   }
-    const m = activeMonth();
-    if (!m || m.rows.length === 0) { showToast('אין נתונים לייצוא'); return; }
 
-    const title = document.getElementById('main-title').value || 'מסכם חודשי';
-    const total = m.rows.reduce((s, r) => s + r.amount, 0);
+  const m = activeMonth();
 
-    // Build CSV with BOM for Hebrew Excel support
-    let csv = '\uFEFF'; // UTF-8 BOM
-    csv += `"${title} — ${m.name}"\r\n`;
-    csv += `\r\n`;
-    csv += `"#","שם / תיאור","הערה","סכום"\r\n`;
-    m.rows.forEach((r, i) => {
-      csv += `"${i+1}","${r.name.replace(/"/g,'""')}","${(r.notes||'').replace(/"/g,'""')}","${r.amount}"\r\n`;
-    });
-    csv += `\r\n`;
-    csv += `"","סה״כ","${total}"\r\n`;
-
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${title}_${m.name}.csv`;
-    document.body.appendChild(a); a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    showToast('✅ הקובץ יוצא בהצלחה!');
+  if (!m || m.rows.length === 0) {
+    showToast('אין נתונים לייצוא');
+    return;
   }
+
+  const hasMarked =
+    m.rows.some(row => row.marked);
+
+  if (hasMarked) {
+    window.emailChoiceType = 'monthlyExcel';
+
+    document
+      .getElementById('email-choice-overlay')
+      .classList.add('show');
+
+    return;
+  }
+
+  exportExcelNow(true);
+}
+
+function exportExcelNow(includeMarked) {
+  const m = activeMonth();
+
+  if (!m || m.rows.length === 0) {
+    showToast('אין נתונים לייצוא');
+    return;
+  }
+
+  const rows = includeMarked
+    ? [...m.rows]
+    : m.rows.filter(row => !row.marked);
+
+  if (rows.length === 0) {
+    showToast('אין פריטים לייצוא');
+    return;
+  }
+
+  const title =
+    document.getElementById('main-title').value ||
+    'מסכם חודשי';
+
+  const total =
+    rows.reduce(
+      (sum, row) =>
+        sum + (Number(row.amount) || 0),
+      0
+    );
+
+  let csv = '\uFEFF';
+
+  csv += `"${title} — ${m.name}"\r\n`;
+  csv += `\r\n`;
+  csv += `"#","שם / תיאור","הערה","סכום"\r\n`;
+
+  rows.forEach((r, i) => {
+    csv +=
+      `"${i + 1}","${String(r.name || '').replace(/"/g,'""')}","${String(r.notes || '').replace(/"/g,'""')}","${Number(r.amount) || 0}"\r\n`;
+  });
+
+  csv += `\r\n`;
+  csv += `"","סה״כ","","${total}"\r\n`;
+
+  const blob =
+    new Blob(
+      [csv],
+      { type: 'text/csv;charset=utf-8;' }
+    );
+
+  const url =
+    URL.createObjectURL(blob);
+
+  const a =
+    document.createElement('a');
+
+  a.href = url;
+  a.download = `${title}_${m.name}.csv`;
+
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+
+  URL.revokeObjectURL(url);
+
+  showToast('✅ הקובץ יוצא בהצלחה!');
+}
 
   // ── DIALOG ────────────────────────────────────────────
   function askDeleteRow(rowId, rowName) {
@@ -6947,6 +7009,8 @@ async function confirmEmailChoice(includeMarked) {
     await sendAnnualEmailNow(includeMarked);
 } else if (type === 'annualExcel') {
   exportAnnualExcelNow(includeMarked);
+    } else if (type === 'monthlyExcel') {
+  exportExcelNow(includeMarked);
   } else if (type === 'tempAnnual') {
     await sendTempAnnualEmailNow(includeMarked);
 
