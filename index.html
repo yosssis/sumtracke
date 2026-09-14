@@ -3921,7 +3921,25 @@ addButtonIndex++;
 
   // ── ROWS ─────────────────────────────────────────────
   function activeMonth() { return months.find(m => m.id === activeId); }
+function getPreviousMonthNote(name) {
+  const currentIndex = months.findIndex(m => m.id === activeId);
 
+  if (currentIndex <= 0) return '';
+
+  const previousMonth = months[currentIndex - 1];
+
+  if (!previousMonth || !Array.isArray(previousMonth.rows)) {
+    return '';
+  }
+
+  const cleanName = String(name || '').trim().toLowerCase();
+
+  const previousRow = previousMonth.rows.find(row =>
+    String(row.name || '').trim().toLowerCase() === cleanName
+  );
+
+  return String(previousRow?.notes || '').trim();
+}
   function addRow() {
       if (!authToken) {
     requireAuth(addRow);
@@ -3929,7 +3947,11 @@ addButtonIndex++;
   }
     const name = nameInput.value.trim();
     const amount = parseFloat(amtInput.value);
-    const notes = notesInput.value.trim();
+    const enteredNotes = notesInput.value.trim();
+
+const notes =
+  enteredNotes ||
+  getPreviousMonthNote(name);
     if (!name && isNaN(amount)) return;
 activeMonth().rows.push({
   id: Date.now(),
