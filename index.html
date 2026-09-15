@@ -2717,6 +2717,19 @@ margin:12px auto 0;
       בודק...
     </div>
   </div>
+  <div
+  id="last-logged-in-user"
+  style="
+    margin-top:10px;
+    padding-top:9px;
+    border-top:1px solid rgba(0,0,0,0.06);
+    font-size:0.72rem;
+    color:var(--muted);
+    line-height:1.6;
+  "
+>
+  🕘 מחובר לאחרונה: —
+</div>
 </div>
 <script>
   const MONTHS_HE = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני',
@@ -6082,7 +6095,7 @@ async function refreshOnlineUsers() {
     renderOnlineUsers(
       result.users || []
     );
-
+renderLastLoggedInUser(result.lastLogin);
   } catch (err) {
     console.error(
       'ONLINE USERS ERROR:',
@@ -6093,7 +6106,42 @@ async function refreshOnlineUsers() {
     onlineUsersBusy = false;
   }
 }
+function renderLastLoggedInUser(lastLogin) {
+  const el =
+    document.getElementById('last-logged-in-user');
 
+  if (!el) return;
+
+  if (!lastLogin || !lastLogin.username) {
+    el.textContent =
+      '🕘 מחובר לאחרונה: —';
+    return;
+  }
+
+  let timeText = '';
+
+  if (lastLogin.loginAt) {
+    const date =
+      new Date(lastLogin.loginAt);
+
+    timeText =
+      date.toLocaleString(
+        'he-IL',
+        {
+          timeZone: 'Asia/Jerusalem',
+          day: '2-digit',
+          month: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit'
+        }
+      );
+  }
+
+  el.textContent =
+    '🕘 מחובר לאחרונה: ' +
+    lastLogin.username +
+    (timeText ? ' · ' + timeText : '');
+}
 
 function renderOnlineUsers(users) {
   const list =
