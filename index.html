@@ -6919,8 +6919,10 @@ if (result.loginInfo) {
   const API_URL = 'https://script.google.com/macros/s/AKfycbxJb1_AFLWh8axOKQoDvz0RPsHGwKPdu-YnROHLeKNoch-bQf1b3kyidbwrwWJPBSxs/exec';
   const LOCAL_KEY = 'sumtracker_v1';
   let saveTimer = null;
-  let isSyncing = false;
-
+let isSyncing = false;
+let dataRevision = 0;
+let localSavePending = false;
+let externalUpdateNoticeShown = false;
   function setSyncStatus(status) {
     const el = document.getElementById('sync-status');
     if (!el) return;
@@ -6940,7 +6942,11 @@ function getPayload() {
     activeId,
     nextMonthId,
     extraExpenses,
-    title: document.getElementById('main-title').value
+    _revision: dataRevision,
+    title:
+      document
+        .getElementById('main-title')
+        .value
   });
 }
 
@@ -6983,6 +6989,15 @@ function normalizeHebrewMonthName(name) {
 }
 
 function applyPayload(d) {
+  if (
+  d &&
+  Number.isFinite(
+    Number(d._revision)
+  )
+) {
+  dataRevision =
+    Number(d._revision);
+}
   if (d.months) {
     months = d.months.map(month => ({
       ...month,
@@ -7004,6 +7019,7 @@ function applyPayload(d) {
 
   // save locally always, then push to Drive
 function saveData(auditAction = '', auditDetails = '') {
+  localSavePending = true;
   const payload = getPayload();
   const currentUndoState = getUndoState();
   registerUndoForSave(currentUndoState, auditAction);
@@ -7038,20 +7054,85 @@ body: JSON.stringify({
         }
       });
 
-      const text = await response.text();
+const text =
+  await response.text();
 
-      if (text.trim() === 'unauthorized') {
-        authToken = '';
-        sessionStorage.removeItem('authToken');
-        setSyncStatus('offline');
-        return;
-      }
+if (
+  text.trim() === 'unauthorized'
+) {
+  authToken = '';
 
-      if (text.trim() !== 'ok') {
-        throw new Error(text);
-      }
+  sessionStorage.removeItem(
+    'authToken'
+  );
 
-      setSyncStatus('saved');
+  setSyncStatus('offline');
+  return;
+}
+
+let result;
+
+try {
+  result =
+    JSON.parse(text);
+} catch (err) {
+  throw new Error(
+    'Invalid server response: ' +
+    text
+  );
+}
+
+if (
+  !result.ok &&
+  result.error ===
+    'revision_conflict'
+) {
+
+  setSyncStatus('error');
+
+  showToast(
+    '⚠️ הנתונים השתנו ממקור אחר. ' +
+    'השמירה נעצרה כדי למנוע דריסת נתונים. ' +
+    'יש לרענן את הנתונים לפני המשך עריכה.'
+  );
+
+  console.warn(
+    'REVISION CONFLICT',
+    {
+      local:
+        dataRevision,
+      server:
+        result.serverRevision
+    }
+  );
+
+  return;
+}
+
+if (!result.ok) {
+  throw new Error(
+    result.error ||
+    'save_failed'
+  );
+}
+
+dataRevision =
+  Number(result.revision) ||
+  dataRevision;
+
+/*
+  מעדכנים גם את העותק המקומי
+  עם מספר הגרסה החדש.
+*/
+try {
+  localStorage.setItem(
+    LOCAL_KEY,
+    getPayload()
+  );
+} catch (e) {}
+localSavePending = false;
+externalUpdateNoticeShown = false;
+setSyncStatus('saved');
 
     } catch(e) {
       console.error('SAVE ERROR:', e);
@@ -7101,97 +7182,122 @@ async function loadData() {
 }
 async function refreshPhoneUpdatesOnly() {
   try {
-    const response = await fetch(API_URL + '?t=' + Date.now());
-    const d = await response.json();
-
-    if (!d || !Array.isArray(d.months)) return;
-
-    let changed = false;
-
-    d.months.forEach(serverMonth => {
-      const localMonth = months.find(
-        
-        m => String(m.id) === String(serverMonth.id)
+    const response =
+      await fetch(
+        API_URL + '?t=' + Date.now()
       );
 
-      if (!localMonth) {
-        months.push({
-          ...serverMonth,
-          name: normalizeHebrewMonthName(serverMonth.name)
-        });
-        changed = true;
-        return;
-      }
+    const d =
+      await response.json();
 
-      (serverMonth.rows || []).forEach(serverRow => {
-        const localRow = (localMonth.rows || []).find(
-          r => String(r.id) === String(serverRow.id)
+    if (
+      !d ||
+      !Array.isArray(d.months)
+    ) {
+      return;
+    }
+
+    const serverRevision =
+      Number(d._revision) || 0;
+
+    /*
+      אין שום שינוי חדש בשרת
+    */
+    if (
+      serverRevision === dataRevision
+    ) {
+      return;
+    }
+
+    /*
+      בודקים האם המשתמש כרגע
+      נמצא באמצע הקלדה/עריכה.
+    */
+    const active =
+      document.activeElement;
+
+    const userIsEditing =
+      active &&
+      (
+        active.tagName === 'INPUT' ||
+        active.tagName === 'TEXTAREA' ||
+        active.tagName === 'SELECT' ||
+        active.isContentEditable
+      );
+
+    /*
+      אם יש שינוי מקומי שעדיין לא נשמר,
+      או שהמשתמש כרגע מקליד,
+      אסור להחליף לו את הנתונים.
+    */
+    if (
+      localSavePending ||
+      userIsEditing
+    ) {
+      setSyncStatus('error');
+
+      if (!externalUpdateNoticeShown) {
+        externalUpdateNoticeShown = true;
+
+        showToast(
+          '⚠️ התקבל עדכון חדש מהשרת. ' +
+          'המערכת לא החליפה את הנתונים ' +
+          'כדי לא לאבד את העריכה שלך.'
         );
-
-        if (!localRow) {
-          localMonth.rows.push(serverRow);
-          changed = true;
-          return;
-        }
-
-        // מעדכנים רק נתונים שיכולים להגיע מהטלפון
-        if (
-          Number(localRow.amount) !== Number(serverRow.amount) ||
-          localRow.reportedAt !== serverRow.reportedAt ||
-          localRow.updatedAt !== serverRow.updatedAt
-        ) {
-          localRow.amount = serverRow.amount;
-          localRow.updatedAt = serverRow.updatedAt;
-          localRow.reportSource = serverRow.reportSource;
-          localRow.reportedAt = serverRow.reportedAt;
-          localRow.history = Array.isArray(serverRow.history)
-            ? serverRow.history
-            : localRow.history;
-
-          changed = true;
-        }
-      });
-    });
-    // סנכרון הוצאות מזדמנות בלבד
-    if (Array.isArray(d.extraExpenses)) {
-      const serverExtraExpenses = d.extraExpenses;
-
-      const localJson = JSON.stringify(extraExpenses || []);
-      const serverJson = JSON.stringify(serverExtraExpenses);
-
-      if (localJson !== serverJson) {
-        extraExpenses = serverExtraExpenses;
-        changed = true;
-
-        // אם חלון ההוצאות המזדמנות פתוח - מעדכנים רק אותו
-        if (
-          document
-            .getElementById('extra-expense-overlay')
-            ?.classList.contains('show')
-        ) {
-          renderExtraExpenses();
-        }
       }
-    }
-    if (changed) {
-      localStorage.setItem(LOCAL_KEY, getPayload());
-undoCommittedState = getUndoState();
-clearUndoOffer();
-      renderRows();
 
-      if (
-        document
-          .getElementById('dashboard-overlay')
-          ?.classList.contains('show')
-      ) {
-        openDashboard();
-      }
+      return;
     }
+
+    /*
+      אין שינוי מקומי לא שמור.
+      אפשר לטעון בבטחה את
+      הגרסה המלאה מהשרת.
+    */
+    applyPayload(d);
+
+    try {
+      localStorage.setItem(
+        LOCAL_KEY,
+        JSON.stringify(d)
+      );
+    } catch (e) {}
+
+    undoCommittedState =
+      getUndoState();
+
+    clearUndoOffer();
+
+    renderTabs();
+    renderRows();
+    updateNameSuggestions();
+
+    /*
+      אם הדשבורד פתוח,
+      מציגים גם בו את הנתונים החדשים.
+    */
+    if (
+      document
+        .getElementById(
+          'dashboard-overlay'
+        )
+        ?.classList.contains('show')
+    ) {
+      openDashboard();
+    }
+
+    externalUpdateNoticeShown = false;
+
+    setSyncStatus('saved');
 
   } catch (e) {
-    console.error('PHONE REFRESH ERROR:', e);
+    console.error(
+      'SERVER REFRESH ERROR:',
+      e
+    );
   }
-}
+
+    }
 document.getElementById('main-title').addEventListener('change', function() {
   const titleInput = this;
 
@@ -7200,7 +7306,7 @@ document.getElementById('main-title').addEventListener('change', function() {
   });
 });
 
-
+ 
 
 
 const _origRenderRows = renderRows;
