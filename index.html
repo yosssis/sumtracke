@@ -5551,10 +5551,7 @@ if (!result.ok) {
       renderRows();
     }
 
-    saveData(
-      'העלאת מסמך',
-      item.name || ''
-    );
+   saveData();
 
     showToast('✅ המסמך הועלה ונשמר');
 
@@ -5700,10 +5697,7 @@ async function deleteDocument(fileId) {
         throw new Error(result.error || 'Delete failed');
       }
 
-      saveData(
-        'מחיקת מסמך',
-        doc.name || ''
-      );
+    saveData();
 
       showToast('✅ המסמך נמחק');
 
