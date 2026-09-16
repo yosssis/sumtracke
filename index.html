@@ -6868,11 +6868,75 @@ try {
 
     const result = await response.json();
 
-    if (!result.ok || !result.token) {
-      showToast('❌ שם משתמש או סיסמה שגויים');
-      return;
+  if (!result.ok) {
+
+  if (
+    result.error ===
+    'login_locked'
+  ) {
+    const minutes =
+      Math.max(
+        1,
+        Math.ceil(
+          Number(
+            result.retryAfterSec ||
+            0
+          ) / 60
+        )
+      );
+
+    showToast(
+      '🔒 יותר מדי ניסיונות שגויים. ' +
+      'הכניסה נחסמה לכ־' +
+      minutes +
+      ' דקות.'
+    );
+
+    return;
+  }
+
+  if (
+    result.error ===
+    'invalid_credentials'
+  ) {
+    const attemptsLeft =
+      Number(
+        result.attemptsLeft
+      );
+
+    if (
+      Number.isFinite(
+        attemptsLeft
+      )
+    ) {
+      showToast(
+        '❌ שם משתמש או סיסמה שגויים. ' +
+        'נותרו ' +
+        attemptsLeft +
+        ' ניסיונות.'
+      );
+    } else {
+      showToast(
+        '❌ שם משתמש או סיסמה שגויים'
+      );
     }
 
+    return;
+  }
+
+  showToast(
+    '❌ לא ניתן להתחבר'
+  );
+
+  return;
+}
+
+if (!result.token) {
+  showToast(
+    '❌ לא התקבל אישור התחברות'
+  );
+  return;
+}
     authToken = result.token;
     sessionStorage.setItem('authToken', authToken);
     resetAuthIdleTimer();
