@@ -8185,23 +8185,61 @@ async function sendTempAnnualEmailNow(includeMarked) {
 const todayHebrew =
   getHebrewDateParts(new Date());
 
-const activeMonthIndex =
-  months.findIndex(
-    item =>
-      String(item.id) ===
-      String(month.id)
-  );
+function getPreviousHebrewMonths(count = 3) {
+  const result = [];
+
+  let cursor = new Date();
+
+  const current =
+    getHebrewDateParts(cursor);
+
+  let lastKey =
+    `${current.month}|${current.year}`;
+
+  let safety = 0;
+
+  while (
+    result.length < count &&
+    safety < 150
+  ) {
+    cursor.setDate(
+      cursor.getDate() - 1
+    );
+
+    const h =
+      getHebrewDateParts(cursor);
+
+    const key =
+      `${h.month}|${h.year}`;
+
+    if (key !== lastKey) {
+      const expectedName =
+        normalizeHebrewMonthName(
+          `${h.month} ${h.year}`
+        );
+
+      const foundMonth =
+        months.find(item =>
+          normalizeHebrewMonthName(
+            item.name
+          ) === expectedName
+        );
+
+      if (foundMonth) {
+        result.push(foundMonth);
+      }
+
+      lastKey = key;
+    }
+
+    safety++;
+  }
+
+  return result;
+}
 
 const previousMonths =
-  activeMonthIndex > 0
-    ? months.slice(
-        Math.max(
-          0,
-          activeMonthIndex - 3
-        ),
-        activeMonthIndex
-      )
-    : [];
+  getPreviousHebrewMonths(3);
 
 const activeStudentNames =
   new Map();
@@ -8260,19 +8298,20 @@ let missingStudents = [];
 */
 
 const activeMonthName =
-  String(
-    month.name || ''
-  ).trim();
+  normalizeHebrewMonthName(
+    String(
+      month.name || ''
+    ).trim()
+  );
 
-const currentHebrewMonth =
-  String(
-    todayHebrew.month || ''
-  ).trim();
+const currentHebrewMonthName =
+  normalizeHebrewMonthName(
+    `${todayHebrew.month} ${todayHebrew.year}`
+  );
 
 const isCurrentHebrewMonth =
-  activeMonthName.includes(
-    currentHebrewMonth
-  );
+  activeMonthName ===
+  currentHebrewMonthName;
 
 if (
   isCurrentHebrewMonth &&
