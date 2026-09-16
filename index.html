@@ -5461,7 +5461,15 @@ async function uploadDocument() {
     showToast('❌ הפריט לא נמצא');
     return;
   }
+const MAX_FILE_SIZE =
+  10 * 1024 * 1024;
 
+if (file.size > MAX_FILE_SIZE) {
+  showToast(
+    '❌ המסמך גדול מדי. מגבלת גודל המסמך היא 10MB.'
+  );
+  return;
+}
   try {
     showToast('⏳ מעלה מסמך...');
 
@@ -5491,11 +5499,35 @@ async function uploadDocument() {
       }
     });
 
-    const result = await response.json();
+  const result = await response.json();
 
-    if (!result.ok) {
-      throw new Error(result.error || 'Upload failed');
-    }
+if (!result.ok) {
+
+  if (result.error === 'file_too_large') {
+    showToast(
+      '❌ המסמך גדול מדי. מגבלת גודל המסמך היא 10MB.'
+    );
+    return;
+  }
+
+  if (result.error === 'file_type_not_allowed') {
+    showToast(
+      '❌ סוג הקובץ אינו נתמך. ניתן להעלות PDF, JPG, PNG, Word או Excel.'
+    );
+    return;
+  }
+
+  if (result.error === 'invalid_file_data') {
+    showToast(
+      '❌ לא ניתן לקרוא את המסמך. נסה לבחור את הקובץ מחדש.'
+    );
+    return;
+  }
+
+  throw new Error(
+    result.error || 'Upload failed'
+  );
+}
 
     if (!Array.isArray(item.documents)) {
       item.documents = [];
