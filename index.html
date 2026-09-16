@@ -1993,9 +1993,22 @@ body.auth-locked .external-links-dock {
 }
     /* ===== CHECKS CENTER ===== */
 
+.main-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 18px;
+  align-items: start;
+}
+
 .checks-center {
-  margin-top: 18px;
+  margin-top: 0;
   padding: 16px;
+
+  position: sticky;
+  top: 20px;
+
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
 
   background: #fff;
   border: 1px solid rgba(0,0,0,0.07);
@@ -2004,7 +2017,6 @@ body.auth-locked .external-links-dock {
   box-shadow:
     0 8px 24px rgba(0,0,0,0.055);
 }
-
 .checks-center-head {
   display: flex;
   align-items: center;
@@ -2116,12 +2128,21 @@ body.auth-locked .external-links-dock {
 
 @media (max-width: 600px) {
 
+  .main-workspace {
+    display: block;
+  }
+
   .checks-center-summary {
     grid-template-columns:
       repeat(2, minmax(0,1fr));
   }
 
   .checks-center {
+    position: static;
+    max-height: none;
+    overflow: visible;
+
+    margin-top: 14px;
     padding: 13px;
   }
 }
@@ -2221,7 +2242,7 @@ body.auth-locked .external-links-dock {
   </div>
 </div>
   <div class="tabs-outer" id="tabs-bar"></div>
-
+<div class="main-workspace">
   <div class="card">
     <div class="add-section">
 <div class="name-autocomplete">
@@ -2317,7 +2338,9 @@ body.auth-locked .external-links-dock {
     id="checks-center-list"
     class="checks-center-list"
   ></div>
+    
 </div>
+  </div>
  <div class="bottom-actions">
   <button class="btn-action export" onclick="exportExcel()">📥 ייצוא לאקסל</button>
   <button class="btn-action" onclick="sendEmail()">✉️ שלח במייל</button>
