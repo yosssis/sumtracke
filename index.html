@@ -1969,6 +1969,26 @@ body.auth-locked .external-links-dock {
     line-height: 1.25;
   }
 }
+    @media (max-width: 600px) {
+
+  .dashboard-month-card {
+    gap: 8px;
+    padding: 9px 10px !important;
+  }
+
+  .dashboard-month-card > span:first-child {
+    min-width: 0;
+    flex: 1;
+    font-size: 0.78rem;
+  }
+
+  .dashboard-month-card > span:last-child {
+    flex-shrink: 0;
+    font-size: 0.76rem !important;
+    white-space: nowrap;
+  }
+
+}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
