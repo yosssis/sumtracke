@@ -7157,8 +7157,34 @@ async function loadData() {
   setSyncStatus('loading');
 
   try {
-    const response = await fetch(API_URL + '?t=' + Date.now());
-    const d = await response.json();
+const response =
+  await fetch(API_URL, {
+    method: 'POST',
+    body: JSON.stringify({
+      action: 'getData',
+      token: authToken
+    })
+  });
+
+const result =
+  await response.json();
+
+if (!result.ok) {
+  if (result.error === 'unauthorized') {
+    authToken = '';
+    sessionStorage.removeItem('authToken');
+
+    document.body.classList.add('auth-locked');
+    openInitialLogin();
+    return;
+  }
+
+  throw new Error(
+    result.error || 'get_data_failed'
+  );
+}
+
+const d = result.data;
 
     if (d && Object.keys(d).length > 0) {
       applyPayload(d);
@@ -7182,14 +7208,49 @@ async function loadData() {
 }
 async function refreshPhoneUpdatesOnly() {
   try {
-    const response =
-      await fetch(
-        API_URL + '?t=' + Date.now()
-      );
+   const response =
+  await fetch(API_URL, {
+    method: 'POST',
+    body: JSON.stringify({
+      action: 'getData',
+      token: authToken
+    })
+  });
 
-    const d =
-      await response.json();
+const result =
+  await response.json();
 
+if (!result.ok) {
+  if (result.error === 'unauthorized') {
+    authToken = '';
+
+    sessionStorage.removeItem(
+      'authToken'
+    );
+
+    stopOnlineUsers();
+
+    if (syncTimer) {
+      clearInterval(syncTimer);
+      syncTimer = null;
+    }
+
+    appStarted = false;
+
+    document.body.classList.add(
+      'auth-locked'
+    );
+
+    openInitialLogin();
+    return;
+  }
+
+  throw new Error(
+    result.error || 'get_data_failed'
+  );
+}
+
+const d = result.data;
     if (
       !d ||
       !Array.isArray(d.months)
