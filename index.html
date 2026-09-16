@@ -1908,6 +1908,54 @@ body.auth-locked .external-links-dock {
     font-size: 0.76rem;
   }
 }
+    /* ===== LAST LOGGED IN USER ===== */
+
+.last-login-card {
+  margin-top: 12px;
+  padding: 10px 11px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+
+  background: linear-gradient(135deg, #fff7f2, #fffdfa);
+  border: 1px solid rgba(255,107,53,0.14);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+}
+
+.last-login-icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  border-radius: 10px;
+  background: rgba(255,107,53,0.10);
+  font-size: 0.95rem;
+}
+
+.last-login-content {
+  min-width: 0;
+  flex: 1;
+}
+
+.last-login-label {
+  font-size: 0.64rem;
+  font-weight: 700;
+  color: var(--muted);
+  margin-bottom: 2px;
+}
+
+.last-login-value {
+  font-size: 0.76rem;
+  font-weight: 900;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
@@ -2811,19 +2859,14 @@ margin:12px auto 0;
       בודק...
     </div>
   </div>
-  <div
-  id="last-logged-in-user"
-  style="
-    margin-top:10px;
-    padding-top:9px;
-    border-top:1px solid rgba(0,0,0,0.06);
-    font-size:0.72rem;
-    color:var(--muted);
-    line-height:1.6;
-  "
->
-  🕘 היה מחובר לאחרונה : —
-</div>
+  
+ <div id="last-logged-in-user" class="last-login-card">
+  <div class="last-login-icon">🕘</div>
+
+  <div class="last-login-content">
+    <div class="last-login-label">היה מחובר לאחרונה</div>
+    <div class="last-login-value">—</div>
+  </div>
 </div>
 <script>
   const MONTHS_HE = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני',
@@ -6206,9 +6249,13 @@ function renderLastLoggedInUser(lastLogin) {
 
   if (!el) return;
 
+  const valueEl =
+    el.querySelector('.last-login-value');
+
+  if (!valueEl) return;
+
   if (!lastLogin || !lastLogin.username) {
-    el.textContent =
-      '🕘 היה מחובר לאחרונה: —';
+    valueEl.textContent = '—';
     return;
   }
 
@@ -6231,8 +6278,7 @@ function renderLastLoggedInUser(lastLogin) {
       );
   }
 
-  el.textContent =
-    '🕘 היה מחובר לאחרונה: ' +
+  valueEl.textContent =
     lastLogin.username +
     (timeText ? ' · ' + timeText : '');
 }
