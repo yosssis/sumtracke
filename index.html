@@ -1991,6 +1991,140 @@ body.auth-locked .external-links-dock {
   }
 
 }
+    /* ===== CHECKS CENTER ===== */
+
+.checks-center {
+  margin-top: 18px;
+  padding: 16px;
+
+  background: #fff;
+  border: 1px solid rgba(0,0,0,0.07);
+  border-radius: 18px;
+
+  box-shadow:
+    0 8px 24px rgba(0,0,0,0.055);
+}
+
+.checks-center-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.checks-center-title {
+  font-size: 0.95rem;
+  font-weight: 900;
+  color: var(--text);
+}
+
+.checks-center-subtitle {
+  margin-top: 3px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.checks-center-count {
+  min-width: 38px;
+  height: 38px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 12px;
+
+  background: #fff3ed;
+  color: var(--accent);
+
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.checks-center-summary {
+  display: grid;
+  grid-template-columns:
+    repeat(4, minmax(0,1fr));
+
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.checks-summary-card {
+  padding: 10px 7px;
+  text-align: center;
+
+  background: #faf9f7;
+  border: 1px solid rgba(0,0,0,0.05);
+  border-radius: 12px;
+}
+
+.checks-summary-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.checks-summary-value {
+  margin-top: 3px;
+
+  font-size: 1rem;
+  font-weight: 900;
+
+  color: var(--text);
+}
+
+.checks-center-list {
+  margin-top: 12px;
+}
+
+.checks-item {
+  padding: 10px 11px;
+  margin-top: 7px;
+
+  border: 1px solid rgba(0,0,0,0.055);
+  border-radius: 12px;
+
+  background: #fffdfb;
+}
+
+.checks-item-title {
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.checks-item-sub {
+  margin-top: 2px;
+
+  font-size: 0.68rem;
+  color: var(--muted);
+}
+
+.checks-ok {
+  padding: 15px;
+
+  text-align: center;
+  font-size: 0.82rem;
+  font-weight: 800;
+
+  color: #219653;
+
+  background: #f2fbf5;
+  border-radius: 12px;
+}
+
+@media (max-width: 600px) {
+
+  .checks-center-summary {
+    grid-template-columns:
+      repeat(2, minmax(0,1fr));
+  }
+
+  .checks-center {
+    padding: 13px;
+  }
+}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
@@ -2148,6 +2282,42 @@ body.auth-locked .external-links-dock {
       <div class="total-amount-el" id="total-amount">₪0.00</div>
     </div>
   </div>
+  <div
+  id="checks-center"
+  class="checks-center"
+>
+  <div class="checks-center-head">
+    <div>
+      <div class="checks-center-title">
+        ⚠️ מרכז בדיקות
+      </div>
+
+      <div
+        id="checks-center-subtitle"
+        class="checks-center-subtitle"
+      >
+        בודק את נתוני החודש...
+      </div>
+    </div>
+
+    <div
+      id="checks-center-count"
+      class="checks-center-count"
+    >
+      0
+    </div>
+  </div>
+
+  <div
+    id="checks-center-summary"
+    class="checks-center-summary"
+  ></div>
+
+  <div
+    id="checks-center-list"
+    class="checks-center-list"
+  ></div>
+</div>
  <div class="bottom-actions">
   <button class="btn-action export" onclick="exportExcel()">📥 ייצוא לאקסל</button>
   <button class="btn-action" onclick="sendEmail()">✉️ שלח במייל</button>
@@ -4155,6 +4325,9 @@ saveData('הוספת פריט', name || '—');
 
 function renderRows() {
   const m = activeMonth();
+
+  renderChecksCenter();
+
   rowsList.innerHTML = '';
 
   const query = (searchInput.value || '')
@@ -7937,6 +8110,612 @@ async function sendTempAnnualEmailNow(includeMarked) {
     showToast('❌ שגיאה בשליחת הדוח השנתי');
   
 }
+  function renderChecksCenter() {
+  const summaryEl =
+    document.getElementById(
+      'checks-center-summary'
+    );
+
+  const listEl =
+    document.getElementById(
+      'checks-center-list'
+    );
+
+  const countEl =
+    document.getElementById(
+      'checks-center-count'
+    );
+
+  const subtitleEl =
+    document.getElementById(
+      'checks-center-subtitle'
+    );
+
+  if (
+    !summaryEl ||
+    !listEl ||
+    !countEl ||
+    !subtitleEl
+  ) {
+    return;
+  }
+
+  const month = activeMonth();
+
+  if (!month) {
+    summaryEl.innerHTML = '';
+    listEl.innerHTML = '';
+    countEl.textContent = '0';
+
+    subtitleEl.textContent =
+      'אין חודש פעיל';
+
+    return;
+  }
+
+  const rows =
+    Array.isArray(month.rows)
+      ? month.rows
+      : [];
+
+  const issues = [];
+
+  /*
+    ===================================
+    1. מי לא דיווח החודש
+    ===================================
+
+    כרגע רשימת התלמידים נבנית מכל
+    השמות שהופיעו בחודשים אחרים.
+  */
+
+  const allNames =
+ /*
+  ===================================
+  1. מי לא דיווח החודש
+  ===================================
+
+  מציגים חסרים רק החל מכ׳ בחודש העברי.
+
+  תלמיד נחשב פעיל אם הופיע
+  לפחות פעם אחת באחד משלושת
+  החודשים הקודמים לחודש הפעיל.
+*/
+
+const todayHebrew =
+  getHebrewDateParts(new Date());
+
+const activeMonthIndex =
+  months.findIndex(
+    item =>
+      String(item.id) ===
+      String(month.id)
+  );
+
+const previousMonths =
+  activeMonthIndex > 0
+    ? months.slice(
+        Math.max(
+          0,
+          activeMonthIndex - 3
+        ),
+        activeMonthIndex
+      )
+    : [];
+
+const activeStudentNames =
+  new Map();
+
+previousMonths.forEach(
+  previousMonth => {
+
+    (previousMonth.rows || [])
+      .forEach(row => {
+
+        const originalName =
+          String(
+            row.name || ''
+          ).trim();
+
+        const cleanName =
+          originalName
+            .toLowerCase();
+
+        if (
+          cleanName &&
+          originalName !== '—' &&
+          !activeStudentNames.has(
+            cleanName
+          )
+        ) {
+          activeStudentNames.set(
+            cleanName,
+            originalName
+          );
+        }
+
+      });
+  }
+);
+
+const currentNames =
+  new Set(
+    rows
+      .map(row =>
+        String(
+          row.name || ''
+        )
+          .trim()
+          .toLowerCase()
+      )
+      .filter(Boolean)
+  );
+
+let missingStudents = [];
+
+/*
+  מציגים חסרים רק כאשר:
+  1. החודש הפעיל הוא החודש העברי הנוכחי
+  2. היום הוא כ׳ בחודש או מאוחר יותר
+*/
+
+const activeMonthName =
+  String(
+    month.name || ''
+  ).trim();
+
+const currentHebrewMonth =
+  String(
+    todayHebrew.month || ''
+  ).trim();
+
+const isCurrentHebrewMonth =
+  activeMonthName.includes(
+    currentHebrewMonth
+  );
+
+if (
+  isCurrentHebrewMonth &&
+  Number(todayHebrew.day) >= 20
+) {
+
+  missingStudents =
+    [...activeStudentNames.entries()]
+      .filter(
+        ([cleanName]) =>
+          !currentNames.has(
+            cleanName
+          )
+      )
+      .map(
+        ([, originalName]) =>
+          originalName
+      );
+}
+
+missingStudents.forEach(name => {
+  issues.push({
+    type: 'missing',
+
+    title:
+      '📭 ' + name,
+
+    sub:
+      'לא נמצא דיווח בחודש ' +
+      month.name +
+      ' — הופיע באחד משלושת החודשים הקודמים'
+  });
+});
+  /*
+    ===================================
+    2. סכום חריג לעומת הממוצע האישי
+    ===================================
+
+    חריג =
+    לפחות 25% מהממוצע
+    וגם לפחות 50 ש"ח הבדל.
+
+    צריך לפחות שני חודשים קודמים
+    כדי שלא לסמן חריגה על בסיס
+    חודש אחד בלבד.
+  */
+
+  const unusualRows = [];
+
+  rows.forEach(row => {
+    const cleanName =
+      String(row.name || '')
+        .trim()
+        .toLowerCase();
+
+    if (!cleanName) {
+      return;
+    }
+
+    const previousAmounts = [];
+
+    months.forEach(otherMonth => {
+      if (
+        String(otherMonth.id) ===
+        String(month.id)
+      ) {
+        return;
+      }
+
+      const previousRow =
+        (otherMonth.rows || [])
+          .find(item =>
+            String(item.name || '')
+              .trim()
+              .toLowerCase() ===
+            cleanName
+          );
+
+      if (!previousRow) {
+        return;
+      }
+
+      const amount =
+        Number(
+          previousRow.amount
+        );
+
+      if (
+        Number.isFinite(amount)
+      ) {
+        previousAmounts.push(
+          amount
+        );
+      }
+    });
+
+    if (
+      previousAmounts.length < 2
+    ) {
+      return;
+    }
+
+    const average =
+      previousAmounts.reduce(
+        (sum, value) =>
+          sum + value,
+        0
+      ) /
+      previousAmounts.length;
+
+    if (average <= 0) {
+      return;
+    }
+
+    const currentAmount =
+      Number(row.amount) || 0;
+
+    const difference =
+      currentAmount - average;
+
+    const absoluteDifference =
+      Math.abs(difference);
+
+    const percentDifference =
+      absoluteDifference /
+      average;
+
+    if (
+      percentDifference >= 0.25 &&
+      absoluteDifference >= 50
+    ) {
+      unusualRows.push({
+        row,
+        average,
+        difference,
+        percentDifference
+      });
+
+      const direction =
+        difference > 0
+          ? 'גבוה'
+          : 'נמוך';
+
+      issues.push({
+        type: 'unusual',
+
+        title:
+          '📊 ' +
+          String(
+            row.name || 'ללא שם'
+          ),
+
+        sub:
+          'הסכום הנוכחי ' +
+          fmt(currentAmount) +
+          ' ' +
+          direction +
+          ' בכ-' +
+          Math.round(
+            percentDifference * 100
+          ) +
+          '% מהממוצע האישי (' +
+          fmt(average) +
+          ')'
+      });
+    }
+  });
+
+
+  /*
+    ===================================
+    3. שינוי ידני אחרי דיווח טלפוני
+    ===================================
+  */
+
+  const manualAfterPhone = [];
+
+  rows.forEach(row => {
+    const history =
+      Array.isArray(row.history)
+        ? row.history
+        : [];
+
+    if (history.length < 2) {
+      return;
+    }
+
+    const sortedHistory =
+      [...history].sort(
+        (a, b) =>
+          new Date(a.date).getTime() -
+          new Date(b.date).getTime()
+      );
+
+    let lastPhoneIndex = -1;
+
+    sortedHistory.forEach(
+      (entry, index) => {
+        if (
+          entry.source === 'phone'
+        ) {
+          lastPhoneIndex = index;
+        }
+      }
+    );
+
+    if (lastPhoneIndex < 0) {
+      return;
+    }
+
+    const manualEntry =
+      sortedHistory
+        .slice(lastPhoneIndex + 1)
+        .find(entry =>
+          entry.source === 'site'
+        );
+
+    if (!manualEntry) {
+      return;
+    }
+
+    manualAfterPhone.push(row);
+
+    const phoneEntry =
+      sortedHistory[
+        lastPhoneIndex
+      ];
+
+    issues.push({
+      type: 'manual',
+
+      title:
+        '✍️ ' +
+        String(
+          row.name || 'ללא שם'
+        ),
+
+      sub:
+        'הסכום שונה ידנית לאחר דיווח טלפוני' +
+        (
+          phoneEntry
+            ? ' (' +
+              fmt(
+                Number(
+                  phoneEntry.amount
+                ) || 0
+              ) +
+              ' ← ' +
+              fmt(
+                Number(
+                  manualEntry.amount
+                ) || 0
+              ) +
+              ')'
+            : ''
+        )
+    });
+  });
+
+
+  /*
+    ===================================
+    4. דיווחים טלפוניים צפופים
+    ===================================
+
+    שני דיווחים שונים בטווח של
+    עד 5 דקות.
+  */
+
+  const closeReports = [];
+
+  rows.forEach(row => {
+    const phoneHistory =
+      (
+        Array.isArray(row.history)
+          ? row.history
+          : []
+      )
+        .filter(entry =>
+          entry.source === 'phone' &&
+          entry.date
+        )
+        .sort(
+          (a, b) =>
+            new Date(a.date).getTime() -
+            new Date(b.date).getTime()
+        );
+
+    let foundCloseReport =
+      false;
+
+    for (
+      let i = 1;
+      i < phoneHistory.length;
+      i++
+    ) {
+      const previousTime =
+        new Date(
+          phoneHistory[i - 1].date
+        ).getTime();
+
+      const currentTime =
+        new Date(
+          phoneHistory[i].date
+        ).getTime();
+
+      const minutes =
+        (
+          currentTime -
+          previousTime
+        ) /
+        60000;
+
+      if (
+        minutes >= 0 &&
+        minutes <= 5
+      ) {
+        foundCloseReport = true;
+        break;
+      }
+    }
+
+    if (!foundCloseReport) {
+      return;
+    }
+
+    closeReports.push(row);
+
+    issues.push({
+      type: 'duplicate',
+
+      title:
+        '📞 ' +
+        String(
+          row.name || 'ללא שם'
+        ),
+
+      sub:
+        'נמצאו מספר דיווחים טלפוניים בתוך פחות מ-5 דקות'
+    });
+  });
+
+
+  /*
+    ===================================
+    כרטיסי הסיכום
+    ===================================
+  */
+
+  summaryEl.innerHTML = `
+    <div class="checks-summary-card">
+      <div class="checks-summary-label">
+        לא דיווחו
+      </div>
+
+      <div class="checks-summary-value">
+        ${missingStudents.length}
+      </div>
+    </div>
+
+    <div class="checks-summary-card">
+      <div class="checks-summary-label">
+        סכומים חריגים
+      </div>
+
+      <div class="checks-summary-value">
+        ${unusualRows.length}
+      </div>
+    </div>
+
+    <div class="checks-summary-card">
+      <div class="checks-summary-label">
+        שונו ידנית
+      </div>
+
+      <div class="checks-summary-value">
+        ${manualAfterPhone.length}
+      </div>
+    </div>
+
+    <div class="checks-summary-card">
+      <div class="checks-summary-label">
+        דיווחים צפופים
+      </div>
+
+      <div class="checks-summary-value">
+        ${closeReports.length}
+      </div>
+    </div>
+  `;
+
+
+  /*
+    ===================================
+    סטטוס עליון
+    ===================================
+  */
+
+  countEl.textContent =
+    String(issues.length);
+
+  if (issues.length === 0) {
+    subtitleEl.textContent =
+      month.name +
+      ' — לא נמצאו חריגות';
+
+    listEl.innerHTML = `
+      <div class="checks-ok">
+        ✅ החודש תקין ולא נמצאו דברים הדורשים בדיקה
+      </div>
+    `;
+
+    return;
+  }
+
+  subtitleEl.textContent =
+    month.name +
+    ' — ' +
+    issues.length +
+    ' פריטים דורשים בדיקה';
+
+
+  /*
+    ===================================
+    רשימת החריגים
+    ===================================
+  */
+
+  listEl.innerHTML =
+    issues
+      .map(issue => `
+        <div class="checks-item">
+          <div class="checks-item-title">
+            ${esc(issue.title)}
+          </div>
+
+          <div class="checks-item-sub">
+            ${esc(issue.sub)}
+          </div>
+        </div>
+      `)
+      .join('');
+
 }
  function getAllNames() {
   const names = new Set();
