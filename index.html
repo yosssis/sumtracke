@@ -8481,96 +8481,96 @@ missingStudents.forEach(name => {
   });
 
 
-  /*
-    ===================================
-    3. שינוי ידני אחרי דיווח טלפוני
-    ===================================
-  */
 
-  const manualAfterPhone = [];
+/*
+  ===================================
+  3. דיווח טלפוני אחרי שינוי ידני
+  ===================================
+*/
 
-  rows.forEach(row => {
-    const history =
-      Array.isArray(row.history)
-        ? row.history
-        : [];
+const phoneAfterManual = [];
 
-    if (history.length < 2) {
-      return;
-    }
+rows.forEach(row => {
+  const history =
+    Array.isArray(row.history)
+      ? row.history
+      : [];
 
-    const sortedHistory =
-      [...history].sort(
-        (a, b) =>
-          new Date(a.date).getTime() -
-          new Date(b.date).getTime()
-      );
+  if (history.length < 2) {
+    return;
+  }
 
-    let lastPhoneIndex = -1;
-
-    sortedHistory.forEach(
-      (entry, index) => {
-        if (
-          entry.source === 'phone'
-        ) {
-          lastPhoneIndex = index;
-        }
-      }
+  const sortedHistory =
+    [...history].sort(
+      (a, b) =>
+        new Date(a.date).getTime() -
+        new Date(b.date).getTime()
     );
 
-    if (lastPhoneIndex < 0) {
-      return;
+  let lastManualIndex = -1;
+
+  sortedHistory.forEach(
+    (entry, index) => {
+      if (
+        entry.source === 'site'
+      ) {
+        lastManualIndex = index;
+      }
     }
+  );
 
-    const manualEntry =
-      sortedHistory
-        .slice(lastPhoneIndex + 1)
-        .find(entry =>
-          entry.source === 'site'
-        );
+  if (lastManualIndex < 0) {
+    return;
+  }
 
-    if (!manualEntry) {
-      return;
-    }
+  const phoneEntry =
+    sortedHistory
+      .slice(lastManualIndex + 1)
+      .find(entry =>
+        entry.source === 'phone'
+      );
 
-    manualAfterPhone.push(row);
+  if (!phoneEntry) {
+    return;
+  }
 
-    const phoneEntry =
-      sortedHistory[
-        lastPhoneIndex
-      ];
+  const manualEntry =
+    sortedHistory[
+      lastManualIndex
+    ];
 
-    issues.push({
-      type: 'manual',
+  phoneAfterManual.push(row);
 
-      title:
-        '✍️ ' +
-        String(
-          row.name || 'ללא שם'
-        ),
+  issues.push({
+    type: 'phoneAfterManual',
 
-      sub:
-        'הסכום שונה ידנית לאחר דיווח טלפוני' +
-        (
-          phoneEntry
-            ? ' (' +
-              fmt(
-                Number(
-                  phoneEntry.amount
-                ) || 0
-              ) +
-              ' ← ' +
-              fmt(
-                Number(
-                  manualEntry.amount
-                ) || 0
-              ) +
-              ')'
-            : ''
-        )
-    });
+    title:
+      '📞 ' +
+      String(
+        row.name || 'ללא שם'
+      ),
+
+    sub:
+      'דיווח טלפוני שינה נתון לאחר שינוי ידני' +
+      (
+        manualEntry
+          ? ' (' +
+            fmt(
+              Number(
+                manualEntry.amount
+              ) || 0
+            ) +
+            ' ← ' +
+            fmt(
+              Number(
+                phoneEntry.amount
+              ) || 0
+            ) +
+            ')'
+          : ''
+      )
   });
-
+});
 
   /*
     ===================================
@@ -8682,15 +8682,15 @@ missingStudents.forEach(name => {
       </div>
     </div>
 
-    <div class="checks-summary-card">
-      <div class="checks-summary-label">
-        שונו ידנית
-      </div>
+  <div class="checks-summary-card">
+  <div class="checks-summary-label">
+    טלפון אחרי ידני
+  </div>
 
-      <div class="checks-summary-value">
-        ${manualAfterPhone.length}
-      </div>
-    </div>
+  <div class="checks-summary-value">
+    ${phoneAfterManual.length}
+  </div>
+</div>
 
     <div class="checks-summary-card">
       <div class="checks-summary-label">
