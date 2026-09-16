@@ -1952,9 +1952,11 @@ body.auth-locked .external-links-dock {
   font-size: 0.76rem;
   font-weight: 900;
   color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  line-height: 1.35;
+  word-break: break-word;
 }
     @media (max-width: 600px) {
   .last-login-card {
