@@ -320,7 +320,7 @@ body {
     linear-gradient(135deg, #f8f6f2 0%, #f3eee8 48%, #faf8f5 100%);
 }
 .container {
-  max-width: 760px;
+  max-width: 1180px;
 }
 
 .title-wrap {
@@ -1841,16 +1841,21 @@ body.auth-locked #online-users-panel {
     /* ===== EXTERNAL LINKS DOCK ===== */
 
 .external-links-dock {
-  position: fixed;
-  left: 16px;
-top: calc(50% - 140px);
+  position: sticky;
+  top: 20px;
+
   display: flex;
   flex-direction: column;
   gap: 10px;
-  z-index: 440;
+
+  width: 150px;
+  z-index: 5;
 }
 
+    
 .external-link-btn {
+  width: 100%;
+white-space: nowrap;
   min-width: 92px;
   height: 46px;
 
@@ -1895,14 +1900,16 @@ body.auth-locked .external-links-dock {
 }
 
 @media (max-width: 700px) {
+
   .external-links-dock {
-    left: 9px;
-    top: auto;
-    bottom: 82px;
+    position: static;
+    width: 100%;
+    margin-top: 14px;
   }
 
   .external-link-btn {
-    min-width: 78px;
+    width: 100%;
+    min-width: 0;
     height: 42px;
     padding: 0 12px;
     font-size: 0.76rem;
@@ -1995,7 +2002,8 @@ body.auth-locked .external-links-dock {
 
 .main-workspace {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
+  grid-template-columns:
+    minmax(0, 1fr) 320px 150px;
   gap: 18px;
   align-items: start;
 }
@@ -2150,34 +2158,6 @@ body.auth-locked .external-links-dock {
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body class="auth-locked">
-  <div class="external-links-dock">
-
-  <a
-    class="external-link-btn"
-    href="https://ultra.kesherhk.info/login"
-    target="_blank"
-    rel="noopener noreferrer"
-  >
-    🔗 קשר
-  </a>
-
-  <a
-    class="external-link-btn"
-    href="https://www.matara.pro/nedarimplus/Reports"
-    target="_blank"
-    rel="noopener noreferrer"
-  >
-    🧾 מכובד
-  </a>
-<a
-  class="external-link-btn"
-  href="https://start.telebank.co.il/login/#/LOGIN_PAGE_SME"
-  target="_blank"
-  rel="noopener noreferrer"
->
-  🏦 העברה בנקאית
-</a>
-</div>
 <div class="container">
 
   <div class="title-wrap">
@@ -2346,6 +2326,36 @@ body.auth-locked .external-links-dock {
     class="checks-center-list"
   ></div>
     
+</div>
+  <div class="external-links-dock">
+
+  <a
+    class="external-link-btn"
+    href="https://ultra.kesherhk.info/login"
+    target="_blank"
+    rel="noopener noreferrer"
+  >
+    🔗 קשר
+  </a>
+
+  <a
+    class="external-link-btn"
+    href="https://www.matara.pro/nedarimplus/Reports"
+    target="_blank"
+    rel="noopener noreferrer"
+  >
+    🧾 מכובד
+  </a>
+
+  <a
+    class="external-link-btn"
+    href="https://start.telebank.co.il/login/#/LOGIN_PAGE_SME"
+    target="_blank"
+    rel="noopener noreferrer"
+  >
+    🏦 העברה בנקאית
+  </a>
+
 </div>
   </div>
  <div class="bottom-actions">
