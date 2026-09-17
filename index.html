@@ -5440,6 +5440,54 @@ function openHistory(rowId) {
       item.source === 'phone'
         ? '📞 טלפון'
         : '✏️ שינוי באתר';
+    const phoneData =
+  item.source === 'phone' &&
+  item.phoneData
+    ? item.phoneData
+    : null;
+
+const phoneDetails = phoneData
+  ? `
+    <div style="
+      margin-top:8px;
+      padding:9px 10px;
+      background:#fff7f2;
+      border-radius:10px;
+      font-size:0.70rem;
+      line-height:1.7;
+      color:var(--text);
+    ">
+      <div><strong>שעות:</strong> ${Number(phoneData.hours) || 0}</div>
+      <div><strong>דקות:</strong> ${Number(phoneData.minutes) || 0}</div>
+      <div><strong>חצאי שעות:</strong> ${Number(phoneData.halfHours) || 0}</div>
+
+      <div>
+        <strong>טלפון כבוי:</strong>
+        ${phoneData.phoneOff ? 'כן' : 'לא'}
+      </div>
+
+      <div>
+        <strong>למד עם מישהו:</strong>
+        ${phoneData.learnedWithSomeone ? 'כן' : 'לא'}
+      </div>
+
+      <div>
+        <strong>העביר שיעור:</strong>
+        ${phoneData.gaveLesson ? 'כן' : 'לא'}
+      </div>
+
+      <div>
+        <strong>הערה - ימים:</strong>
+        ${Number(phoneData.noteDays) || 0}
+      </div>
+
+      <div>
+        <strong>הערה - דקות:</strong>
+        ${Number(phoneData.noteMinutes) || 0}
+      </div>
+    </div>
+  `
+  : '';
 
     return `
       <div style="
@@ -5462,6 +5510,7 @@ function openHistory(rowId) {
             margin-top:2px;
           ">
             ${source}
+            ${phoneDetails}
           </div>
         </div>
 
