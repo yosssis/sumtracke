@@ -391,32 +391,49 @@ body {
 }
 
 .add-section {
-  padding: 22px 22px 12px;
-  gap: 12px;
+  padding: 10px 14px;
+  gap: 8px;
   border-bottom: none;
 }
 
 .add-section-row2 {
-  padding: 0 22px 22px;
+  padding: 0 14px 10px;
   border-bottom: 1px solid rgba(0,0,0,0.06);
 }
 
 .add-section {
-  padding-top: 18px;
+  padding-top: 10px;
 }
 
 .add-section input,
 .inp-notes,
 .inp-search {
-  height: 46px;
+  height: 36px;
   border: 1px solid rgba(0,0,0,0.08);
-  border-radius: 12px;
+  border-radius: 9px;
   background: #fbfaf8;
   box-shadow: none;
   transition: all 0.2s;
-
+  font-size: 0.82rem;
+  padding: 0 10px;
 }
 
+    .name-autocomplete {
+  flex: 1.45;
+}
+
+.inp-search {
+  flex: 1.1;
+}
+
+.inp-amount {
+  flex: 0.65;
+}
+
+.inp-notes {
+  flex: 1.25;
+}
+    
 .add-section input:focus,
 .inp-notes:focus,
 .inp-search:focus {
@@ -425,10 +442,10 @@ body {
 }
 
 .btn-add {
-  min-width: 46px;
+  min-width: 36px;
   
-  height: 46px;
-  border-radius: 12px;
+  height: 36px;
+  border-radius: 9px;
   background: linear-gradient(135deg, #ff6b35, #ff914d);
   box-shadow: 0 6px 16px rgba(255,107,53,0.22);
 }
@@ -1710,8 +1727,10 @@ body.auth-locked #login-overlay .btn-action {
 .login-changes-dock {
   position: fixed;
   left: 16px;
-  top: 50%;
-  transform: translateY(-50%) translateX(-80px);
+  right: auto;
+  top: auto;
+  bottom: 18px;
+  transform: translateX(-80px);
 
   min-width: 52px;
   height: 52px;
@@ -1747,7 +1766,7 @@ body.auth-locked #login-overlay .btn-action {
   visibility: visible;
   pointer-events: auto !important;
   z-index: 9999 !important;
-  transform: translateY(-50%) translateX(0);
+  transform: translateX(0);
 }
 
 #login-changes-badge {
@@ -2320,17 +2339,19 @@ position: static;
   placeholder="🔍 חיפוש..."
   autocomplete="off"
 />
+
+<input
+  type="text"
+  id="input-notes"
+  class="inp-notes"
+  placeholder="הערה (אופציונלי)"
+/>
       
       <input type="number" id="input-amount" class="inp-amount" placeholder="סכום" step="0.01" inputmode="decimal" />
       <button class="btn-add" onclick="addRow()">+</button>
     </div>
    <div class="add-section-row2">
-  <input
-    type="text"
-    id="input-notes"
-    class="inp-notes"
-    placeholder="הערה (אופציונלי)"
-  />
+
 
   <button
     type="button"
@@ -2338,8 +2359,8 @@ position: static;
     onclick="openExtraExpense()"
     style="
       flex-shrink:0;
-      height:46px;
-      padding:0 16px;
+      height:36px;
+      padding:0 12px;
       white-space:nowrap;
       color:var(--accent);
       border-color:rgba(255,107,53,0.25);
