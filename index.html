@@ -2425,6 +2425,22 @@ position: static;
   >
     ➕ הוצאה מזדמנת
   </button>
+     <button
+  type="button"
+  class="btn-action export"
+  onclick="exportMasavExcel()"
+  style="
+    flex-shrink:0;
+    height:36px;
+    padding:0 12px;
+    white-space:nowrap;
+    color:var(--green);
+    border-color:rgba(46,204,113,0.35);
+    font-weight:700;
+  "
+>
+  🏦 ייצוא טופס מס"ב
+</button>
 </div>
      <div class="total-bar">
       <div class="total-label">
@@ -2675,6 +2691,42 @@ position: static;
       style="width:100%; padding:10px; margin:6px 0 16px; border:1.5px solid #ddd; border-radius:9px; font-family:Heebo;"
     />
 
+    <input
+  type="text"
+  id="edit-beneficiary-id"
+  placeholder="מזהה מוטב — אופציונלי"
+  maxlength="10"
+  style="width:100%; padding:10px; margin:6px 0; border:1.5px solid #ddd; border-radius:9px; font-family:Heebo;"
+/>
+
+<input
+  type="text"
+  id="edit-account-number"
+  placeholder="מספר חשבון"
+  maxlength="13"
+  inputmode="numeric"
+  style="width:100%; padding:10px; margin:6px 0; border:1.5px solid #ddd; border-radius:9px; font-family:Heebo;"
+/>
+
+<input
+  type="text"
+  id="edit-bank-code"
+  placeholder="קוד בנק"
+  maxlength="4"
+  inputmode="numeric"
+  style="width:100%; padding:10px; margin:6px 0; border:1.5px solid #ddd; border-radius:9px; font-family:Heebo;"
+/>
+
+<input
+  type="text"
+  id="edit-branch-code"
+  placeholder="קוד סניף"
+  maxlength="4"
+  inputmode="numeric"
+  style="width:100%; padding:10px; margin:6px 0 16px; border:1.5px solid #ddd; border-radius:9px; font-family:Heebo;"
+/>
+
+    
     <div class="dialog-btns">
       <button class="btn-cancel" onclick="closeEditDialog()">ביטול</button>
       <button class="btn-confirm-del" onclick="saveEditRow()">שמור</button>
@@ -4527,6 +4579,66 @@ function getPreviousMonthNote(name) {
 
   return String(previousRow?.notes || '').trim();
 }
+
+  function getSavedBankDetails(name, excludeRowId = null) {
+  const cleanName =
+    String(name || '').trim().toLowerCase();
+
+  for (
+    let monthIndex = months.length - 1;
+    monthIndex >= 0;
+    monthIndex--
+  ) {
+    const monthRows =
+      months[monthIndex].rows || [];
+
+    for (
+      let rowIndex = monthRows.length - 1;
+      rowIndex >= 0;
+      rowIndex--
+    ) {
+      const row = monthRows[rowIndex];
+
+      const sameName =
+        String(row.name || '')
+          .trim()
+          .toLowerCase() === cleanName;
+
+      if (
+        sameName &&
+        row.id !== excludeRowId &&
+        (
+          row.beneficiaryId ||
+          row.accountNumber ||
+          row.bankCode ||
+          row.branchCode
+        )
+      ) {
+        return {
+          beneficiaryId:
+            String(row.beneficiaryId || ''),
+
+          accountNumber:
+            String(row.accountNumber || ''),
+
+          bankCode:
+            String(row.bankCode || ''),
+
+          branchCode:
+            String(row.branchCode || '')
+        };
+      }
+    }
+  }
+
+  return {
+    beneficiaryId: '',
+    accountNumber: '',
+    bankCode: '',
+    branchCode: ''
+  };
+}
+  
   function addRow() {
       if (!authToken) {
     requireAuth(addRow);
@@ -4535,6 +4647,8 @@ function getPreviousMonthNote(name) {
     const name = nameInput.value.trim();
     const amount = parseFloat(amtInput.value);
     const enteredNotes = notesInput.value.trim();
+    const savedBankDetails =
+  getSavedBankDetails(name);
 
 const notes =
   enteredNotes ||
@@ -4545,6 +4659,19 @@ activeMonth().rows.push({
   name: name || '—',
   amount: isNaN(amount) ? 0 : amount,
   notes,
+
+  beneficiaryId:
+    savedBankDetails.beneficiaryId,
+
+  accountNumber:
+    savedBankDetails.accountNumber,
+
+  bankCode:
+    savedBankDetails.bankCode,
+
+  branchCode:
+    savedBankDetails.branchCode,
+
   marked: false,
   documents: []
 });
@@ -4745,6 +4872,19 @@ function editRow(rowId) {
   document.getElementById('edit-amount').value = row.amount ?? '';
   document.getElementById('edit-notes').value = row.notes || '';
 
+  document.getElementById('edit-beneficiary-id').value =
+  row.beneficiaryId || '';
+
+document.getElementById('edit-account-number').value =
+  row.accountNumber || '';
+
+document.getElementById('edit-bank-code').value =
+  row.bankCode || '';
+
+document.getElementById('edit-branch-code').value =
+  row.branchCode || '';
+
+  
   document.getElementById('edit-overlay').classList.add('show');
 
   setTimeout(() => {
@@ -5559,6 +5699,59 @@ function saveEditRow() {
     document.getElementById('edit-amount').value
   );
   const newNotes = document.getElementById('edit-notes').value.trim();
+  const newBeneficiaryId =
+  document
+    .getElementById('edit-beneficiary-id')
+    .value
+    .trim();
+
+const newAccountNumber =
+  document
+    .getElementById('edit-account-number')
+    .value
+    .trim();
+
+const newBankCode =
+  document
+    .getElementById('edit-bank-code')
+    .value
+    .trim();
+
+const newBranchCode =
+  document
+    .getElementById('edit-branch-code')
+    .value
+    .trim();
+
+if (
+  newAccountNumber &&
+  !/^\d{1,13}$/.test(newAccountNumber)
+) {
+  showToast(
+    '❌ מספר החשבון חייב להכיל עד 13 ספרות'
+  );
+  return;
+}
+
+if (
+  newBankCode &&
+  !/^\d{1,4}$/.test(newBankCode)
+) {
+  showToast(
+    '❌ קוד הבנק חייב להכיל עד 4 ספרות'
+  );
+  return;
+}
+
+if (
+  newBranchCode &&
+  !/^\d{1,4}$/.test(newBranchCode)
+) {
+  showToast(
+    '❌ קוד הסניף חייב להכיל עד 4 ספרות'
+  );
+  return;
+}
 
   if (isNaN(newAmount)) {
     showToast('❌ סכום לא תקין');
@@ -5569,6 +5762,18 @@ const oldAmount = Number(row.amount) || 0;
 
 row.name = newName || '—';
 row.notes = newNotes;
+
+row.beneficiaryId =
+  newBeneficiaryId;
+
+row.accountNumber =
+  newAccountNumber;
+
+row.bankCode =
+  newBankCode;
+
+row.branchCode =
+  newBranchCode;
 
 if (oldAmount !== newAmount) {
   if (!Array.isArray(row.history)) {
@@ -6326,6 +6531,252 @@ function exportExcelNow(includeMarked) {
   showToast('✅ הקובץ יוצא בהצלחה!');
 }
 
+  function exportMasavExcel() {
+  if (!authToken) {
+    requireAuth(exportMasavExcel);
+    return;
+  }
+
+  const month = activeMonth();
+
+  if (
+    !month ||
+    !Array.isArray(month.rows) ||
+    month.rows.length === 0
+  ) {
+    showToast('אין נתונים לייצוא');
+    return;
+  }
+
+  if (typeof XLSX === 'undefined') {
+    showToast('❌ ספריית Excel לא נטענה');
+    return;
+  }
+
+  const rows = [...month.rows];
+  const errors = [];
+
+  rows.forEach((row, index) => {
+    const rowNumber = index + 1;
+
+    const name =
+      String(row.name || '').trim();
+
+    const beneficiaryId =
+      String(row.beneficiaryId || '').trim();
+
+    const accountNumber =
+      String(row.accountNumber || '').trim();
+
+    const bankCode =
+      String(row.bankCode || '').trim();
+
+    const branchCode =
+      String(row.branchCode || '').trim();
+
+    const notes =
+      String(row.notes || '').trim();
+
+    const amount =
+      Number(row.amount);
+
+    if (
+      !name ||
+      name === '—'
+    ) {
+      errors.push(
+        `שורה ${rowNumber}: חסר שם מוטב`
+      );
+    } else if (name.length > 40) {
+      errors.push(
+        `שורה ${rowNumber}: שם המוטב ארוך מ־40 תווים`
+      );
+    }
+
+    if (beneficiaryId.length > 10) {
+      errors.push(
+        `שורה ${rowNumber}: מזהה המוטב ארוך מ־10 תווים`
+      );
+    }
+
+    if (
+      !/^\d{1,13}$/.test(accountNumber)
+    ) {
+      errors.push(
+        `שורה ${rowNumber}: מספר חשבון חסר או לא תקין`
+      );
+    }
+
+    if (
+      !/^\d{1,4}$/.test(bankCode)
+    ) {
+      errors.push(
+        `שורה ${rowNumber}: קוד בנק חסר או לא תקין`
+      );
+    }
+
+    if (
+      !/^\d{1,4}$/.test(branchCode)
+    ) {
+      errors.push(
+        `שורה ${rowNumber}: קוד סניף חסר או לא תקין`
+      );
+    }
+
+    if (
+      !Number.isFinite(amount) ||
+      amount <= 0
+    ) {
+      errors.push(
+        `שורה ${rowNumber}: סכום לא תקין`
+      );
+    }
+
+    if (notes.length > 58) {
+      errors.push(
+        `שורה ${rowNumber}: ההערה ארוכה מ־58 תווים`
+      );
+    }
+  });
+
+  if (errors.length > 0) {
+    alert(
+      'לא ניתן לייצא טופס מס"ב:\n\n' +
+      errors.slice(0, 15).join('\n') +
+      (
+        errors.length > 15
+          ? `\n\nועוד ${errors.length - 15} שגיאות`
+          : ''
+      )
+    );
+
+    showToast(
+      '❌ יש להשלים את פרטי הבנק'
+    );
+
+    return;
+  }
+
+  const excelData = [
+    [
+      'שם המוטב',
+      'מזהה מוטב',
+      'מספר החשבון ',
+      'בנק',
+      'סניף',
+      'סכום',
+      'הערה'
+    ]
+  ];
+
+  rows.forEach(row => {
+    excelData.push([
+      String(row.name || '').trim(),
+
+      String(
+        row.beneficiaryId || ''
+      ).trim(),
+
+      Number(row.accountNumber),
+
+      Number(row.bankCode),
+
+      Number(row.branchCode),
+
+      Number(
+        Number(row.amount).toFixed(2)
+      ),
+
+      String(row.notes || '').trim()
+    ]);
+  });
+
+  const worksheet =
+    XLSX.utils.aoa_to_sheet(excelData);
+
+  worksheet['!cols'] = [
+    { wch: 25 },
+    { wch: 14 },
+    { wch: 16 },
+    { wch: 8 },
+    { wch: 8 },
+    { wch: 14 },
+    { wch: 35 }
+  ];
+
+  for (
+    let rowNumber = 2;
+    rowNumber <= excelData.length;
+    rowNumber++
+  ) {
+    const beneficiaryCell =
+      worksheet[`B${rowNumber}`];
+
+    const accountCell =
+      worksheet[`C${rowNumber}`];
+
+    const bankCell =
+      worksheet[`D${rowNumber}`];
+
+    const branchCell =
+      worksheet[`E${rowNumber}`];
+
+    const amountCell =
+      worksheet[`F${rowNumber}`];
+
+    if (beneficiaryCell) {
+      beneficiaryCell.z = '0';
+    }
+
+    if (accountCell) {
+      accountCell.z = '0';
+    }
+
+    if (bankCell) {
+      bankCell.z = '0';
+    }
+
+    if (branchCell) {
+      branchCell.z = '0';
+    }
+
+    if (amountCell) {
+      amountCell.z = '0.00';
+    }
+  }
+
+  const workbook =
+    XLSX.utils.book_new();
+
+  workbook.Workbook = {
+    Views: [
+      {
+        RTL: true
+      }
+    ]
+  };
+
+  XLSX.utils.book_append_sheet(
+    workbook,
+    worksheet,
+    'גיליון1'
+  );
+
+  const safeMonthName =
+    String(month.name || 'חודש')
+      .replace(/[\\/:*?"<>|]/g, '-');
+
+  XLSX.writeFile(
+    workbook,
+    `טופס_מסב_${safeMonthName}.xlsx`
+  );
+
+  showToast(
+    '✅ טופס מס"ב נוצר בהצלחה'
+  );
+}
+
+  
   // ── DIALOG ────────────────────────────────────────────
   function askDeleteRow(rowId, rowName) {
     pendingDelete = { type: 'row', rowId };
