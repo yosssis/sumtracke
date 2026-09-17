@@ -2708,25 +2708,38 @@ position: static;
   style="width:100%; padding:10px; margin:6px 0; border:1.5px solid #ddd; border-radius:9px; font-family:Heebo;"
 />
 
-<input
-  type="text"
+<select
   id="edit-bank-code"
-  placeholder="קוד בנק * חובה למס״ב"
-  maxlength="4"
-  inputmode="numeric"
-  
-  style="width:100%; padding:10px; margin:6px 0; border:1.5px solid #ddd; border-radius:9px; font-family:Heebo;"
-/>
+  style="
+    width:100%;
+    padding:10px;
+    margin:6px 0;
+    border:1.5px solid #ddd;
+    border-radius:9px;
+    font-family:Heebo;
+    background:#fff;
+    color:var(--text);
+  "
+>
+  <option value="">בחר בנק * חובה למס״ב</option>
+</select>
 
-<input
-  type="text"
+<select
   id="edit-branch-code"
-  placeholder="קוד סניף * חובה למס״ב"
-  maxlength="4"
-  inputmode="numeric"
-  
-  style="width:100%; padding:10px; margin:6px 0 16px; border:1.5px solid #ddd; border-radius:9px; font-family:Heebo;"
-/>
+  disabled
+  style="
+    width:100%;
+    padding:10px;
+    margin:6px 0 16px;
+    border:1.5px solid #ddd;
+    border-radius:9px;
+    font-family:Heebo;
+    background:#fff;
+    color:var(--text);
+  "
+>
+  <option value="">תחילה יש לבחור בנק</option>
+</select>
     
     <div class="dialog-btns">
       <button class="btn-cancel" onclick="closeEditDialog()">ביטול</button>
@@ -3351,6 +3364,239 @@ margin:12px auto 0;
 </div>
 </div>
 <script>
+  let bankBranchesData = [];
+let bankBranchesLoaded = false;
+let bankBranchesLoadingPromise = null;
+
+function getXmlValue(element, tagName) {
+  return (
+    element.querySelector(tagName)?.textContent || ''
+  ).trim();
+}
+
+async function loadBankBranches() {
+  if (bankBranchesLoaded) {
+    return;
+  }
+
+  if (bankBranchesLoadingPromise) {
+    return bankBranchesLoadingPromise;
+  }
+
+  const bankSelect =
+    document.getElementById('edit-bank-code');
+
+  const branchSelect =
+    document.getElementById('edit-branch-code');
+
+  bankSelect.innerHTML =
+    '<option value="">טוען רשימת בנקים...</option>';
+
+  bankSelect.disabled = true;
+  branchSelect.disabled = true;
+
+  bankBranchesLoadingPromise = (async () => {
+    try {
+      const response = await fetch(
+        './snifim_he.xml',
+        {
+          cache: 'no-store'
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `טעינת הקובץ נכשלה: ${response.status}`
+        );
+      }
+
+      const xmlText = await response.text();
+
+      const xml =
+        new DOMParser().parseFromString(
+          xmlText,
+          'text/xml'
+        );
+
+      if (xml.querySelector('parsererror')) {
+        throw new Error('קובץ הסניפים אינו תקין');
+      }
+
+      bankBranchesData =
+        [...xml.querySelectorAll('branch')]
+          .map(branch => ({
+            bankCode:
+              getXmlValue(branch, 'id'),
+
+            bankName:
+              getXmlValue(branch, 'name'),
+
+            branchCode:
+              getXmlValue(
+                branch,
+                'branch_code'
+              ),
+
+            branchName:
+              getXmlValue(
+                branch,
+                'branch_name'
+              ),
+
+            city:
+              getXmlValue(branch, 'city'),
+
+            closeDate:
+              getXmlValue(
+                branch,
+                'close_date'
+              )
+          }))
+          .filter(item =>
+            item.bankCode &&
+            item.branchCode &&
+            !item.closeDate
+          );
+
+      const banksMap = new Map();
+
+      bankBranchesData.forEach(item => {
+        if (!banksMap.has(item.bankCode)) {
+          banksMap.set(
+            item.bankCode,
+            item.bankName
+          );
+        }
+      });
+
+      const banks =
+        [...banksMap.entries()]
+          .sort(
+            (a, b) =>
+              Number(a[0]) - Number(b[0])
+          );
+
+      bankSelect.innerHTML =
+        '<option value="">בחר בנק * חובה למס״ב</option>';
+
+      banks.forEach(([code, name]) => {
+        const option =
+          document.createElement('option');
+
+        option.value = code;
+        option.textContent =
+          `${code} — ${name}`;
+
+        bankSelect.appendChild(option);
+      });
+
+      bankSelect.disabled = false;
+      bankBranchesLoaded = true;
+
+    } catch (error) {
+      console.error(
+        'BANK BRANCHES LOAD ERROR:',
+        error
+      );
+
+      bankSelect.innerHTML =
+        '<option value="">לא ניתן לטעון בנקים</option>';
+
+      showToast(
+        '❌ לא ניתן לטעון את רשימת הבנקים'
+      );
+    } finally {
+      bankBranchesLoadingPromise = null;
+    }
+  })();
+
+  return bankBranchesLoadingPromise;
+}
+
+function populateBranchOptions(
+  bankCode,
+  selectedBranchCode = ''
+) {
+  const branchSelect =
+    document.getElementById(
+      'edit-branch-code'
+    );
+
+  branchSelect.innerHTML = '';
+
+  if (!bankCode) {
+    branchSelect.disabled = true;
+
+    branchSelect.innerHTML =
+      '<option value="">תחילה יש לבחור בנק</option>';
+
+    return;
+  }
+
+  const uniqueBranches = new Map();
+
+  bankBranchesData
+    .filter(
+      item =>
+        String(item.bankCode) ===
+        String(bankCode)
+    )
+    .forEach(item => {
+      if (
+        !uniqueBranches.has(
+          item.branchCode
+        )
+      ) {
+        uniqueBranches.set(
+          item.branchCode,
+          item
+        );
+      }
+    });
+
+  const branches =
+    [...uniqueBranches.values()]
+      .sort(
+        (a, b) =>
+          Number(a.branchCode) -
+          Number(b.branchCode)
+      );
+
+  branchSelect.innerHTML =
+    '<option value="">בחר סניף * חובה למס״ב</option>';
+
+  branches.forEach(branch => {
+    const option =
+      document.createElement('option');
+
+    option.value = branch.branchCode;
+
+    option.textContent =
+      `${branch.branchCode} — ` +
+      `${branch.branchName}` +
+      (
+        branch.city
+          ? `, ${branch.city}`
+          : ''
+      );
+
+    branchSelect.appendChild(option);
+  });
+
+  branchSelect.disabled = false;
+
+  if (selectedBranchCode) {
+    branchSelect.value =
+      String(selectedBranchCode);
+  }
+}
+  document
+  .getElementById('edit-bank-code')
+  .addEventListener('change', event => {
+    populateBranchOptions(
+      event.target.value
+    );
+  });
   const MONTHS_HE = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני',
                      'יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
 
@@ -4859,7 +5105,7 @@ filteredRows.forEach((r, i) => {
   }
 let editingRowId = null;
 
-function editRow(rowId) {
+async function editRow(rowId) {
     if (!authToken) {
     requireAuth(() => editRow(rowId));
     return;
@@ -4868,6 +5114,7 @@ function editRow(rowId) {
   if (!row) return;
 
   editingRowId = rowId;
+  await loadBankBranches();
 
   document.getElementById('edit-name').value = row.name || '';
   document.getElementById('edit-amount').value = row.amount ?? '';
@@ -4879,11 +5126,20 @@ function editRow(rowId) {
 document.getElementById('edit-account-number').value =
   row.accountNumber || '';
 
-document.getElementById('edit-bank-code').value =
-  row.bankCode || '';
+const savedBankCode =
+  String(row.bankCode || '');
 
-document.getElementById('edit-branch-code').value =
-  row.branchCode || '';
+const savedBranchCode =
+  String(row.branchCode || '');
+
+document.getElementById(
+  'edit-bank-code'
+).value = savedBankCode;
+
+populateBranchOptions(
+  savedBankCode,
+  savedBranchCode
+);
 
   
   document.getElementById('edit-overlay').classList.add('show');
