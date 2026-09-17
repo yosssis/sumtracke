@@ -2702,7 +2702,7 @@ position: static;
 <input
   type="text"
   id="edit-account-number"
-  placeholder="מספר חשבון"
+ placeholder="מספר חשבון * חובה למס״ב"
   maxlength="13"
   inputmode="numeric"
   style="width:100%; padding:10px; margin:6px 0; border:1.5px solid #ddd; border-radius:9px; font-family:Heebo;"
@@ -2711,21 +2711,22 @@ position: static;
 <input
   type="text"
   id="edit-bank-code"
-  placeholder="קוד בנק"
+  placeholder="קוד בנק * חובה למס״ב"
   maxlength="4"
   inputmode="numeric"
+  
   style="width:100%; padding:10px; margin:6px 0; border:1.5px solid #ddd; border-radius:9px; font-family:Heebo;"
 />
 
 <input
   type="text"
   id="edit-branch-code"
-  placeholder="קוד סניף"
+  placeholder="קוד סניף * חובה למס״ב"
   maxlength="4"
   inputmode="numeric"
+  
   style="width:100%; padding:10px; margin:6px 0 16px; border:1.5px solid #ddd; border-radius:9px; font-family:Heebo;"
 />
-
     
     <div class="dialog-btns">
       <button class="btn-cancel" onclick="closeEditDialog()">ביטול</button>
@@ -5727,6 +5728,7 @@ if (
   newAccountNumber &&
   !/^\d{1,13}$/.test(newAccountNumber)
 ) {
+  
   showToast(
     '❌ מספר החשבון חייב להכיל עד 13 ספרות'
   );
@@ -5737,6 +5739,7 @@ if (
   newBankCode &&
   !/^\d{1,4}$/.test(newBankCode)
 ) {
+  
   showToast(
     '❌ קוד הבנק חייב להכיל עד 4 ספרות'
   );
@@ -6579,23 +6582,27 @@ function exportExcelNow(includeMarked) {
 
     const amount =
       Number(row.amount);
+    const rowLabel =
+  name && name !== '—'
+    ? `${name} — שורה ${rowNumber}`
+    : `שורה ${rowNumber}`;
 
     if (
       !name ||
       name === '—'
     ) {
       errors.push(
-        `שורה ${rowNumber}: חסר שם מוטב`
+       `${rowLabel}: חסר שם מוטב`
       );
     } else if (name.length > 40) {
       errors.push(
-        `שורה ${rowNumber}: שם המוטב ארוך מ־40 תווים`
+      `${rowLabel}: שם המוטב ארוך מ־40 תווים`
       );
     }
 
     if (beneficiaryId.length > 10) {
       errors.push(
-        `שורה ${rowNumber}: מזהה המוטב ארוך מ־10 תווים`
+       `${rowLabel}: מזהה המוטב ארוך מ־10 תווים`
       );
     }
 
@@ -6603,7 +6610,7 @@ function exportExcelNow(includeMarked) {
       !/^\d{1,13}$/.test(accountNumber)
     ) {
       errors.push(
-        `שורה ${rowNumber}: מספר חשבון חסר או לא תקין`
+       `${rowLabel}: מספר חשבון חסר או לא תקין`
       );
     }
 
@@ -6611,7 +6618,7 @@ function exportExcelNow(includeMarked) {
       !/^\d{1,4}$/.test(bankCode)
     ) {
       errors.push(
-        `שורה ${rowNumber}: קוד בנק חסר או לא תקין`
+       `${rowLabel}: קוד בנק חסר או לא תקין`
       );
     }
 
@@ -6619,7 +6626,7 @@ function exportExcelNow(includeMarked) {
       !/^\d{1,4}$/.test(branchCode)
     ) {
       errors.push(
-        `שורה ${rowNumber}: קוד סניף חסר או לא תקין`
+       `${rowLabel}: קוד סניף חסר או לא תקין`
       );
     }
 
@@ -6628,13 +6635,13 @@ function exportExcelNow(includeMarked) {
       amount <= 0
     ) {
       errors.push(
-        `שורה ${rowNumber}: סכום לא תקין`
+       `${rowLabel}: סכום לא תקין`
       );
     }
 
     if (notes.length > 58) {
       errors.push(
-        `שורה ${rowNumber}: ההערה ארוכה מ־58 תווים`
+        `${rowLabel}: ההערה ארוכה מ־58 תווים`
       );
     }
   });
