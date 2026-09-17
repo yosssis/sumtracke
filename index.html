@@ -1796,29 +1796,22 @@ body.auth-locked #login-overlay .btn-action {
     /* ===== ONLINE USERS ===== */
 
 #online-users-panel {
-  position: fixed;
-  top: 140px;
-  right: 18px;
+  position: static;
 
-  width: 190px;
-  padding: 14px;
+  width: 100%;
+  margin-top: 10px;
+  padding: 12px;
 
   background: rgba(255,255,255,0.96);
 
-  border:
-    1px solid rgba(0,0,0,0.07);
+  border: 1px solid rgba(0,0,0,0.07);
+  border-radius: 14px;
 
-  border-radius: 16px;
-
-  box-shadow:
-    0 8px 28px rgba(0,0,0,0.08);
-
-  z-index: 90;
+  box-shadow: 0 5px 16px rgba(0,0,0,0.05);
 
   font-family: Heebo, sans-serif;
   direction: rtl;
 }
-
 
 .online-users-title {
   display: flex;
@@ -1910,18 +1903,7 @@ body.auth-locked #online-users-panel {
 }
 
 
-@media (max-width: 900px) {
-  #online-users-panel {
-    top: auto;
-    bottom: 14px;
-    right: 10px;
 
-    width: 165px;
-    max-height: 190px;
-
-    overflow-y: auto;
-  }
-}
     /* ===== EXTERNAL LINKS DOCK ===== */
 
 .external-links-dock {
@@ -2092,13 +2074,16 @@ body.auth-locked .external-links-dock {
   gap: 10px;
   align-items: start;
 }
-
+.checks-column {
+  width: 100%;
+  position: sticky;
+  top: 20px;
+}
 .checks-center {
   margin-top: 0;
   padding: 16px;
 
-  position: sticky;
-  top: 20px;
+position: static;
 
   max-height: calc(100vh - 40px);
   overflow-y: auto;
@@ -2375,6 +2360,7 @@ body.auth-locked .external-links-dock {
       <div class="total-amount-el" id="total-amount">₪0.00</div>
     </div>
   </div>
+  <div class="checks-column">
   <div
   id="checks-center"
   class="checks-center"
@@ -2412,6 +2398,32 @@ body.auth-locked .external-links-dock {
   ></div>
     
 </div>
+
+    <div id="online-users-panel">
+  <div class="online-users-title">
+    <span class="online-main-dot"></span>
+    <span>מחוברים עכשיו</span>
+    <span id="online-users-count">0</span>
+  </div>
+
+  <div id="online-users-list">
+    <div class="online-users-loading">
+      בודק...
+    </div>
+  </div>
+
+  <div id="last-logged-in-user" class="last-login-card">
+    <div class="last-login-icon">🕘</div>
+
+    <div class="last-login-content">
+      <div class="last-login-label">היה מחובר לאחרונה</div>
+      <div class="last-login-value">—</div>
+    </div>
+  </div>
+</div>
+
+</div>
+    
   <div class="external-links-dock">
 
   <a
@@ -3173,30 +3185,7 @@ margin:12px auto 0;
   <span id="login-changes-badge">0</span>
 </button>
 <div class="toast" id="toast"></div>
-<div id="online-users-panel">
-  <div class="online-users-title">
-    <span class="online-main-dot"></span>
-
-    <span>
-      מחוברים עכשיו
-    </span>
-
-    <span id="online-users-count">0</span>
-  </div>
-
-  <div id="online-users-list">
-    <div class="online-users-loading">
-      בודק...
-    </div>
-  </div>
-  
- <div id="last-logged-in-user" class="last-login-card">
-  <div class="last-login-icon">🕘</div>
-
-  <div class="last-login-content">
-    <div class="last-login-label">היה מחובר לאחרונה</div>
-    <div class="last-login-value">—</div>
-  </div>
+</div>
 </div>
 <script>
   const MONTHS_HE = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני',
