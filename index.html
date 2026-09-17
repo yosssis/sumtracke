@@ -6556,7 +6556,14 @@ function exportExcelNow(includeMarked) {
     return;
   }
 
-  const rows = [...month.rows];
+  const rows =
+  month.rows.filter(row => !row.marked);
+    if (rows.length === 0) {
+  showToast(
+    'אין פריטים לא מסומנים לייצוא למס״ב'
+  );
+  return;
+}
   const errors = [];
 
   rows.forEach((row, index) => {
