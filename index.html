@@ -166,7 +166,16 @@
       border-bottom: 1px solid var(--border);
     }
 
-    .rows-list { list-style: none; }
+    .rows-list {
+  list-style: none;
+
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+
+  padding: 12px;
+  align-items: stretch;
+}
 
     .row-item {
       display: flex; align-items: center;
@@ -415,6 +424,7 @@ body {
 
 .btn-add {
   min-width: 46px;
+  
   height: 46px;
   border-radius: 12px;
   background: linear-gradient(135deg, #ff6b35, #ff914d);
@@ -423,15 +433,81 @@ body {
 
 .row-item {
   background:#fff;
-  margin:8px 12px;
-  padding:14px 16px;
-  border:1px solid rgba(0,0,0,0.055);
-  border-radius:14px;
-  box-shadow:0 4px 14px rgba(0,0,0,0.035);
+
+  margin:0;
+  padding:14px;
+
+  min-width:0;
+  min-height:150px;
+
+  border:1px solid rgba(0,0,0,0.07);
+  border-radius:16px;
+  box-shadow:0 4px 14px rgba(0,0,0,0.04);
+
+  display:grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    "number amount"
+    "info info"
+    "edit delete";
+
+  gap:10px;
+
   transition:
     transform 0.18s ease,
     box-shadow 0.18s ease,
     border-color 0.18s ease;
+}
+    .row-item .row-num {
+  grid-area:number;
+  align-self:center;
+}
+
+.row-item .row-info {
+  grid-area:info;
+  width:100%;
+  min-width:0;
+}
+
+.row-item .row-amount {
+  grid-area:amount;
+
+  font-size:1.05rem;
+  font-weight:900;
+
+  align-self:center;
+  justify-self:end;
+}
+
+.row-item .btn-edit {
+  grid-area:edit;
+  justify-self:start;
+}
+
+.row-item .btn-del {
+  grid-area:delete;
+  justify-self:end;
+}
+
+.row-item .row-note-input {
+  width:100%;
+  margin-top:8px;
+}
+    @media (max-width: 1050px) {
+  .rows-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+    @media (max-width: 650px) {
+  .rows-list {
+    grid-template-columns: 1fr;
+    gap:10px;
+    padding:8px;
+  }
+
+  .row-item {
+    min-height:0;
+  }
 }
 
 .row-item:hover {
@@ -452,6 +528,7 @@ body {
 
 }
 .list-header {
+  display: none;
   margin: 10px 12px 0;
   padding: 8px 16px 6px;
   border-bottom: none;
