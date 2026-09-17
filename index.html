@@ -2000,6 +2000,62 @@ body.auth-locked .external-links-dock {
     font-size: 0.76rem;
   }
 }
+
+    /* שלושת הקישורים מתחת למרכז הבקרה */
+.checks-column .external-links-dock {
+  position: static;
+  width: 100%;
+  margin-top: 12px;
+}
+
+/* כפתורי הפעולות בעמודה השמאלית */
+.side-actions-dock {
+  position: sticky;
+  top: 20px;
+  width: 145px;
+  z-index: 5;
+}
+
+.side-actions-dock .bottom-actions {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+}
+
+.side-actions-dock .bottom-actions .btn-action {
+  width: 100%;
+  min-height: 42px;
+  padding: 8px 10px;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.sync-status-wrap {
+  margin-top: 10px;
+  text-align: center;
+}
+
+@media (max-width: 700px) {
+  .side-actions-dock {
+    position: static;
+    width: 100%;
+    margin-top: 14px;
+  }
+
+  .side-actions-dock .bottom-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .side-actions-dock .bottom-actions .btn-action {
+    width: auto;
+  }
+}
+    
     /* ===== LAST LOGGED IN USER ===== */
 
 .last-login-card {
@@ -2442,10 +2498,8 @@ position: static;
     </div>
   </div>
 </div>
-
-</div>
-    
-  <div class="external-links-dock">
+<!-- שלושת הקישורים מתחת למרכז הבקרה -->
+<div class="external-links-dock">
 
   <a
     class="external-link-btn"
@@ -2475,20 +2529,55 @@ position: static;
   </a>
 
 </div>
+
+</div><!-- סיום checks-column -->
+
+
+<!-- כפתורי הפעולות בעמודה השמאלית -->
+<div class="side-actions-dock">
+
+  <div class="bottom-actions">
+    <button class="btn-action export" onclick="exportExcel()">
+      📥 ייצוא לאקסל
+    </button>
+
+    <button class="btn-action" onclick="sendEmail()">
+      ✉️ שלח במייל
+    </button>
+
+    <button class="btn-action" onclick="openTempEmail('monthly')">
+      📧 מייל מזדמן
+    </button>
+
+    <button class="btn-action" onclick="openAnnualReport()">
+      📊 דוח שנתי
+    </button>
+
+    <button class="btn-action" onclick="openDashboard()">
+      📈 דשבורד
+    </button>
+
+    <button class="btn-action danger" onclick="clearCurrent()">
+      🗑 נקה חודש זה
+    </button>
   </div>
- <div class="bottom-actions">
-  <button class="btn-action export" onclick="exportExcel()">📥 ייצוא לאקסל</button>
-  <button class="btn-action" onclick="sendEmail()">✉️ שלח במייל</button>
-   <button class="btn-action" onclick="openTempEmail('monthly')">📧 מייל מזדמן</button>
-   <button class="btn-action" onclick="openAnnualReport()">📊 דוח שנתי</button>
-   <button class="btn-action" onclick="openDashboard()">📈 דשבורד</button>
-  <button class="btn-action danger" onclick="clearCurrent()">🗑 נקה חודש זה</button>
-  </div>
-  <div style="text-align:center; margin-top:10px;">
-    <span id="sync-status" style="font-size:0.78rem; font-weight:600; transition: color 0.3s;"></span>
+
+  <div class="sync-status-wrap">
+    <span
+      id="sync-status"
+      style="
+        font-size:0.78rem;
+        font-weight:600;
+        transition:color 0.3s;
+      "
+    ></span>
   </div>
 
 </div>
+
+</div><!-- סיום main-workspace -->
+
+</div><!-- סיום container -->
 <!-- Global Search -->
 <div
   class="overlay"
