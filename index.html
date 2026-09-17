@@ -2512,7 +2512,7 @@ position: static;
 
   <a
     class="external-link-btn"
-    href="https://www.matara.pro/nedarimplus/Reports"
+    href="https://reports.matara.pro/login"
     target="_blank"
     rel="noopener noreferrer"
   >
@@ -3308,6 +3308,7 @@ margin:12px auto 0;
 
   let months = [{ id: 1, name: defaultMonthName(), rows: [] }];
   let activeId = 1;
+  const ACTIVE_MONTH_KEY = 'sumtracker_active_month';
   let nextMonthId = 2;
   let pendingDelete = null;
   let extraExpenses = [];
@@ -4384,8 +4385,15 @@ nameInput.addEventListener('blur', () => {
   });
 
   // ── TABS ─────────────────────────────────────────────
-  function renderTabs() {
-    tabsBar.innerHTML = '';
+function renderTabs() {
+  try {
+    localStorage.setItem(
+      ACTIVE_MONTH_KEY,
+      String(activeId)
+    );
+  } catch (e) {}
+
+  tabsBar.innerHTML = '';
    months.forEach((m, index) => {
      if (index === addButtonIndex) {
   const addBtn = document.createElement('button');
@@ -7543,6 +7551,37 @@ function applyPayload(d) {
       name: normalizeHebrewMonthName(month.name)
     }));
   }
+  /*
+  שחזור החודש האחרון שהיה פתוח במחשב הזה
+*/
+let rememberedActiveId = null;
+
+try {
+  rememberedActiveId =
+    localStorage.getItem(ACTIVE_MONTH_KEY);
+} catch (e) {}
+
+const rememberedMonth = months.find(
+  month =>
+    String(month.id) ===
+    String(rememberedActiveId)
+);
+
+const payloadMonth = months.find(
+  month =>
+    String(month.id) ===
+    String(d.activeId)
+);
+
+if (rememberedMonth) {
+  activeId = rememberedMonth.id;
+
+} else if (payloadMonth) {
+  activeId = payloadMonth.id;
+
+} else if (months.length > 0) {
+  activeId = months[months.length - 1].id;
+}
 
   if (d.nextMonthId) {
     nextMonthId = d.nextMonthId;
