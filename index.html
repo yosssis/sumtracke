@@ -2299,6 +2299,39 @@ position: static;
     padding: 13px;
   }
 }
+
+    .login-thanks {
+  margin-bottom: 10px;
+  text-align: center;
+  font-size: 1.65rem;
+  font-weight: 900;
+  letter-spacing: 1px;
+  background: linear-gradient(
+    90deg,
+    #ff6b35,
+    #ffb703,
+    #2ecc71,
+    #3498db,
+    #9b59b6
+  );
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: thanks-colors 4s linear infinite;
+  filter: drop-shadow(0 3px 5px rgba(0,0,0,0.14));
+}
+
+@keyframes thanks-colors {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  100% {
+    background-position: 300% 50%;
+  }
+}
+    
   </style>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
@@ -3247,7 +3280,11 @@ readonly
   <!-- Login Dialog -->
 <div class="overlay" id="login-overlay">
   <div class="dialog">
+    <div class="login-thanks">
+      תודה השם
+    </div>
     <div
+      
   id="login-date-time"
   style="
     width:100%;
