@@ -3038,8 +3038,109 @@ readonly
 >
   📊 דשבורד
 </button>
+        <button
+  type="button"
+  class="btn-action"
+  onclick="openExtraExpensesEmailChoice()"
+>
+  ✉️ שלח הוצאות במייל
+</button>
     </div>
 
+  </div>
+</div>
+  <div
+  class="overlay"
+  id="extra-expenses-email-choice-overlay"
+  style="z-index:225;"
+>
+  <div class="dialog" style="max-width:430px;">
+    <div class="dialog-icon">✉️</div>
+
+    <div class="dialog-msg">
+      אילו הוצאות לשלוח?
+    </div>
+
+    <div class="dialog-sub">
+      קובץ Excel יצורף למייל
+    </div>
+
+    <div class="dialog-btns" style="flex-wrap:wrap;">
+      <button
+        class="btn-cancel"
+        onclick="closeExtraExpensesEmailChoice()"
+      >
+        ביטול
+      </button>
+
+      <button
+        class="btn-action"
+        onclick="chooseAllExtraExpensesEmail()"
+      >
+        כל ההוצאות
+      </button>
+
+      <button
+        class="btn-action"
+        onclick="openExtraExpensesByDateDialog()"
+      >
+        לפי תאריך
+      </button>
+    </div>
+  </div>
+</div>
+  <!-- Extra Expenses Email By Date -->
+<div
+  class="overlay"
+  id="extra-expense-email-date-overlay"
+  style="z-index:230;"
+>
+  <div
+    class="dialog"
+    style="max-width:420px;"
+  >
+    <div class="dialog-icon">📅</div>
+
+    <div class="dialog-msg">
+      שליחת הוצאות לפי תאריך
+    </div>
+
+    <div class="dialog-sub">
+      בחר את התאריך שיישלח במייל
+    </div>
+
+    <select
+      id="extra-expense-email-date"
+      style="
+        width:100%;
+        padding:11px;
+        margin:8px 0 18px;
+        border:1.5px solid #ddd;
+        border-radius:9px;
+        background:#fff;
+        font-family:Heebo;
+      "
+    >
+      <option value="">
+        בחר תאריך
+      </option>
+    </select>
+
+    <div class="dialog-btns">
+      <button
+        class="btn-cancel"
+        onclick="closeExtraExpensesByDateDialog()"
+      >
+        ביטול
+      </button>
+
+      <button
+        class="btn-action"
+        onclick="continueExtraExpensesByDateEmail()"
+      >
+        המשך לשליחה
+      </button>
+    </div>
   </div>
 </div>
   <!-- Extra Expense Dashboard -->
@@ -3674,6 +3775,8 @@ function populateBranchOptions(
   let extraExpenses = [];
   let editingExtraExpenseId = null;
   let tempEmailExtraExpenseId = null;
+  let tempEmailExtraExpenses = [];
+let tempEmailExtraExpensesLabel = '';
   let extraExpenseDateCursor = new Date();
   let authToken = sessionStorage.getItem('authToken') || '';
 let pendingProtectedAction = null;
@@ -8945,6 +9048,147 @@ async function sendAnnualEmailNow(includeMarked) {
 
 let tempEmailType = null;
 let tempEmailAddress = '';
+ function openExtraExpensesEmailChoice() {
+  requireAuth(() => {
+    if (
+      !Array.isArray(extraExpenses) ||
+      extraExpenses.length === 0
+    ) {
+      showToast('אין הוצאות מזדמנות לשליחה');
+      return;
+    }
+
+    document
+      .getElementById(
+        'extra-expenses-email-choice-overlay'
+      )
+      .classList.add('show');
+  });
+}
+
+function closeExtraExpensesEmailChoice() {
+  document
+    .getElementById(
+      'extra-expenses-email-choice-overlay'
+    )
+    .classList.remove('show');
+}
+
+function chooseAllExtraExpensesEmail() {
+  tempEmailExtraExpenses =
+    [...extraExpenses];
+
+  tempEmailExtraExpensesLabel =
+    'כל ההוצאות המזדמנות';
+
+  closeExtraExpensesEmailChoice();
+
+  openTempEmail('extraExpenses');
+}
+function openExtraExpensesByDateDialog() {
+  requireAuth(() => {
+    if (
+      !Array.isArray(extraExpenses) ||
+      extraExpenses.length === 0
+    ) {
+      showToast('אין הוצאות מזדמנות לשליחה');
+      return;
+    }
+
+    const select =
+      document.getElementById(
+        'extra-expense-email-date'
+      );
+
+    const dates =
+      [...extraExpenses]
+        .sort(
+          (a, b) =>
+            new Date(b.createdAt || 0) -
+            new Date(a.createdAt || 0)
+        )
+        .map(expense =>
+          String(
+            expense.hebrewDate || ''
+          ).trim()
+        )
+        .filter(Boolean);
+
+    const uniqueDates =
+      [...new Set(dates)];
+
+    if (uniqueDates.length === 0) {
+      showToast(
+        'לא נמצאו תאריכים בהוצאות'
+      );
+      return;
+    }
+
+    select.innerHTML =
+      '<option value="">בחר תאריך</option>' +
+      uniqueDates
+        .map(date => `
+          <option value="${esc(date)}">
+            ${esc(date)}
+          </option>
+        `)
+        .join('');
+
+    document
+      .getElementById(
+        'extra-expense-email-date-overlay'
+      )
+      .classList.add('show');
+  });
+}
+
+function closeExtraExpensesByDateDialog() {
+  document
+    .getElementById(
+      'extra-expense-email-date-overlay'
+    )
+    .classList.remove('show');
+}
+
+function continueExtraExpensesByDateEmail() {
+  const select =
+    document.getElementById(
+      'extra-expense-email-date'
+    );
+
+  const selectedDate =
+    String(select.value || '').trim();
+
+  if (!selectedDate) {
+    showToast('⚠️ בחר תאריך');
+    select.focus();
+    return;
+  }
+
+  const selectedExpenses =
+    extraExpenses.filter(expense =>
+      String(
+        expense.hebrewDate || ''
+      ).trim() === selectedDate
+    );
+
+  if (selectedExpenses.length === 0) {
+    showToast(
+      'לא נמצאו הוצאות בתאריך שנבחר'
+    );
+    return;
+  }
+
+  tempEmailExtraExpenses =
+    selectedExpenses;
+
+  tempEmailExtraExpensesLabel =
+    'הוצאות לתאריך ' + selectedDate;
+
+  closeExtraExpensesByDateDialog();
+
+  openTempEmail('extraExpenses');
+}
 function openExtraExpenseTempEmail(expenseId) {
   requireAuth(() => {
     const expense = extraExpenses.find(
@@ -8998,6 +9242,10 @@ async function sendTempEmail() {
   closeTempEmail();
 if (tempEmailType === 'extraExpense') {
   await sendTempExtraExpenseEmailNow();
+  return;
+}
+  if (tempEmailType === 'extraExpenses') {
+  await sendTempExtraExpensesEmailNow();
   return;
 }
   // בודקים אם יש פריטים מסומנים
@@ -9096,6 +9344,130 @@ if (tempEmailType === 'extraExpense') {
   } catch (e) {
     console.error('EXTRA EXPENSE EMAIL ERROR:', e);
     showToast('❌ שגיאה בשליחת המייל');
+  }
+}
+  async function sendTempExtraExpensesEmailNow() {
+  if (!authToken) {
+    requireAuth(
+      sendTempExtraExpensesEmailNow
+    );
+    return;
+  }
+
+  if (
+    !Array.isArray(
+      tempEmailExtraExpenses
+    ) ||
+    tempEmailExtraExpenses.length === 0
+  ) {
+    showToast(
+      'אין הוצאות מזדמנות לשליחה'
+    );
+    return;
+  }
+
+  try {
+    showToast(
+      'שולח הוצאות מזדמנות במייל...'
+    );
+
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      redirect: 'follow',
+
+      body: JSON.stringify({
+        action:
+          'sendTempExtraExpensesEmail',
+
+        token: authToken,
+        email: tempEmailAddress,
+
+        title:
+          document
+            .getElementById(
+              'main-title'
+            )
+            .value ||
+          'מסכם חודשי',
+
+        label:
+          tempEmailExtraExpensesLabel,
+
+        expenses:
+          tempEmailExtraExpenses
+      }),
+
+      headers: {
+        'Content-Type':
+          'text/plain;charset=utf-8'
+      }
+    });
+
+    const text = await res.text();
+    const result = text.trim();
+
+    if (
+      result === 'unauthorized' ||
+      res.status === 401 ||
+      res.status === 403
+    ) {
+      authToken = '';
+
+      sessionStorage.removeItem(
+        'authToken'
+      );
+
+      showToast(
+        '🔐 ההתחברות פגה — התחבר מחדש'
+      );
+
+      requireAuth(
+        sendTempExtraExpensesEmailNow
+      );
+
+      return;
+    }
+
+    if (!res.ok) {
+      throw new Error(
+        'HTTP ' +
+        res.status +
+        ': ' +
+        result
+      );
+    }
+
+    if (
+      result ===
+      'temp extra expenses email sent'
+    ) {
+      showToast(
+        '✅ ההוצאות נשלחו במייל'
+      );
+
+      tempEmailExtraExpenses = [];
+      tempEmailExtraExpensesLabel = '';
+
+    } else {
+      console.error(
+        'SERVER RESPONSE:',
+        result
+      );
+
+      showToast(
+        '❌ המייל לא נשלח'
+      );
+    }
+
+  } catch (e) {
+    console.error(
+      'EXTRA EXPENSES EMAIL ERROR:',
+      e
+    );
+
+    showToast(
+      '❌ שגיאה בשליחת המייל'
+    );
   }
 }
   async function sendTempMonthlyEmailNow(includeMarked) {
