@@ -3084,7 +3084,7 @@ readonly
         class="btn-action"
         onclick="openExtraExpensesByDateDialog()"
       >
-        לפי תאריך
+        לפי טווח תאריכים
       </button>
     </div>
   </div>
@@ -3102,29 +3102,46 @@ readonly
     <div class="dialog-icon">📅</div>
 
     <div class="dialog-msg">
-      שליחת הוצאות לפי תאריך
-    </div>
+  שליחת הוצאות לפי טווח תאריכים
+</div>
 
-    <div class="dialog-sub">
-      בחר את התאריך שיישלח במייל
-    </div>
+<div class="dialog-sub">
+  בחר מתאריך ועד תאריך
+</div>
 
-    <select
-      id="extra-expense-email-date"
-      style="
-        width:100%;
-        padding:11px;
-        margin:8px 0 18px;
-        border:1.5px solid #ddd;
-        border-radius:9px;
-        background:#fff;
-        font-family:Heebo;
-      "
-    >
-      <option value="">
-        בחר תאריך
-      </option>
-    </select>
+<select
+  id="extra-expense-email-date-from"
+  style="
+    width:100%;
+    padding:11px;
+    margin:8px 0;
+    border:1.5px solid #ddd;
+    border-radius:9px;
+    background:#fff;
+    font-family:Heebo;
+  "
+>
+  <option value="">
+    מתאריך
+  </option>
+</select>
+
+<select
+  id="extra-expense-email-date-to"
+  style="
+    width:100%;
+    padding:11px;
+    margin:8px 0 18px;
+    border:1.5px solid #ddd;
+    border-radius:9px;
+    background:#fff;
+    font-family:Heebo;
+  "
+>
+  <option value="">
+    עד תאריך
+  </option>
+</select>
 
     <div class="dialog-btns">
       <button
@@ -9085,37 +9102,120 @@ function chooseAllExtraExpensesEmail() {
 
   openTempEmail('extraExpenses');
 }
+  const extraExpenseDateTimestampCache =
+  new Map();
+
+function getExtraExpenseDateTimestamp(
+  hebrewDateText
+) {
+  const text =
+    String(hebrewDateText || '').trim();
+
+  if (!text) {
+    return NaN;
+  }
+
+  if (
+    extraExpenseDateTimestampCache.has(text)
+  ) {
+    return extraExpenseDateTimestampCache.get(
+      text
+    );
+  }
+
+  const currentYear =
+    new Date().getFullYear();
+
+  const start =
+    new Date(currentYear - 5, 0, 1, 12);
+
+  const end =
+    new Date(currentYear + 5, 11, 31, 12);
+
+  const date =
+    new Date(start);
+
+  while (date <= end) {
+    const hebrew =
+      getHebrewDateParts(date);
+
+    const formatted =
+      `${hebrewDayNumber(hebrew.day)} ` +
+      `ב${hebrew.month} ` +
+      `${hebrewYearLetters(hebrew.year)}`;
+
+    if (formatted === text) {
+      const timestamp =
+        new Date(
+          date.getFullYear(),
+          date.getMonth(),
+          date.getDate()
+        ).getTime();
+
+      extraExpenseDateTimestampCache.set(
+        text,
+        timestamp
+      );
+
+      return timestamp;
+    }
+
+    date.setDate(date.getDate() + 1);
+  }
+
+  extraExpenseDateTimestampCache.set(
+    text,
+    NaN
+  );
+
+  return NaN;
+}
 function openExtraExpensesByDateDialog() {
   requireAuth(() => {
     if (
       !Array.isArray(extraExpenses) ||
       extraExpenses.length === 0
     ) {
-      showToast('אין הוצאות מזדמנות לשליחה');
+      showToast(
+        'אין הוצאות מזדמנות לשליחה'
+      );
       return;
     }
 
-    const select =
+    const fromSelect =
       document.getElementById(
-        'extra-expense-email-date'
+        'extra-expense-email-date-from'
       );
 
-    const dates =
-      [...extraExpenses]
-        .sort(
-          (a, b) =>
-            new Date(b.createdAt || 0) -
-            new Date(a.createdAt || 0)
-        )
-        .map(expense =>
-          String(
-            expense.hebrewDate || ''
-          ).trim()
-        )
-        .filter(Boolean);
+    const toSelect =
+      document.getElementById(
+        'extra-expense-email-date-to'
+      );
 
     const uniqueDates =
-      [...new Set(dates)];
+      [
+        ...new Set(
+          extraExpenses
+            .map(expense =>
+              String(
+                expense.hebrewDate || ''
+              ).trim()
+            )
+            .filter(Boolean)
+        )
+      ]
+        .map(date => ({
+          text: date,
+          timestamp:
+            getExtraExpenseDateTimestamp(date)
+        }))
+        .filter(item =>
+          Number.isFinite(item.timestamp)
+        )
+        .sort(
+          (a, b) =>
+            a.timestamp - b.timestamp
+        );
 
     if (uniqueDates.length === 0) {
       showToast(
@@ -9124,16 +9224,25 @@ function openExtraExpensesByDateDialog() {
       return;
     }
 
-    select.innerHTML =
-      '<option value="">בחר תאריך</option>' +
+    const options =
       uniqueDates
-        .map(date => `
-          <option value="${esc(date)}">
-            ${esc(date)}
+        .map(item => `
+          <option value="${esc(item.text)}">
+            ${esc(item.text)}
           </option>
         `)
         .join('');
-closeExtraExpensesEmailChoice();
+
+    fromSelect.innerHTML =
+      '<option value="">מתאריך</option>' +
+      options;
+
+    toSelect.innerHTML =
+      '<option value="">עד תאריך</option>' +
+      options;
+
+    closeExtraExpensesEmailChoice();
+
     document
       .getElementById(
         'extra-expense-email-date-overlay'
@@ -9151,30 +9260,69 @@ function closeExtraExpensesByDateDialog() {
 }
 
 function continueExtraExpensesByDateEmail() {
-  const select =
+  const fromSelect =
     document.getElementById(
-      'extra-expense-email-date'
+      'extra-expense-email-date-from'
     );
 
-  const selectedDate =
-    String(select.value || '').trim();
+  const toSelect =
+    document.getElementById(
+      'extra-expense-email-date-to'
+    );
 
-  if (!selectedDate) {
-    showToast('⚠️ בחר תאריך');
-    select.focus();
+  const fromDate =
+    String(fromSelect.value || '').trim();
+
+  const toDate =
+    String(toSelect.value || '').trim();
+
+  if (!fromDate || !toDate) {
+    showToast(
+      '⚠️ חובה לבחור מתאריך ועד תאריך'
+    );
+    return;
+  }
+
+  const fromTimestamp =
+    getExtraExpenseDateTimestamp(fromDate);
+
+  const toTimestamp =
+    getExtraExpenseDateTimestamp(toDate);
+
+  if (
+    !Number.isFinite(fromTimestamp) ||
+    !Number.isFinite(toTimestamp)
+  ) {
+    showToast(
+      '❌ אחד התאריכים אינו תקין'
+    );
+    return;
+  }
+
+  if (fromTimestamp > toTimestamp) {
+    showToast(
+      '⚠️ תאריך ההתחלה מאוחר מתאריך הסיום'
+    );
     return;
   }
 
   const selectedExpenses =
-    extraExpenses.filter(expense =>
-      String(
-        expense.hebrewDate || ''
-      ).trim() === selectedDate
-    );
+    extraExpenses.filter(expense => {
+      const timestamp =
+        getExtraExpenseDateTimestamp(
+          expense.hebrewDate
+        );
+
+      return (
+        Number.isFinite(timestamp) &&
+        timestamp >= fromTimestamp &&
+        timestamp <= toTimestamp
+      );
+    });
 
   if (selectedExpenses.length === 0) {
     showToast(
-      'לא נמצאו הוצאות בתאריך שנבחר'
+      'לא נמצאו הוצאות בטווח שנבחר'
     );
     return;
   }
@@ -9183,7 +9331,8 @@ function continueExtraExpensesByDateEmail() {
     selectedExpenses;
 
   tempEmailExtraExpensesLabel =
-    'הוצאות לתאריך ' + selectedDate;
+    `הוצאות מתאריך ${fromDate} ` +
+    `עד תאריך ${toDate}`;
 
   closeExtraExpensesByDateDialog();
 
