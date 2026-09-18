@@ -2225,6 +2225,24 @@ position: static;
   border-radius: 12px;
 }
 
+.checks-item-clickable {
+  cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.checks-item-clickable:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255,107,53,0.35);
+  box-shadow: 0 7px 18px rgba(0,0,0,0.08);
+}
+
+.checks-item-clickable:active {
+  transform: scale(0.98);
+}
+    
 .checks-summary-label {
   font-size: 0.62rem;
   font-weight: 700;
@@ -9413,6 +9431,7 @@ if (
 missingStudents.forEach(name => {
   issues.push({
     type: 'missing',
+    name: name,
 
     title:
       '📭 ' + name,
@@ -9535,6 +9554,7 @@ missingStudents.forEach(name => {
 
       issues.push({
         type: 'unusual',
+        rowId: row.id,
 
         title:
           '📊 ' +
@@ -9621,7 +9641,7 @@ rows.forEach(row => {
 
   issues.push({
     type: 'phoneAfterManual',
-
+rowId: row.id,
     title:
       '📞 ' +
       String(
@@ -9720,7 +9740,7 @@ rows.forEach(row => {
 
     issues.push({
       type: 'duplicate',
-
+rowId: row.id,
       title:
         '📞 ' +
         String(
@@ -9818,21 +9838,163 @@ rows.forEach(row => {
     ===================================
   */
 
-  listEl.innerHTML =
-    issues
-      .map(issue => `
-        <div class="checks-item">
-          <div class="checks-item-title">
-            ${esc(issue.title)}
-          </div>
-
-          <div class="checks-item-sub">
-            ${esc(issue.sub)}
-          </div>
+listEl.innerHTML =
+  issues
+    .map((issue, index) => `
+      <div
+        class="checks-item checks-item-clickable"
+        data-check-index="${index}"
+        role="button"
+        tabindex="0"
+        title="לחץ כדי לעבור לפריט"
+      >
+        <div class="checks-item-title">
+          ${esc(issue.title)}
         </div>
-      `)
-      .join('');
 
+        <div class="checks-item-sub">
+          ${esc(issue.sub)}
+        </div>
+      </div>
+    `)
+    .join('');
+
+listEl
+  .querySelectorAll('[data-check-index]')
+  .forEach(item => {
+    const openIssue = () => {
+      const index =
+        Number(item.dataset.checkIndex);
+
+      openChecksIssue(issues[index]);
+    };
+
+    item.addEventListener(
+      'click',
+      openIssue
+    );
+
+    item.addEventListener(
+      'keydown',
+      event => {
+        if (
+          event.key === 'Enter' ||
+          event.key === ' '
+        ) {
+          event.preventDefault();
+          openIssue();
+        }
+      }
+    );
+  });
+
+}
+  function openChecksIssue(issue) {
+  if (!issue) return;
+
+  /*
+    תלמיד שלא דיווח:
+    ממלאים את שמו בשדה ההוספה
+  */
+  if (issue.type === 'missing') {
+    const nameField =
+      document.getElementById('input-name');
+
+    if (!nameField) return;
+
+    nameField.value =
+      issue.name || '';
+
+    nameField.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center'
+    });
+
+    nameField.classList.add(
+      'global-search-highlight'
+    );
+
+    setTimeout(() => {
+      nameField.classList.remove(
+        'global-search-highlight'
+      );
+
+      nameField.focus();
+    }, 500);
+
+    showToast(
+      '📭 יש להשלים דיווח עבור ' +
+      (issue.name || '')
+    );
+
+    return;
+  }
+
+  const rowId =
+    Number(issue.rowId);
+
+  if (!rowId) {
+    showToast('⚠️ לא נמצא פריט מתאים');
+    return;
+  }
+
+  /*
+    מבטלים חיפוש פעיל כדי שהכרטיס
+    לא יהיה מוסתר מתוצאות החיפוש
+  */
+  const searchField =
+    document.getElementById(
+      'search-input'
+    );
+
+  if (searchField) {
+    searchField.value = '';
+  }
+
+  renderRows();
+
+  /*
+    בהתראות טלפוניות פותחים ישירות
+    את היסטוריית הדיווחים
+  */
+  if (
+    issue.type === 'phoneAfterManual' ||
+    issue.type === 'duplicate'
+  ) {
+    openHistory(rowId);
+    return;
+  }
+
+  /*
+    בסכום חריג גוללים לכרטיס
+    ומבליטים אותו
+  */
+  setTimeout(() => {
+    const rowElement =
+      rowsList.querySelector(
+        `.row-mark[data-id="${rowId}"]`
+      )?.closest('.row-item');
+
+    if (!rowElement) {
+      showToast('⚠️ הפריט לא נמצא');
+      return;
+    }
+
+    rowElement.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center'
+    });
+
+    rowElement.classList.add(
+      'global-search-highlight'
+    );
+
+    setTimeout(() => {
+      rowElement.classList.remove(
+        'global-search-highlight'
+      );
+    }, 2300);
+  }, 80);
 }
  function getAllNames() {
   const names = new Set();
