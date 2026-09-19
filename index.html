@@ -2175,6 +2175,30 @@ body.auth-locked .external-links-dock {
   position: sticky;
   top: 20px;
 }
+    /* במחשב בלבד:
+   החלקים הנוספים מופיעים מעל מרכז הבדיקות */
+@media (min-width: 701px) {
+  .checks-column {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .checks-column #online-users-panel {
+    order: 1;
+    margin-top: 0;
+    margin-bottom: 10px;
+  }
+
+  .checks-column .external-links-dock {
+    order: 2;
+    margin-top: 0;
+    margin-bottom: 12px;
+  }
+
+  .checks-column .checks-center {
+    order: 3;
+  }
+}
 .checks-center {
   margin-top: 0;
   padding: 16px;
@@ -2636,7 +2660,7 @@ position: static;
     </button>
 <button
   class="btn-action"
-  onclick="exportSpecialMonthlyExcel()"
+  onclick="openSpecialReportChoice()"
   style="
     color:#7656c9;
     border-color:#ded3f7;
@@ -2970,6 +2994,50 @@ position: static;
     <div class="dialog-btns">
       <button class="btn-cancel" onclick="closeTempEmail()">ביטול</button>
       <button class="btn-action" onclick="sendTempEmail()">שלח</button>
+    </div>
+  </div>
+</div>
+  <!-- Special Report Choice -->
+<div
+  class="overlay"
+  id="special-report-choice-overlay"
+  style="z-index:220;"
+>
+  <div class="dialog">
+    <div class="dialog-icon">⭐</div>
+
+    <div class="dialog-msg">
+      דוח קבוצה מיוחדת
+    </div>
+
+    <div class="dialog-sub">
+      כיצד להפיק את הדוח?
+    </div>
+
+    <div
+      class="dialog-btns"
+      style="flex-wrap:wrap;"
+    >
+      <button
+        class="btn-cancel"
+        onclick="closeSpecialReportChoice()"
+      >
+        יציאה
+      </button>
+
+      <button
+        class="btn-action export"
+        onclick="downloadSpecialReport()"
+      >
+        📥 הורדת טופס
+      </button>
+
+      <button
+        class="btn-action"
+        onclick="emailSpecialReport()"
+      >
+        📧 שליחה למייל מזדמן
+      </button>
     </div>
   </div>
 </div>
@@ -7107,6 +7175,65 @@ function exportExcelNow(includeMarked) {
 
   showToast('✅ הקובץ יוצא בהצלחה!');
 }
+  function getSpecialReportRows() {
+  const month =
+    activeMonth();
+
+  if (
+    !month ||
+    !Array.isArray(month.rows)
+  ) {
+    return [];
+  }
+
+  return month.rows.filter(
+    row =>
+      row.specialReport === true
+  );
+}
+
+function openSpecialReportChoice() {
+  if (!authToken) {
+    requireAuth(
+      openSpecialReportChoice
+    );
+    return;
+  }
+
+  const rows =
+    getSpecialReportRows();
+
+  if (rows.length === 0) {
+    showToast(
+      'אין תלמידים שסומנו לדוח הקבוצה המיוחדת בחודש זה'
+    );
+    return;
+  }
+
+  document
+    .getElementById(
+      'special-report-choice-overlay'
+    )
+    .classList.add('show');
+}
+
+function closeSpecialReportChoice() {
+  document
+    .getElementById(
+      'special-report-choice-overlay'
+    )
+    .classList.remove('show');
+}
+
+function downloadSpecialReport() {
+  closeSpecialReportChoice();
+  exportSpecialMonthlyExcel();
+}
+
+function emailSpecialReport() {
+  closeSpecialReportChoice();
+  openTempEmail('specialMonthly');
+}
 function exportSpecialMonthlyExcel() {
   if (!authToken) {
     requireAuth(
@@ -9651,6 +9778,16 @@ if (tempEmailType === 'extraExpense') {
   await sendTempExtraExpensesEmailNow();
   return;
 }
+  if (
+  tempEmailType ===
+  'specialMonthly'
+) {
+  await sendTempMonthlyEmailNow(
+    true,
+    true
+  );
+  return;
+}
   // בודקים אם יש פריטים מסומנים
   let hasMarked = false;
 
@@ -9873,7 +10010,10 @@ if (tempEmailType === 'extraExpense') {
     );
   }
 }
-  async function sendTempMonthlyEmailNow(includeMarked) {
+  async function sendTempMonthlyEmailNow(
+  includeMarked,
+  specialOnly = false
+) {
   const m = activeMonth();
 
   if (!m || m.rows.length === 0) {
@@ -9881,12 +10021,26 @@ if (tempEmailType === 'extraExpense') {
     return;
   }
 
-  const monthToSend = {
-    ...m,
-    rows: includeMarked
-      ? [...m.rows]
-      : m.rows.filter(row => !row.marked)
-  };
+const monthToSend = {
+  ...m,
+
+  name:
+    specialOnly
+      ? `${m.name} — קבוצה מיוחדת`
+      : m.name,
+
+  rows:
+    specialOnly
+      ? m.rows.filter(
+          row =>
+            row.specialReport === true
+        )
+      : includeMarked
+        ? [...m.rows]
+        : m.rows.filter(
+            row => !row.marked
+          )
+};
 
   if (monthToSend.rows.length === 0) {
     showToast('אין פריטים לשליחה');
