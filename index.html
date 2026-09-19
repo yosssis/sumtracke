@@ -7483,8 +7483,7 @@ function exportSpecialMonthlyExcel() {
     const branchCode =
       String(row.branchCode || '').trim();
 
-    const notes =
-      String(row.notes || '').trim();
+
 
     const amount =
       Number(row.amount);
@@ -7545,11 +7544,7 @@ function exportSpecialMonthlyExcel() {
       );
     }
 
-    if (notes.length > 58) {
-      errors.push(
-        `${rowLabel}: ההערה ארוכה מ־58 תווים`
-      );
-    }
+   
   });
 
   if (errors.length > 0) {
@@ -7570,39 +7565,36 @@ function exportSpecialMonthlyExcel() {
     return;
   }
 
-  const excelData = [
-    [
-      'שם המוטב',
-      'מזהה מוטב',
-      'מספר החשבון ',
-      'בנק',
-      'סניף',
-      'סכום',
-      'הערה'
-    ]
-  ];
+const excelData = [
+  [
+    'שם המוטב',
+    'מזהה מוטב',
+    'מספר החשבון ',
+    'בנק',
+    'סניף',
+    'סכום'
+  ]
+];
 
-  rows.forEach(row => {
-    excelData.push([
-      String(row.name || '').trim(),
+rows.forEach(row => {
+  excelData.push([
+    String(row.name || '').trim(),
 
-      String(
-        row.beneficiaryId || ''
-      ).trim(),
+    String(
+      row.beneficiaryId || ''
+    ).trim(),
 
-      Number(row.accountNumber),
+    Number(row.accountNumber),
 
-      Number(row.bankCode),
+    Number(row.bankCode),
 
-      Number(row.branchCode),
+    Number(row.branchCode),
 
-      Number(
-        Number(row.amount).toFixed(2)
-      ),
-
-      String(row.notes || '').trim()
-    ]);
-  });
+    Number(
+      Number(row.amount).toFixed(2)
+    )
+  ]);
+});
 
   const worksheet =
     XLSX.utils.aoa_to_sheet(excelData);
@@ -7614,7 +7606,7 @@ function exportSpecialMonthlyExcel() {
     { wch: 8 },
     { wch: 8 },
     { wch: 14 },
-    { wch: 35 }
+   
   ];
 
   for (
