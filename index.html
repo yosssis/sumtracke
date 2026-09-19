@@ -2698,6 +2698,84 @@ position: static;
         transition:color 0.3s;
       "
     ></span>
+    <button
+  type="button"
+  class="btn-action"
+  onclick="openRecycleBin()"
+  style="
+    width:100%;
+    margin-top:10px;
+    justify-content:center;
+    color:#7656c9;
+    border-color:#ded3f7;
+  "
+>
+  ♻️ סל מיחזור
+  <span id="recycle-bin-count">(0)</span>
+</button>
+    <!-- Recycle Bin Dialog -->
+<div
+  class="overlay"
+  id="recycle-bin-overlay"
+  style="z-index:240;"
+>
+  <div
+    class="dialog"
+    style="
+      max-width:620px;
+      width:94%;
+      max-height:85vh;
+      overflow-y:auto;
+    "
+  >
+    <div class="dialog-icon">♻️</div>
+
+    <div class="dialog-msg">
+      סל מיחזור
+    </div>
+
+    <div
+      id="recycle-bin-month-name"
+      class="dialog-sub"
+    ></div>
+
+    <div
+      id="recycle-bin-list"
+      style="
+        max-height:50vh;
+        overflow-y:auto;
+        text-align:right;
+        margin:12px 0 18px;
+      "
+    ></div>
+
+    <div
+      class="dialog-btns"
+      style="flex-wrap:wrap;"
+    >
+      <button
+        class="btn-cancel"
+        onclick="closeRecycleBin()"
+      >
+        יציאה
+      </button>
+
+      <button
+        class="btn-action"
+        onclick="restoreAllRecycleItems()"
+      >
+        ↩️ שחזר הכול
+      </button>
+
+      <button
+        class="btn-confirm-del"
+        onclick="emptyCurrentMonthRecycleBin()"
+      >
+        🗑 רוקן את סל החודש
+      </button>
+    </div>
+  </div>
+</div>
   </div>
 
 </div>
@@ -3918,6 +3996,7 @@ function populateBranchOptions(
   let nextMonthId = 2;
   let pendingDelete = null;
   let extraExpenses = [];
+  let recycleBin = [];
   let editingExtraExpenseId = null;
   let tempEmailExtraExpenseId = null;
   let tempEmailExtraExpenses = [];
@@ -5289,6 +5368,8 @@ saveData('הוספת פריט', name || '—');
 
 function renderRows() {
   const m = activeMonth();
+
+  updateRecycleBinButton();
 
   renderChecksCenter();
 
@@ -7610,6 +7691,499 @@ function exportSpecialMonthlyExcel() {
 
   
   // ── DIALOG ────────────────────────────────────────────
+  function cloneRecycleValue(value) {
+  return JSON.parse(
+    JSON.stringify(value)
+  );
+}
+
+function moveRowToRecycleBin(
+  month,
+  row,
+  originalIndex,
+  reason
+) {
+  if (!month || !row) {
+    return;
+  }
+
+  recycleBin.push({
+    trashId:
+      `${Date.now()}_` +
+      `${Math.random()
+        .toString(36)
+        .slice(2)}`,
+
+    monthId:
+      month.id,
+
+    monthName:
+      month.name || '',
+
+    originalIndex:
+      Number(originalIndex) || 0,
+
+    deletedAt:
+      new Date().toISOString(),
+
+    reason:
+      reason || 'מחיקת פריט',
+
+    row:
+      cloneRecycleValue(row)
+  });
+}
+
+function getCurrentMonthRecycleItems() {
+  const month =
+    activeMonth();
+
+  if (!month) {
+    return [];
+  }
+
+  return recycleBin
+    .filter(item =>
+      String(item.monthId) ===
+      String(month.id)
+    )
+    .sort(
+      (a, b) =>
+        new Date(b.deletedAt || 0) -
+        new Date(a.deletedAt || 0)
+    );
+}
+
+function updateRecycleBinButton() {
+  const countElement =
+    document.getElementById(
+      'recycle-bin-count'
+    );
+
+  if (!countElement) {
+    return;
+  }
+
+  const count =
+    getCurrentMonthRecycleItems()
+      .length;
+
+  countElement.textContent =
+    `(${count})`;
+}
+
+function openRecycleBin() {
+  if (!authToken) {
+    requireAuth(openRecycleBin);
+    return;
+  }
+
+  renderRecycleBin();
+
+  document
+    .getElementById(
+      'recycle-bin-overlay'
+    )
+    .classList.add('show');
+}
+
+function closeRecycleBin() {
+  document
+    .getElementById(
+      'recycle-bin-overlay'
+    )
+    .classList.remove('show');
+}
+
+function renderRecycleBin() {
+  const month =
+    activeMonth();
+
+  const list =
+    document.getElementById(
+      'recycle-bin-list'
+    );
+
+  const monthName =
+    document.getElementById(
+      'recycle-bin-month-name'
+    );
+
+  if (!list || !monthName) {
+    return;
+  }
+
+  monthName.textContent =
+    month
+      ? `פריטים שנמחקו מחודש ${month.name}`
+      : 'לא נמצא חודש פעיל';
+
+  const items =
+    getCurrentMonthRecycleItems();
+
+  updateRecycleBinButton();
+
+  if (items.length === 0) {
+    list.innerHTML = `
+      <div style="
+        padding:24px 12px;
+        text-align:center;
+        color:var(--muted);
+        font-weight:700;
+      ">
+        סל המיחזור של חודש זה ריק
+      </div>
+    `;
+
+    return;
+  }
+
+  list.innerHTML =
+    items
+      .map(item => {
+        const row =
+          item.row || {};
+
+        const deletedDate =
+          item.deletedAt
+            ? new Date(
+                item.deletedAt
+              ).toLocaleString(
+                'he-IL'
+              )
+            : '';
+
+        return `
+          <div style="
+            padding:12px;
+            margin-bottom:9px;
+            border:1px solid var(--border);
+            border-radius:12px;
+            background:#fff;
+          ">
+            <div style="
+              display:flex;
+              justify-content:space-between;
+              gap:10px;
+              align-items:flex-start;
+            ">
+              <div style="min-width:0;">
+                <div style="
+                  font-weight:900;
+                  color:var(--text);
+                  overflow-wrap:anywhere;
+                ">
+                  ${esc(row.name || 'ללא שם')}
+                </div>
+
+                <div style="
+                  margin-top:4px;
+                  font-size:0.76rem;
+                  color:var(--muted);
+                ">
+                  ${esc(item.reason || '')}
+                  ${deletedDate
+                    ? ` · ${esc(deletedDate)}`
+                    : ''}
+                </div>
+
+                <div style="
+                  margin-top:5px;
+                  font-size:0.8rem;
+                ">
+                  סכום:
+                  ${fmt(Number(row.amount) || 0)}
+                </div>
+
+                ${row.notes
+                  ? `
+                    <div style="
+                      margin-top:4px;
+                      font-size:0.78rem;
+                      color:var(--muted);
+                      overflow-wrap:anywhere;
+                    ">
+                      ${esc(row.notes)}
+                    </div>
+                  `
+                  : ''}
+              </div>
+
+              <div style="
+                display:flex;
+                flex-direction:column;
+                gap:7px;
+                flex-shrink:0;
+              ">
+                <button
+                  class="btn-action"
+                  onclick="restoreRecycleItem('${item.trashId}')"
+                >
+                  ↩️ שחזור
+                </button>
+
+                <button
+                  class="btn-action danger"
+                  onclick="deleteRecycleItemPermanently('${item.trashId}')"
+                >
+                  מחיקה לצמיתות
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      })
+      .join('');
+}
+
+function restoreRecycleItem(
+  trashId
+) {
+  const month =
+    activeMonth();
+
+  if (!month) {
+    return;
+  }
+
+  const itemIndex =
+    recycleBin.findIndex(
+      item =>
+        String(item.trashId) ===
+        String(trashId) &&
+        String(item.monthId) ===
+        String(month.id)
+    );
+
+  if (itemIndex === -1) {
+    showToast(
+      '❌ הפריט לא נמצא בסל'
+    );
+    return;
+  }
+
+  const item =
+    recycleBin[itemIndex];
+
+  const restoredRow =
+    cloneRecycleValue(item.row);
+
+  const alreadyExists =
+    month.rows.some(row =>
+      String(row.id) ===
+      String(restoredRow.id)
+    );
+
+  if (alreadyExists) {
+    showToast(
+      '⚠️ הפריט כבר קיים בחודש'
+    );
+    return;
+  }
+
+  const originalIndex =
+    Math.max(
+      0,
+      Math.min(
+        Number(item.originalIndex) || 0,
+        month.rows.length
+      )
+    );
+
+  month.rows.splice(
+    originalIndex,
+    0,
+    restoredRow
+  );
+
+  recycleBin.splice(
+    itemIndex,
+    1
+  );
+
+  renderRows();
+  renderRecycleBin();
+  updateNameSuggestions();
+
+  saveData(
+    'שחזור פריט מסל המיחזור',
+    restoredRow.name || ''
+  );
+
+  showToast(
+    `✅ ${restoredRow.name || 'הפריט'} שוחזר בדיוק כפי שהיה`
+  );
+}
+
+function restoreAllRecycleItems() {
+  const month =
+    activeMonth();
+
+  if (!month) {
+    return;
+  }
+
+  const items =
+    getCurrentMonthRecycleItems()
+      .sort(
+        (a, b) =>
+          Number(a.originalIndex) -
+          Number(b.originalIndex)
+      );
+
+  if (items.length === 0) {
+    showToast(
+      'סל המיחזור של חודש זה ריק'
+    );
+    return;
+  }
+
+  const restoredIds =
+    new Set();
+
+  let restoredCount = 0;
+
+  items.forEach(item => {
+    const restoredRow =
+      cloneRecycleValue(item.row);
+
+    const alreadyExists =
+      month.rows.some(row =>
+        String(row.id) ===
+        String(restoredRow.id)
+      );
+
+    if (alreadyExists) {
+      return;
+    }
+
+    const originalIndex =
+      Math.max(
+        0,
+        Math.min(
+          Number(item.originalIndex) || 0,
+          month.rows.length
+        )
+      );
+
+    month.rows.splice(
+      originalIndex,
+      0,
+      restoredRow
+    );
+
+    restoredIds.add(
+      String(item.trashId)
+    );
+
+    restoredCount++;
+  });
+
+  recycleBin =
+    recycleBin.filter(item =>
+      !restoredIds.has(
+        String(item.trashId)
+      )
+    );
+
+  renderRows();
+  renderRecycleBin();
+  updateNameSuggestions();
+
+  saveData(
+    'שחזור כל פריטי החודש מסל המיחזור',
+    `${month.name} — ${restoredCount} פריטים`
+  );
+
+  showToast(
+    `✅ שוחזרו ${restoredCount} פריטים`
+  );
+}
+
+function deleteRecycleItemPermanently(
+  trashId
+) {
+  const item =
+    recycleBin.find(
+      current =>
+        String(current.trashId) ===
+        String(trashId)
+    );
+
+  if (!item) {
+    return;
+  }
+
+  const approved =
+    window.confirm(
+      `למחוק לצמיתות את ${
+        item.row?.name || 'הפריט'
+      }?`
+    );
+
+  if (!approved) {
+    return;
+  }
+
+  recycleBin =
+    recycleBin.filter(
+      current =>
+        String(current.trashId) !==
+        String(trashId)
+    );
+
+  renderRecycleBin();
+
+  saveData(
+    'מחיקה לצמיתות מסל המיחזור',
+    item.row?.name || ''
+  );
+
+  showToast(
+    '🗑 הפריט נמחק לצמיתות'
+  );
+}
+
+function emptyCurrentMonthRecycleBin() {
+  const month =
+    activeMonth();
+
+  const items =
+    getCurrentMonthRecycleItems();
+
+  if (!month || items.length === 0) {
+    showToast(
+      'סל המיחזור של חודש זה ריק'
+    );
+    return;
+  }
+
+  const approved =
+    window.confirm(
+      `למחוק לצמיתות ${items.length} פריטים מסל המיחזור של ${month.name}?`
+    );
+
+  if (!approved) {
+    return;
+  }
+
+  recycleBin =
+    recycleBin.filter(item =>
+      String(item.monthId) !==
+      String(month.id)
+    );
+
+  renderRecycleBin();
+
+  saveData(
+    'ריקון סל המיחזור',
+    month.name
+  );
+
+  showToast(
+    '🗑 סל המיחזור של החודש רוקן'
+  );
+}
   function askDeleteRow(rowId, rowName) {
     pendingDelete = { type: 'row', rowId };
     dialogIcon.textContent = '⚠️';
@@ -7644,6 +8218,12 @@ function exportSpecialMonthlyExcel() {
   const deletedRow = month.rows[deletedIndex];
 
   if (deletedRow && deletedIndex !== -1) {
+    moveRowToRecycleBin(
+  month,
+  deletedRow,
+  deletedIndex,
+  'מחיקת פריט'
+);
     month.rows.splice(deletedIndex, 1);
 
     renderRows();
@@ -7671,12 +8251,33 @@ function exportSpecialMonthlyExcel() {
 
   renderTabs();
   renderRows();  
- } else if (type === 'clearMonth') {
-    const clearedMonthName = activeMonth().name;
-activeMonth().rows = [];
-renderRows();
-saveData('ניקוי חודש', clearedMonthName);
+} else if (type === 'clearMonth') {
+  const month =
+    activeMonth();
+
+  const clearedMonthName =
+    month.name;
+
+  month.rows.forEach(
+    (row, index) => {
+      moveRowToRecycleBin(
+        month,
+        row,
+        index,
+        'ניקוי חודש'
+      );
     }
+  );
+
+  month.rows = [];
+
+  renderRows();
+
+  saveData(
+    'ניקוי חודש',
+    clearedMonthName
+  );
+}
 if (
   type !== 'row' &&
   type !== 'month' &&
@@ -7722,6 +8323,7 @@ function getUndoState() {
     activeId,
     nextMonthId,
     extraExpenses,
+    recycleBin,
     title:
       document.getElementById('main-title')?.value || ''
   });
@@ -7748,6 +8350,10 @@ function restoreUndoState(snapshot) {
   if (Array.isArray(d.extraExpenses)) {
     extraExpenses = d.extraExpenses;
   }
+  if (Array.isArray(d.recycleBin)) {
+  recycleBin =
+    d.recycleBin;
+}
 
   if (typeof d.title === 'string') {
     document.getElementById('main-title').value = d.title;
@@ -8772,6 +9378,7 @@ function getPayload() {
     activeId,
     nextMonthId,
     extraExpenses,
+    recycleBin,
     _revision: dataRevision,
     title:
       document
@@ -8872,6 +9479,14 @@ if (rememberedMonth) {
   if (Array.isArray(d.extraExpenses)) {
   extraExpenses = d.extraExpenses;
 }
+  if (Array.isArray(d.recycleBin)) {
+  recycleBin =
+    d.recycleBin;
+} else {
+  recycleBin = [];
+}
+
+updateRecycleBinButton();
 
   if (d.title) {
     document.getElementById('main-title').value = d.title;
