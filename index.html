@@ -2634,7 +2634,16 @@ position: static;
     <button class="btn-action export" onclick="exportExcel()">
       📥 ייצוא לאקסל
     </button>
-
+<button
+  class="btn-action"
+  onclick="exportSpecialMonthlyExcel()"
+  style="
+    color:#7656c9;
+    border-color:#ded3f7;
+  "
+>
+  ⭐ דוח קבוצה מיוחדת
+</button>
     <button class="btn-action" onclick="sendEmail()">
       ✉️ שלח במייל
     </button>
@@ -2818,7 +2827,37 @@ position: static;
 >
   <option value="">תחילה יש לבחור בנק</option>
 </select>
-    
+    <label
+  style="
+    display:flex;
+    align-items:center;
+    gap:9px;
+    margin:10px 0 16px;
+    padding:10px 12px;
+    background:#f5f1ff;
+    border:1px solid #ded3f7;
+    border-radius:10px;
+    cursor:pointer;
+    text-align:right;
+    font-weight:700;
+    color:var(--text);
+  "
+>
+  <input
+    type="checkbox"
+    id="edit-special-report"
+    style="
+      width:18px;
+      height:18px;
+      accent-color:#7656c9;
+      cursor:pointer;
+    "
+  />
+
+  <span>
+    כלול בדוח הקבוצה המיוחדת
+  </span>
+</label>
     <div class="dialog-btns">
       <button class="btn-cancel" onclick="closeEditDialog()">ביטול</button>
       <button class="btn-confirm-del" onclick="saveEditRow()">שמור</button>
@@ -3042,7 +3081,7 @@ readonly
         class="btn-cancel"
         onclick="closeExtraExpense()"
       >
-        ביטול
+        יציאה
       </button>
 
     <button
@@ -5030,6 +5069,7 @@ function getPreviousMonthNote(name) {
 }
 
   function getSavedBankDetails(name, excludeRowId = null) {
+ 
   const cleanName =
     String(name || '').trim().toLowerCase();
 
@@ -5087,7 +5127,51 @@ function getPreviousMonthNote(name) {
     branchCode: ''
   };
 }
-  
+  function getSavedSpecialReport(
+  name,
+  excludeRowId = null
+) {
+  const cleanName =
+    String(name || '')
+      .trim()
+      .toLowerCase();
+
+  if (!cleanName) {
+    return false;
+  }
+
+  for (
+    let monthIndex = months.length - 1;
+    monthIndex >= 0;
+    monthIndex--
+  ) {
+    const monthRows =
+      months[monthIndex].rows || [];
+
+    for (
+      let rowIndex = monthRows.length - 1;
+      rowIndex >= 0;
+      rowIndex--
+    ) {
+      const row =
+        monthRows[rowIndex];
+
+      const sameName =
+        String(row.name || '')
+          .trim()
+          .toLowerCase() === cleanName;
+
+      if (
+        sameName &&
+        row.id !== excludeRowId
+      ) {
+        return row.specialReport === true;
+      }
+    }
+  }
+
+  return false;
+}
   function addRow() {
       if (!authToken) {
     requireAuth(addRow);
@@ -5098,6 +5182,8 @@ function getPreviousMonthNote(name) {
     const enteredNotes = notesInput.value.trim();
     const savedBankDetails =
   getSavedBankDetails(name);
+    const savedSpecialReport =
+  getSavedSpecialReport(name);
 
 const notes =
   enteredNotes ||
@@ -5122,6 +5208,8 @@ activeMonth().rows.push({
     savedBankDetails.branchCode,
 
   marked: false,
+  specialReport:
+  savedSpecialReport,
   documents: []
 });
 
@@ -5342,7 +5430,10 @@ populateBranchOptions(
   savedBankCode,
   savedBranchCode
 );
-
+document.getElementById(
+  'edit-special-report'
+).checked =
+  row.specialReport === true;
   
   document.getElementById('edit-overlay').classList.add('show');
 
@@ -6152,6 +6243,10 @@ function saveEditRow() {
 
   const row = activeMonth().rows.find(r => r.id === editingRowId);
   if (!row) return closeEditDialog();
+  const originalStudentName =
+  String(row.name || '')
+    .trim()
+    .toLowerCase();
 
   const newName = document.getElementById('edit-name').value.trim();
   const newAmount = parseFloat(
@@ -6181,7 +6276,10 @@ const newBranchCode =
     .getElementById('edit-branch-code')
     .value
     .trim();
-
+const newSpecialReport =
+  document.getElementById(
+    'edit-special-report'
+  ).checked;
 if (
   newAccountNumber &&
   !/^\d{1,13}$/.test(newAccountNumber)
@@ -6235,7 +6333,25 @@ row.bankCode =
 
 row.branchCode =
   newBranchCode;
+months.forEach(month => {
+  (month.rows || []).forEach(studentRow => {
+    const studentName =
+      String(studentRow.name || '')
+        .trim()
+        .toLowerCase();
 
+    if (
+      studentName ===
+      originalStudentName
+    ) {
+      studentRow.specialReport =
+        newSpecialReport;
+    }
+  });
+});
+
+row.specialReport =
+  newSpecialReport;
 if (oldAmount !== newAmount) {
   if (!Array.isArray(row.history)) {
     row.history = [];
@@ -6991,7 +7107,124 @@ function exportExcelNow(includeMarked) {
 
   showToast('✅ הקובץ יוצא בהצלחה!');
 }
+function exportSpecialMonthlyExcel() {
+  if (!authToken) {
+    requireAuth(
+      exportSpecialMonthlyExcel
+    );
+    return;
+  }
 
+  if (typeof XLSX === 'undefined') {
+    showToast(
+      '❌ ספריית Excel לא נטענה'
+    );
+    return;
+  }
+
+  const month =
+    activeMonth();
+
+  if (!month) {
+    showToast(
+      '❌ לא נמצא חודש פעיל'
+    );
+    return;
+  }
+
+  const rows =
+    (month.rows || []).filter(
+      row =>
+        row.specialReport === true
+    );
+
+  if (rows.length === 0) {
+    showToast(
+      'אין תלמידים שסומנו לדוח הקבוצה המיוחדת בחודש זה'
+    );
+    return;
+  }
+
+  const title =
+    document
+      .getElementById('main-title')
+      .value ||
+    'מסכם חודשי';
+
+  const total =
+    rows.reduce(
+      (sum, row) =>
+        sum +
+        (Number(row.amount) || 0),
+      0
+    );
+
+  const data = [
+    [
+      `${title} — דוח קבוצה מיוחדת — ${month.name}`
+    ],
+    [],
+    [
+      '#',
+      'שם / תיאור',
+      'הערה',
+      'סכום'
+    ]
+  ];
+
+  rows.forEach((row, index) => {
+    data.push([
+      index + 1,
+      row.name || '',
+      row.notes || '',
+      Number(row.amount) || 0
+    ]);
+  });
+
+  data.push([]);
+
+  data.push([
+    '',
+    'סה״כ',
+    '',
+    total
+  ]);
+
+  const worksheet =
+    XLSX.utils.aoa_to_sheet(data);
+
+  worksheet['!cols'] = [
+    { wch: 6 },
+    { wch: 28 },
+    { wch: 35 },
+    { wch: 14 }
+  ];
+
+  const workbook =
+    XLSX.utils.book_new();
+
+  XLSX.utils.book_append_sheet(
+    workbook,
+    worksheet,
+    'קבוצה מיוחדת'
+  );
+
+  const safeMonthName =
+    String(month.name || 'חודש')
+      .replace(
+        /[\\\/:*?"<>|]/g,
+        '-'
+      );
+
+  XLSX.writeFile(
+    workbook,
+    `דוח_קבוצה_מיוחדת_${safeMonthName}.xlsx`
+  );
+
+  showToast(
+    `✅ הופק דוח עבור ${rows.length} תלמידים`
+  );
+}
   function exportMasavExcel() {
   if (!authToken) {
     requireAuth(exportMasavExcel);
