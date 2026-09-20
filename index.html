@@ -2543,6 +2543,24 @@ position: static;
 >
   🏦 ייצוא טופס מס"ב
 </button>
+     <button
+  type="button"
+  id="masav-approve-btn"
+  class="btn-action"
+  onclick="openMasavApprovalDialog()"
+  style="
+    display:none;
+    flex-shrink:0;
+    height:36px;
+    padding:0 12px;
+    white-space:nowrap;
+    color:#1976d2;
+    border-color:rgba(25,118,210,0.30);
+    font-weight:700;
+  "
+>
+  ✅ אישור העברה לבנק
+</button>
 </div>
      <div class="total-bar">
       <div class="total-label">
@@ -2851,7 +2869,107 @@ position: static;
     </div>
   </div>
 </div>
+<!-- Masav Bank Approval Dialog -->
+<div class="overlay" id="masav-approval-overlay">
+  <div class="dialog">
+    <div class="dialog-icon">🏦</div>
 
+    <div class="dialog-msg">
+      אישור העברה לבנק
+    </div>
+
+    <div
+      id="masav-approval-summary"
+      class="dialog-sub"
+      style="
+        line-height:1.7;
+        margin-bottom:12px;
+      "
+    ></div>
+
+    <input
+      type="text"
+      id="masav-reference"
+      placeholder="מספר אסמכתא מהבנק"
+      autocomplete="off"
+      style="
+        width:100%;
+        padding:10px;
+        margin:6px 0;
+        border:1.5px solid #ddd;
+        border-radius:9px;
+        font-family:Heebo;
+      "
+    />
+
+    <label
+      for="masav-transfer-date"
+      style="
+        display:block;
+        text-align:right;
+        margin-top:8px;
+        color:var(--muted);
+        font-size:0.82rem;
+        font-weight:700;
+      "
+    >
+      תאריך ההעברה
+    </label>
+
+    <input
+      type="date"
+      id="masav-transfer-date"
+      style="
+        width:100%;
+        padding:10px;
+        margin:6px 0 12px;
+        border:1.5px solid #ddd;
+        border-radius:9px;
+        font-family:Heebo;
+      "
+    />
+<label
+  for="masav-approval-file"
+  style="
+    display:block;
+    text-align:right;
+    margin-top:6px;
+    color:var(--muted);
+    font-size:0.82rem;
+    font-weight:700;
+  "
+>
+  אישור העברה מהבנק — אופציונלי
+</label>
+
+<input
+  type="file"
+  id="masav-approval-file"
+  accept=".pdf,.xlsx,.xls,.png,.jpg,.jpeg"
+  style="
+    width:100%;
+    margin:6px 0 14px;
+    font-family:Heebo;
+  "
+/>
+    <div class="dialog-btns">
+      <button
+        class="btn-cancel"
+        onclick="closeMasavApprovalDialog()"
+      >
+        ביטול
+      </button>
+
+      <button
+        class="btn-confirm-del"
+        onclick="confirmMasavBankApproval()"
+        style="background:#2ecc71;"
+      >
+        אשר שהועבר
+      </button>
+    </div>
+  </div>
+</div>
 <!-- Edit Row Dialog -->
 <div class="overlay" id="edit-overlay">
   <div class="dialog">
@@ -2929,6 +3047,22 @@ position: static;
 >
   <option value="">תחילה יש לבחור בנק</option>
 </select>
+    <div
+  id="edit-masav-status"
+  style="
+    width:100%;
+    margin:10px 0;
+    padding:11px 12px;
+    border:1px solid #d8e5f2;
+    border-radius:10px;
+    background:#f5f9fd;
+    text-align:right;
+    font-size:0.82rem;
+    line-height:1.7;
+  "
+>
+  ⚪ טרם הופק למס״ב
+</div>
     <label
   style="
     display:flex;
@@ -3997,6 +4131,7 @@ function populateBranchOptions(
   let pendingDelete = null;
   let extraExpenses = [];
   let recycleBin = [];
+  let masavBatches = [];
   let editingExtraExpenseId = null;
   let tempEmailExtraExpenseId = null;
   let tempEmailExtraExpenses = [];
@@ -5370,8 +5505,9 @@ function renderRows() {
   const m = activeMonth();
 
   updateRecycleBinButton();
+updateMasavApprovalButton();
 
-  renderChecksCenter();
+renderChecksCenter();
 
   rowsList.innerHTML = '';
 
@@ -5543,7 +5679,181 @@ filteredRows.forEach((r, i) => {
     totalEl.classList.add('bump'); setTimeout(() => totalEl.classList.remove('bump'), 200);
   }
 let editingRowId = null;
+function formatMasavTransferDate(value) {
+  if (!value) return '';
 
+  const parts =
+    String(value).split('-');
+
+  if (parts.length !== 3) {
+    return String(value);
+  }
+
+  return (
+    parts[2] +
+    '/' +
+    parts[1] +
+    '/' +
+    parts[0]
+  );
+}
+
+function renderEditMasavStatus(row) {
+  const box =
+    document.getElementById(
+      'edit-masav-status'
+    );
+
+  if (!box || !row) return;
+
+  const month = activeMonth();
+
+  if (!month) {
+    box.textContent =
+      '⚪ טרם הופק למס״ב';
+    return;
+  }
+
+  const activeBatch =
+    getActiveMasavBatch(month.id);
+
+  const activeItem =
+    activeBatch
+      ? (activeBatch.items || []).find(
+          item =>
+            String(item.rowId) ===
+            String(row.id)
+        )
+      : null;
+
+  let relevantBatch = null;
+
+  if (activeItem) {
+    relevantBatch = activeBatch;
+  } else {
+    relevantBatch =
+      [...masavBatches]
+        .reverse()
+        .find(batch =>
+          String(batch.monthId) ===
+            String(month.id) &&
+          batch.status === 'approved' &&
+          (batch.items || []).some(
+            item =>
+              String(item.rowId) ===
+              String(row.id)
+          )
+        ) || null;
+  }
+
+  if (
+    relevantBatch &&
+    relevantBatch.status === 'approved'
+  ) {
+    const documentLink =
+      relevantBatch.approvalDocument?.url
+        ? `
+          <br>
+          <a
+            href="${esc(
+              relevantBatch
+                .approvalDocument
+                .url
+            )}"
+            target="_blank"
+            rel="noopener"
+            style="
+              color:#1976d2;
+              font-weight:800;
+            "
+          >
+            📎 פתיחת אישור הבנק
+          </a>
+        `
+        : '';
+
+    box.innerHTML = `
+      <strong style="color:#159447;">
+        🟢 אושר בבנק
+      </strong>
+      <br>
+      אסמכתא:
+      ${esc(
+        relevantBatch.reference || '—'
+      )}
+      <br>
+      תאריך:
+      ${esc(
+        formatMasavTransferDate(
+          relevantBatch.transferDate
+        ) || '—'
+      )}
+      <br>
+      סכום שהופק:
+      ${fmt(
+        Number(
+          (
+            relevantBatch.items || []
+          ).find(
+            item =>
+              String(item.rowId) ===
+              String(row.id)
+          )?.amount
+        ) || 0
+      )}
+      ${documentLink}
+    `;
+
+    return;
+  }
+
+  if (
+    activeBatch &&
+    activeBatch.status === 'exported' &&
+    activeItem
+  ) {
+    box.innerHTML = `
+      <strong style="color:#d99100;">
+        🟡 נכלל בקובץ האחרון
+      </strong>
+      <br>
+      סכום שהופק:
+      ${fmt(
+        Number(activeItem.amount) || 0
+      )}
+      <br>
+      ממתין לאישור ההעברה בבנק
+    `;
+
+    return;
+  }
+
+  if (row.marked === true) {
+    box.innerHTML = `
+      <strong style="color:#8a8a8a;">
+        🚫 מוחרג מקובץ המס״ב
+      </strong>
+    `;
+
+    return;
+  }
+
+  if (activeBatch) {
+    box.innerHTML = `
+      <strong style="color:#8a8a8a;">
+        ⚪ לא נכלל בקובץ האחרון
+      </strong>
+    `;
+
+    return;
+  }
+
+  box.innerHTML = `
+    <strong style="color:#8a8a8a;">
+      ⚪ טרם הופק למס״ב
+    </strong>
+  `;
+}
 async function editRow(rowId) {
     if (!authToken) {
     requireAuth(() => editRow(rowId));
@@ -5583,6 +5893,7 @@ document.getElementById(
   'edit-special-report'
 ).checked =
   row.specialReport === true;
+  renderEditMasavStatus(row);
   
   document.getElementById('edit-overlay').classList.add('show');
 
@@ -7433,12 +7744,470 @@ function exportSpecialMonthlyExcel() {
     `✅ הופק דוח עבור ${rows.length} תלמידים`
   );
 }
+function getIsraelDateForInput() {
+  const parts =
+    new Intl.DateTimeFormat(
+      'en-CA',
+      {
+        timeZone: 'Asia/Jerusalem',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      }
+    ).formatToParts(new Date());
+
+  const values = {};
+
+  parts.forEach(part => {
+    values[part.type] = part.value;
+  });
+
+  return (
+    values.year +
+    '-' +
+    values.month +
+    '-' +
+    values.day
+  );
+}
+
+function updateMasavApprovalButton() {
+  const button =
+    document.getElementById(
+      'masav-approve-btn'
+    );
+
+  if (!button) return;
+
+  const month = activeMonth();
+
+  if (!month) {
+    button.style.display = 'none';
+    return;
+  }
+
+  const batch =
+    getActiveMasavBatch(month.id);
+
+  if (!batch) {
+    button.style.display = 'none';
+    return;
+  }
+
+  button.style.display = 'inline-flex';
+  button.style.alignItems = 'center';
+
+  if (batch.status === 'exported') {
+    button.disabled = false;
+    button.textContent =
+      '✅ אישור העברה לבנק';
+    button.style.opacity = '1';
+    button.style.cursor = 'pointer';
+    return;
+  }
+
+  if (batch.status === 'approved') {
+    button.disabled = true;
+    button.textContent =
+      '✅ ההעברה אושרה';
+    button.style.opacity = '0.75';
+    button.style.cursor = 'default';
+    return;
+  }
+
+  button.style.display = 'none';
+}
+
+function openMasavApprovalDialog() {
+  if (!authToken) {
+    requireAuth(openMasavApprovalDialog);
+    return;
+  }
+
+  const month = activeMonth();
+
+  if (!month) return;
+
+  const batch =
+    getActiveMasavBatch(month.id);
+
+  if (
+    !batch ||
+    batch.status !== 'exported'
+  ) {
+    showToast(
+      'אין קובץ מס״ב שממתין לאישור'
+    );
+    return;
+  }
+
+  const itemCount =
+    (batch.items || []).length;
+
+  document.getElementById(
+    'masav-approval-summary'
+  ).textContent =
+    `${itemCount} מוטבים · ` +
+    `${fmt(Number(batch.total) || 0)}`;
+
+  document.getElementById(
+    'masav-reference'
+  ).value = '';
+
+  document.getElementById(
+    'masav-transfer-date'
+  ).value =
+    getIsraelDateForInput();
+  document.getElementById(
+  'masav-approval-file'
+).value = '';
+
+  document.getElementById(
+    'masav-approval-overlay'
+  ).classList.add('show');
+
+  setTimeout(() => {
+    document.getElementById(
+      'masav-reference'
+    ).focus();
+  }, 50);
+}
+
+function closeMasavApprovalDialog() {
+  document.getElementById(
+    'masav-approval-overlay'
+  ).classList.remove('show');
+}
+
+async function confirmMasavBankApproval() {
+  if (!authToken) {
+    requireAuth(
+      confirmMasavBankApproval
+    );
+    return;
+  }
+
+  const month = activeMonth();
+
+  if (!month) return;
+
+  const batch =
+    getActiveMasavBatch(month.id);
+
+  if (
+    !batch ||
+    batch.status !== 'exported'
+  ) {
+    closeMasavApprovalDialog();
+
+    showToast(
+      'הקובץ הפעיל כבר אינו ממתין לאישור'
+    );
+
+    return;
+  }
+
+  const reference =
+    document
+      .getElementById('masav-reference')
+      .value
+      .trim();
+
+  const transferDate =
+    document
+      .getElementById(
+        'masav-transfer-date'
+      )
+      .value;
+const approvalFile =
+  document
+    .getElementById(
+      'masav-approval-file'
+    )
+    .files[0] || null;
+  if (!reference) {
+    showToast(
+      '⚠️ יש להזין מספר אסמכתא'
+    );
+    return;
+  }
+
+  if (!transferDate) {
+    showToast(
+      '⚠️ יש לבחור תאריך העברה'
+    );
+    return;
+  }
+
+  const approved =
+    confirm(
+      `לאשר שהועברו לבנק ` +
+      `${(batch.items || []).length} מוטבים ` +
+      `בסכום ${fmt(Number(batch.total) || 0)}?`
+    );
+
+  if (!approved) return;
+let approvalDocument = null;
+
+if (approvalFile) {
+  if (
+    approvalFile.size >
+    10 * 1024 * 1024
+  ) {
+    showToast(
+      '❌ קובץ האישור גדול מדי. המגבלה היא 10MB'
+    );
+    return;
+  }
+
+  try {
+    showToast(
+      '⏳ מעלה את אישור הבנק...'
+    );
+
+    const base64 =
+      await new Promise(
+        (resolve, reject) => {
+          const reader =
+            new FileReader();
+
+          reader.onload = () => {
+            resolve(
+              reader.result.split(',')[1]
+            );
+          };
+
+          reader.onerror = reject;
+
+          reader.readAsDataURL(
+            approvalFile
+          );
+        }
+      );
+
+    const response =
+      await fetch(API_URL, {
+        method: 'POST',
+        redirect: 'follow',
+
+        body: JSON.stringify({
+          action: 'uploadDocument',
+          token: authToken,
+          fileName: approvalFile.name,
+          mimeType:
+            approvalFile.type ||
+            'application/octet-stream',
+          base64
+        }),
+
+        headers: {
+          'Content-Type':
+            'text/plain;charset=utf-8'
+        }
+      });
+
+    const result =
+      await response.json();
+
+    if (result.authExpired) {
+      authToken = '';
+
+      sessionStorage.removeItem(
+        'authToken'
+      );
+
+      showToast(
+        '🔐 ההתחברות פגה — התחבר מחדש'
+      );
+
+      requireAuth(
+        confirmMasavBankApproval
+      );
+
+      return;
+    }
+
+    if (
+      !response.ok ||
+      result.success === false ||
+      !result.url
+    ) {
+      throw new Error(
+        result.error ||
+        'Upload failed'
+      );
+    }
+
+    approvalDocument = {
+      id: result.id,
+      name:
+        result.name ||
+        approvalFile.name,
+      url: result.url
+    };
+
+  } catch (error) {
+    console.error(
+      'MASAV APPROVAL UPLOAD ERROR:',
+      error
+    );
+
+    showToast(
+      '❌ העלאת אישור הבנק נכשלה'
+    );
+
+    return;
+  }
+}
+  batch.status = 'approved';
+  batch.reference = reference;
+  batch.transferDate = transferDate;
+  batch.approvedAt =
+    new Date().toISOString();
+  batch.approvalDocument =
+  approvalDocument;
+
+  closeMasavApprovalDialog();
+  updateMasavApprovalButton();
+  renderRows();
+
+  saveData(
+    'אישור העברה לבנק',
+    `${month.name} — אסמכתא ${reference}`
+  );
+
+  showToast(
+    '✅ ההעברה אושרה ונשמרה'
+  );
+}
+function getActiveMasavBatch(monthId) {
+  return masavBatches.find(batch =>
+    String(batch.monthId) === String(monthId) &&
+    batch.active === true
+  ) || null;
+}
+
+function getApprovedMasavRowIds(monthId) {
+  const approvedIds = new Set();
+
+  masavBatches.forEach(batch => {
+    if (
+      String(batch.monthId) !== String(monthId) ||
+      batch.status !== 'approved'
+    ) {
+      return;
+    }
+
+    (batch.items || []).forEach(item => {
+      approvedIds.add(String(item.rowId));
+    });
+  });
+
+  return approvedIds;
+}
+
+function confirmApprovedMasavReexport(month, rows) {
+  const approvedIds =
+    getApprovedMasavRowIds(month.id);
+
+  const duplicateRows = rows.filter(row =>
+    approvedIds.has(String(row.id))
+  );
+
+  if (duplicateRows.length === 0) {
+    return true;
+  }
+
+  const names = duplicateRows
+    .slice(0, 10)
+    .map(row => `• ${row.name}`)
+    .join('\n');
+
+  const moreText =
+    duplicateRows.length > 10
+      ? `\nועוד ${duplicateRows.length - 10} תלמידים`
+      : '';
+
+  return confirm(
+    '⚠️ התלמידים הבאים כבר הופיעו בהעברה שאושרה בבנק:\n\n' +
+    names +
+    moreText +
+    '\n\nהפקה נוספת עלולה לגרום לתשלום כפול.\nלהמשיך בכל זאת?'
+  );
+}
+
+function registerMasavExport(month, rows) {
+  masavBatches.forEach(batch => {
+    if (
+      String(batch.monthId) === String(month.id) &&
+      batch.active === true
+    ) {
+      batch.active = false;
+
+      if (batch.status === 'exported') {
+        batch.status = 'replaced';
+        batch.replacedAt =
+          new Date().toISOString();
+      }
+    }
+  });
+
+  const nowIso = new Date().toISOString();
+
+  const batch = {
+    id:
+      'masav_' +
+      Date.now() +
+      '_' +
+      Math.random().toString(36).slice(2, 8),
+
+    monthId: month.id,
+    monthName: month.name || '',
+    createdAt: nowIso,
+    status: 'exported',
+    active: true,
+    reference: '',
+    approvedAt: '',
+    transferDate: '',
+
+    total: rows.reduce(
+      (sum, row) =>
+        sum + (Number(row.amount) || 0),
+      0
+    ),
+
+    items: rows.map(row => ({
+      rowId: row.id,
+      name: String(row.name || ''),
+      amount: Number(row.amount) || 0,
+      beneficiaryId:
+        String(row.beneficiaryId || ''),
+      accountNumber:
+        String(row.accountNumber || ''),
+      bankCode:
+        String(row.bankCode || ''),
+      branchCode:
+        String(row.branchCode || '')
+    }))
+  };
+
+masavBatches.push(batch);
+
+updateMasavApprovalButton();
+
+
+  saveData(
+    'הפקת טופס מס"ב',
+    `${month.name} — ${rows.length} מוטבים`
+  );
+
+  return batch;
+}
   function exportMasavExcel() {
   if (!authToken) {
     requireAuth(exportMasavExcel);
     return;
   }
-
   const month = activeMonth();
 
   if (
@@ -7564,7 +8333,15 @@ function exportSpecialMonthlyExcel() {
 
     return;
   }
-
+if (
+  !confirmApprovedMasavReexport(
+    month,
+    rows
+  )
+) {
+  showToast('הפקת המס״ב בוטלה');
+  return;
+}
 const excelData = [
   [
     'שם המוטב',
@@ -7675,7 +8452,10 @@ rows.forEach(row => {
     workbook,
     `טופס_מסב_${safeMonthName}.xlsx`
   );
-
+registerMasavExport(
+  month,
+  rows
+);
   showToast(
     '✅ טופס מס"ב נוצר בהצלחה'
   );
@@ -8316,6 +9096,7 @@ function getUndoState() {
     nextMonthId,
     extraExpenses,
     recycleBin,
+    masavBatches,
     title:
       document.getElementById('main-title')?.value || ''
   });
@@ -8346,7 +9127,11 @@ function restoreUndoState(snapshot) {
   recycleBin =
     d.recycleBin;
 }
-
+if (Array.isArray(d.masavBatches)) {
+  masavBatches = d.masavBatches;
+} else {
+  masavBatches = [];
+}
   if (typeof d.title === 'string') {
     document.getElementById('main-title').value = d.title;
   }
@@ -9371,6 +10156,7 @@ function getPayload() {
     nextMonthId,
     extraExpenses,
     recycleBin,
+    masavBatches,
     _revision: dataRevision,
     title:
       document
@@ -9477,9 +10263,13 @@ if (rememberedMonth) {
 } else {
   recycleBin = [];
 }
-
+if (Array.isArray(d.masavBatches)) {
+  masavBatches = d.masavBatches;
+} else {
+  masavBatches = [];
+}
 updateRecycleBinButton();
-
+updateMasavApprovalButton();
   if (d.title) {
     document.getElementById('main-title').value = d.title;
   }
