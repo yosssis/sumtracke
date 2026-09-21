@@ -8349,7 +8349,8 @@ const excelData = [
     'מספר החשבון ',
     'בנק',
     'סניף',
-    'סכום'
+   'סכום',
+'הערה'
   ]
 ];
 
@@ -8367,24 +8368,25 @@ rows.forEach(row => {
 
     Number(row.branchCode),
 
-    Number(
-      Number(row.amount).toFixed(2)
-    )
+  Number(
+  Number(row.amount).toFixed(2)
+),
+''
   ]);
 });
 
   const worksheet =
     XLSX.utils.aoa_to_sheet(excelData);
 
-  worksheet['!cols'] = [
-    { wch: 25 },
-    { wch: 14 },
-    { wch: 16 },
-    { wch: 8 },
-    { wch: 8 },
-    { wch: 14 },
-   
-  ];
+worksheet['!cols'] = [
+  { wch: 25 },
+  { wch: 14 },
+  { wch: 16 },
+  { wch: 8 },
+  { wch: 8 },
+  { wch: 14 },
+  { wch: 25 }
+];
 
   for (
     let rowNumber = 2;
