@@ -2886,7 +2886,31 @@ position: static;
         margin-bottom:12px;
       "
     ></div>
+<div
+  id="masav-approval-items"
+  style="
+    width:100%;
+    max-height:220px;
+    overflow-y:auto;
+    margin:0 0 8px;
+    padding:8px;
+    border:1px solid #e2e2e2;
+    border-radius:10px;
+    background:#fafafa;
+    text-align:right;
+  "
+></div>
 
+<div
+  style="
+    font-size:0.76rem;
+    color:var(--muted);
+    margin-bottom:10px;
+    text-align:right;
+  "
+>
+  הסר את הסימון מתלמיד שהבנק דחה
+</div>
     <input
       type="text"
       id="masav-reference"
@@ -5746,6 +5770,70 @@ function renderEditMasavStatus(row) {
         ) || null;
   }
 
+const relevantItem =
+  relevantBatch
+    ? (relevantBatch.items || []).find(
+        item =>
+          String(item.rowId) ===
+          String(row.id)
+      )
+    : null;
+
+if (
+  relevantBatch &&
+  relevantBatch.status === 'approved' &&
+  relevantItem?.transferStatus === 'rejected'
+) {
+  box.innerHTML = `
+    <strong style="color:#d93636;">
+      🔴 ההעברה נדחתה בבנק
+    </strong>
+
+    <br>
+
+    אסמכתא:
+    ${esc(
+      relevantBatch.reference || '—'
+    )}
+
+    <br>
+
+    תאריך:
+    ${esc(
+      formatMasavTransferDate(
+        relevantBatch.transferDate
+      ) || '—'
+    )}
+
+    <br>
+
+    <button
+      type="button"
+      onclick="
+        setMasavItemTransferStatus(
+          '${esc(String(row.id))}',
+          'approved'
+        )
+      "
+      style="
+        margin-top:8px;
+        padding:6px 10px;
+        border:1px solid #2ecc71;
+        border-radius:7px;
+        background:#fff;
+        color:#159447;
+        font-family:Heebo;
+        font-weight:700;
+        cursor:pointer;
+      "
+    >
+      תיקון: סמן שהועבר
+    </button>
+  `;
+
+  return;
+}
+  
   if (
     relevantBatch &&
     relevantBatch.status === 'approved'
@@ -5802,6 +5890,30 @@ function renderEditMasavStatus(row) {
         ) || 0
       )}
       ${documentLink}
+      <br>
+
+<button
+  type="button"
+  onclick="
+    setMasavItemTransferStatus(
+      '${esc(String(row.id))}',
+      'rejected'
+    )
+  "
+  style="
+    margin-top:8px;
+    padding:6px 10px;
+    border:1px solid #e25757;
+    border-radius:7px;
+    background:#fff;
+    color:#d93636;
+    font-family:Heebo;
+    font-weight:700;
+    cursor:pointer;
+  "
+>
+  סמן שההעברה נדחתה
+</button>
     `;
 
     return;
@@ -5853,6 +5965,91 @@ function renderEditMasavStatus(row) {
       ⚪ טרם הופק למס״ב
     </strong>
   `;
+}
+  function setMasavItemTransferStatus(
+  rowId,
+  newStatus
+) {
+  const month = activeMonth();
+
+  if (!month) return;
+
+  const relevantBatches =
+    masavBatches.filter(batch =>
+      String(batch.monthId) ===
+        String(month.id) &&
+      batch.status === 'approved' &&
+      (batch.items || []).some(
+        item =>
+          String(item.rowId) ===
+          String(rowId)
+      )
+    );
+
+  const batch =
+    relevantBatches[
+      relevantBatches.length - 1
+    ];
+
+  if (!batch) {
+    showToast(
+      '❌ לא נמצאה העברה עבור התלמיד'
+    );
+    return;
+  }
+
+  const item =
+    (batch.items || []).find(
+      currentItem =>
+        String(currentItem.rowId) ===
+        String(rowId)
+    );
+
+  if (!item) return;
+
+  const statusText =
+    newStatus === 'rejected'
+      ? 'נדחתה בבנק'
+      : 'הועברה בהצלחה';
+
+  if (
+    !confirm(
+      `לסמן שההעברה עבור ${item.name} ${statusText}?`
+    )
+  ) {
+    return;
+  }
+
+  item.transferStatus = newStatus;
+
+  item.rejectionReason =
+    newStatus === 'rejected'
+      ? 'נדחה בבנק'
+      : '';
+
+  saveData(
+    'שינוי סטטוס העברה',
+    `${item.name} — ${statusText}`
+  );
+
+  const row =
+    (month.rows || []).find(
+      currentRow =>
+        String(currentRow.id) ===
+        String(rowId)
+    );
+
+  if (row) {
+    renderEditMasavStatus(row);
+  }
+
+  renderRows();
+
+  showToast(
+    newStatus === 'rejected'
+      ? '🔴 התלמיד סומן כנדחה בבנק'
+      : '✅ התלמיד סומן כהועבר'
+  );
 }
 async function editRow(rowId) {
     if (!authToken) {
@@ -7849,6 +8046,41 @@ function openMasavApprovalDialog() {
   ).textContent =
     `${itemCount} מוטבים · ` +
     `${fmt(Number(batch.total) || 0)}`;
+  const approvalItems =
+  document.getElementById(
+    'masav-approval-items'
+  );
+
+approvalItems.innerHTML =
+  (batch.items || [])
+    .map(item => `
+      <label
+        style="
+          display:flex;
+          align-items:center;
+          gap:9px;
+          padding:8px 5px;
+          border-bottom:1px solid #ededed;
+          cursor:pointer;
+        "
+      >
+        <input
+          type="checkbox"
+          class="masav-item-approved"
+          data-row-id="${esc(String(item.rowId))}"
+          checked
+        />
+
+        <span style="flex:1;">
+          ${esc(item.name || 'ללא שם')}
+        </span>
+
+        <strong>
+          ${fmt(Number(item.amount) || 0)}
+        </strong>
+      </label>
+    `)
+    .join('');
 
   document.getElementById(
     'masav-reference'
@@ -7906,7 +8138,21 @@ async function confirmMasavBankApproval() {
 
     return;
   }
+const approvedRowIds =
+  new Set(
+    [
+      ...document.querySelectorAll(
+        '#masav-approval-items ' +
+        '.masav-item-approved:checked'
+      )
+    ].map(input =>
+      String(input.dataset.rowId)
+    )
+  );
 
+const rejectedCount =
+  (batch.items || []).length -
+  approvedRowIds.size;
   const reference =
     document
       .getElementById('masav-reference')
@@ -7940,13 +8186,16 @@ const approvalFile =
   }
 
   const approved =
-    confirm(
-      `לאשר שהועברו לבנק ` +
-      `${(batch.items || []).length} מוטבים ` +
-      `בסכום ${fmt(Number(batch.total) || 0)}?`
-    );
+  confirm(
+    `לאשר ${approvedRowIds.size} תלמידים כהועברו?` +
+    (
+      rejectedCount > 0
+        ? `\n\n${rejectedCount} תלמידים יסומנו כנדחו בבנק.`
+        : ''
+    )
+  );
 
-  if (!approved) return;
+if (!approved) return;
 let approvalDocument = null;
 
 if (approvalFile) {
@@ -8059,12 +8308,30 @@ if (approvalFile) {
     return;
   }
 }
-  batch.status = 'approved';
-  batch.reference = reference;
-  batch.transferDate = transferDate;
-  batch.approvedAt =
-    new Date().toISOString();
-  batch.approvalDocument =
+ (batch.items || []).forEach(item => {
+  const wasApproved =
+    approvedRowIds.has(
+      String(item.rowId)
+    );
+
+  item.transferStatus =
+    wasApproved
+      ? 'approved'
+      : 'rejected';
+
+  item.rejectionReason =
+    wasApproved
+      ? ''
+      : 'נדחה בבנק';
+});
+
+batch.status = 'approved';
+batch.reference = reference;
+batch.transferDate = transferDate;
+batch.approvedAt =
+  new Date().toISOString();
+
+batch.approvalDocument =
   approvalDocument;
 
   closeMasavApprovalDialog();
@@ -8098,42 +8365,64 @@ function getApprovedMasavRowIds(monthId) {
       return;
     }
 
-    (batch.items || []).forEach(item => {
-      approvedIds.add(String(item.rowId));
-    });
+   (batch.items || []).forEach(item => {
+  if (
+    item.transferStatus === 'rejected'
+  ) {
+    return;
+  }
+
+  approvedIds.add(String(item.rowId));
+});
   });
 
   return approvedIds;
 }
 
-function confirmApprovedMasavReexport(month, rows) {
+function chooseMasavRowsForExport(month, rows) {
   const approvedIds =
     getApprovedMasavRowIds(month.id);
 
-  const duplicateRows = rows.filter(row =>
+  const newRows = rows.filter(row =>
+    !approvedIds.has(String(row.id))
+  );
+
+  const approvedRows = rows.filter(row =>
     approvedIds.has(String(row.id))
   );
 
-  if (duplicateRows.length === 0) {
-    return true;
+  if (approvedRows.length === 0) {
+    return rows;
   }
 
-  const names = duplicateRows
-    .slice(0, 10)
-    .map(row => `• ${row.name}`)
-    .join('\n');
+  if (newRows.length === 0) {
+    const exportAgain = confirm(
+      'לא נמצאו תלמידים חדשים להעברה.\n\n' +
+      `${approvedRows.length} התלמידים כבר אושרו בעבר בבנק.\n\n` +
+      'האם בכל זאת להפיק שוב את כולם?\n' +
+      'פעולה זו עלולה לגרום לתשלום כפול.'
+    );
 
-  const moreText =
-    duplicateRows.length > 10
-      ? `\nועוד ${duplicateRows.length - 10} תלמידים`
-      : '';
+    return exportAgain ? rows : null;
+  }
 
-  return confirm(
-    '⚠️ התלמידים הבאים כבר הופיעו בהעברה שאושרה בבנק:\n\n' +
-    names +
-    moreText +
-    '\n\nהפקה נוספת עלולה לגרום לתשלום כפול.\nלהמשיך בכל זאת?'
+  const onlyNew = confirm(
+    `נמצאו ${newRows.length} תלמידים חדשים להעברה.\n` +
+    `${approvedRows.length} תלמידים כבר אושרו בעבר.\n\n` +
+    'לחץ "אישור" כדי להפיק רק את החדשים.\n' +
+    'לחץ "ביטול" לאפשרויות נוספות.'
   );
+
+  if (onlyNew) {
+    return newRows;
+  }
+
+  const exportAll = confirm(
+    'האם להפיק מחדש גם את התלמידים שכבר שולמו?\n\n' +
+    '⚠️ פעולה זו עלולה לגרום לתשלום כפול.'
+  );
+
+  return exportAll ? rows : null;
 }
 
 function registerMasavExport(month, rows) {
@@ -8178,6 +8467,7 @@ function registerMasavExport(month, rows) {
 
     items: rows.map(row => ({
       rowId: row.id,
+      transferStatus: 'pending',
       name: String(row.name || ''),
       amount: Number(row.amount) || 0,
       beneficiaryId:
@@ -8224,12 +8514,24 @@ updateMasavApprovalButton();
     return;
   }
 
-  const rows =
+const availableRows =
   month.rows.filter(row => !row.marked);
-    if (rows.length === 0) {
+
+if (availableRows.length === 0) {
   showToast(
     'אין פריטים לא מסומנים לייצוא למס״ב'
   );
+  return;
+}
+
+const rows =
+  chooseMasavRowsForExport(
+    month,
+    availableRows
+  );
+
+if (!rows || rows.length === 0) {
+  showToast('הפקת המס״ב בוטלה');
   return;
 }
   const errors = [];
@@ -8333,15 +8635,7 @@ updateMasavApprovalButton();
 
     return;
   }
-if (
-  !confirmApprovedMasavReexport(
-    month,
-    rows
-  )
-) {
-  showToast('הפקת המס״ב בוטלה');
-  return;
-}
+
 const excelData = [
   [
     'שם המוטב',
