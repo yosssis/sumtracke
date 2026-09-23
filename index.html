@@ -5495,8 +5495,13 @@ const notes =
   enteredNotes ||
   getPreviousMonthNote(name);
     if (!name && isNaN(amount)) return;
+    const nowIso =
+  new Date().toISOString();
 activeMonth().rows.push({
   id: Date.now(),
+  reportSource: 'site',
+createdAt: nowIso,
+updatedAt: nowIso,
   name: name || '—',
   amount: isNaN(amount) ? 0 : amount,
   notes,
@@ -5573,12 +5578,20 @@ filteredRows.forEach((r, i) => {
       font-weight:600;
       white-space:nowrap;
     ">📞 ${formatReportedAt(r.reportedAt)}</span>`
-  : `<span style="
-      font-size:0.72rem;
-      color:var(--muted);
-      font-weight:600;
-      white-space:nowrap;
-    ">✍️ הזנה ידנית</span>`
+ : `<span style="
+    font-size:0.72rem;
+    color:var(--muted);
+    font-weight:600;
+    white-space:nowrap;
+  ">
+    ✍️ ${
+      r.updatedAt || r.createdAt
+        ? formatReportedAt(
+            r.updatedAt || r.createdAt
+          )
+        : 'הזנה ידנית'
+    }
+  </span>`
 }
     <button
   class="btn-docs"
@@ -6975,6 +6988,8 @@ if (
   }
 
 const oldAmount = Number(row.amount) || 0;
+  const manualUpdateTime =
+  new Date().toISOString();
 
 row.name = newName || '—';
 row.notes = newNotes;
@@ -6990,6 +7005,12 @@ row.bankCode =
 
 row.branchCode =
   newBranchCode;
+  row.updatedAt =
+  manualUpdateTime;
+
+row.reportSource =
+  'site';
+  
 months.forEach(month => {
   (month.rows || []).forEach(studentRow => {
     const studentName =
@@ -7014,16 +7035,16 @@ if (oldAmount !== newAmount) {
     row.history = [];
   }
 
-  const nowIso = new Date().toISOString();
+
 
   row.history.push({
     amount: newAmount,
-    date: nowIso,
+    date: manualUpdateTime,
     source: 'site'
   });
 
   row.amount = newAmount;
-  row.updatedAt = nowIso;
+ 
 }
 
   closeEditDialog();
