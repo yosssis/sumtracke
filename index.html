@@ -7008,8 +7008,7 @@ row.branchCode =
   row.updatedAt =
   manualUpdateTime;
 
-row.reportSource =
-  'site';
+
   
 months.forEach(month => {
   (month.rows || []).forEach(studentRow => {
@@ -7031,6 +7030,7 @@ months.forEach(month => {
 row.specialReport =
   newSpecialReport;
 if (oldAmount !== newAmount) {
+    row.reportSource = 'site';
   if (!Array.isArray(row.history)) {
     row.history = [];
   }
