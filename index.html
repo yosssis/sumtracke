@@ -2579,9 +2579,8 @@ position: static;
   font-weight: 900;
 }
 
-/* בכניסה מסתירים את נתוני החודש */
-body.month-picker-open .global-search-wrap,
-body.month-picker-open .main-workspace {
+/* בכניסה מסתירים רק את רשימת התלמידים */
+body.month-picker-open #month-students-section {
   display: none !important;
 }
 
@@ -2596,9 +2595,7 @@ body:not(.month-picker-open) .month-picker-title {
 body:not(.month-picker-open) .month-back-bar {
   display: flex;
 }
-body:not(.month-picker-open) #tabs-bar {
-  display: none;
-}
+
 @media (max-width: 600px) {
   .tabs-outer {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2708,7 +2705,7 @@ body:not(.month-picker-open) #tabs-bar {
   </div>
 </div>
   <div class="month-picker-title">
-  בחר חודש להצגת הנתונים
+  בחר חודש להצגת התלמידים
 </div>
 
 <div class="tabs-outer" id="tabs-bar"></div>
@@ -2719,7 +2716,7 @@ body:not(.month-picker-open) #tabs-bar {
     class="month-back-button"
     onclick="showMonthPicker()"
   >
-    ← חזרה לבחירת חודש
+ סגור את רשימת התלמידים
   </button>
 
   <div
@@ -2820,8 +2817,10 @@ body:not(.month-picker-open) #tabs-bar {
       </div>
       <div class="total-amount-el" id="total-amount">₪0.00</div>
     </div>
+    <div id="month-students-section">
     <div class="list-header"><span>פריט</span><span>סכום</span></div>
     <ul class="rows-list" id="rows-list"></ul>
+      </div>
   
   </div>
   <div class="checks-column">
