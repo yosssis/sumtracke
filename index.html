@@ -2445,6 +2445,7 @@ position: static;
 }
 
 .tab.active {
+    height: 105px;
   background: #ffffff;
   border: 2px solid var(--accent);
   color: var(--text);
@@ -2505,7 +2506,29 @@ position: static;
 .tab:hover .tab-del-btn {
   opacity: 0.75;
 }
+.tab-edit-btn {
+  position: absolute;
+  top: 7px;
+  right: 7px;
 
+  width: 24px;
+  height: 24px;
+  padding: 0;
+
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+
+  color: var(--accent);
+  font-size: 0.78rem;
+  opacity: 0.65;
+  cursor: pointer;
+}
+
+.tab-edit-btn:hover {
+  opacity: 1;
+  background: #fff3ec;
+}
 .btn-add-tab {
   width: 100%;
   min-width: 0;
@@ -2583,10 +2606,11 @@ body:not(.month-picker-open) #tabs-bar {
     margin-top: 14px;
   }
 
-  .tab,
-  .btn-add-tab {
-    height: 90px;
-  }
+.tab,
+.tab.active,
+.btn-add-tab {
+  height: 90px;
+}
 
   .tab-name-input {
     font-size: 0.86rem;
@@ -5584,6 +5608,26 @@ if (newName !== m.name) {
   e.stopPropagation();
   requireAuth(() => askDeleteMonth(m.id, m.name));
 });
+
+     const editBtn =
+  document.createElement('button');
+
+editBtn.type = 'button';
+editBtn.className = 'tab-edit-btn';
+editBtn.textContent = '✏️';
+editBtn.title = 'עריכת שם החודש';
+
+editBtn.addEventListener('click', e => {
+  e.stopPropagation();
+
+  requireAuth(() => {
+    inp.readOnly = false;
+    inp.style.width = '100%';
+    inp.focus();
+    inp.select();
+  });
+});
+     
 const monthTotal = (m.rows || []).reduce(
   (sum, row) =>
     sum + (Number(row.amount) || 0),
@@ -5601,11 +5645,15 @@ totalBox.innerHTML = `
   </span>
   ${fmt(monthTotal)}
 `;
-      tab.appendChild(inp);
-     tab.appendChild(totalBox);
-      if (months.length > 1) tab.appendChild(delBtn);
-      tabsBar.appendChild(tab);
-    });
+tab.appendChild(inp);
+tab.appendChild(totalBox);
+tab.appendChild(editBtn);
+
+if (months.length > 1) {
+  tab.appendChild(delBtn);
+}
+                tabsBar.appendChild(tab);
+});
     if (addButtonIndex >= months.length) {
   const addBtn = document.createElement('button');
   addBtn.className = 'btn-add-tab';
