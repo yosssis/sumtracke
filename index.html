@@ -2397,7 +2397,135 @@ position: static;
     background-position: 300% 50%;
   }
 }
-    
+    /* ===== בחירת חודשים קומפקטית ===== */
+
+.tabs-outer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+
+  padding: 0;
+  margin: 0 0 10px;
+
+  overflow: visible;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+
+  flex: 0 0 auto;
+  min-width: 84px;
+  max-width: 125px;
+  height: 32px;
+
+  padding: 0 8px;
+
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+
+  color: var(--muted);
+  box-shadow: none;
+  cursor: pointer;
+}
+
+.tab:hover {
+  background: #fff7f2;
+  border-color: rgba(255,107,53,0.35);
+  color: var(--text);
+}
+
+.tab.active {
+  height: 32px;
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  color: #ffffff;
+  box-shadow: 0 3px 9px rgba(255,107,53,0.20);
+}
+
+.tab-name-input {
+  width: 100%;
+  min-width: 58px;
+  max-width: 96px;
+
+  padding: 0;
+
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+
+  color: inherit;
+  text-align: center;
+  cursor: pointer;
+}
+
+.tab-del-btn {
+  width: 14px;
+  height: 14px;
+  font-size: 0.62rem;
+  opacity: 0;
+  color: inherit;
+  transition: opacity 0.15s;
+}
+
+.tab:hover .tab-del-btn,
+.tab.active .tab-del-btn {
+  opacity: 0.75;
+}
+
+.btn-add-tab {
+  flex: 0 0 32px;
+  min-width: 32px;
+  width: 32px;
+  height: 32px;
+
+  padding: 0;
+
+  border: 1px dashed rgba(255,107,53,0.50);
+  border-radius: 8px;
+  background: #ffffff;
+
+  font-size: 1rem;
+  color: var(--accent);
+}
+
+@media (max-width: 600px) {
+  .tabs-outer {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .tab {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    padding: 0 5px;
+  }
+
+  .tab-name-input {
+    min-width: 0;
+    max-width: none;
+    font-size: 0.72rem;
+  }
+
+  .btn-add-tab {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .tab-del-btn {
+    opacity: 0.65;
+  }
+}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
@@ -5259,6 +5387,22 @@ addBtn.addEventListener('dragstart', e => {
  
 
       tab.className = 'tab' + (m.id === activeId ? ' active' : '');
+     tab.addEventListener('click', event => {
+  if (
+    event.target.closest(
+      '.tab-del-btn'
+    )
+  ) {
+    return;
+  }
+
+  if (m.id !== activeId) {
+    activeId = m.id;
+
+    renderTabs();
+    renderRows();
+  }
+});
 
       const inp = document.createElement('input');
       inp.type = 'text'; inp.className = 'tab-name-input';
