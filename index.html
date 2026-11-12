@@ -192,7 +192,7 @@
     .row-note-input {
       font-family: 'Heebo', sans-serif;
       font-size: clamp(0.72rem,2.3vw,0.80rem);
-      color: var(--muted); font-style: italic;
+      color: var(--delete); font-style: italic;
       border: none; border-bottom: 1.5px dashed transparent;
       background: transparent; outline: none; width: 100%;
       padding: 2px 0; margin-top: 3px;
@@ -201,7 +201,11 @@
     }
     .row-note-input::placeholder { color: #ccc; font-style: italic; }
     .row-note-input:hover { border-bottom-color: var(--border); }
-    .row-note-input:focus { border-bottom-color: var(--accent); color: var(--text); font-style: normal; }
+    .row-note-input:focus {
+  border-bottom-color: var(--accent);
+  color: var(--delete);
+  font-style: normal;
+}
     .row-amount { flex: 1; font-size: clamp(0.85rem,2.8vw,0.97rem); font-weight: 700; color: var(--accent); text-align: left; direction: ltr; font-variant-numeric: tabular-nums; }
     .btn-del { background: none; border: none; cursor: pointer; color: #ccc; font-size: 0.95rem; transition: color 0.15s; line-height: 1; padding: 0 2px; flex-shrink: 0; }
     .btn-del:hover { color: var(--delete); }
