@@ -2899,7 +2899,13 @@ body:not(.month-picker-open) .month-back-bar {
   >
     🔗 קשר
   </a>
-
+<button
+  type="button"
+  class="external-link-btn"
+  onclick="openDonationChoice()"
+>
+  💳 תרומות וסליקה
+</button>
   <a
     class="external-link-btn"
     href="https://reports.matara.pro/login"
@@ -3527,6 +3533,50 @@ body:not(.month-picker-open) .month-back-bar {
         onclick="emailSpecialReport()"
       >
         📧 שליחה למייל מזדמן
+      </button>
+    </div>
+  </div>
+</div>
+  <!-- Donation Choice Dialog -->
+<div
+  class="overlay"
+  id="donation-choice-overlay"
+  style="z-index:230;"
+>
+  <div class="dialog">
+    <div class="dialog-icon">💳</div>
+
+    <div class="dialog-msg">
+      תרומות וסליקה
+    </div>
+
+    <div class="dialog-sub">
+      מה ברצונך לבצע?
+    </div>
+
+    <div
+      class="dialog-btns"
+      style="flex-wrap:wrap;"
+    >
+      <button
+        class="btn-cancel"
+        onclick="closeDonationChoice()"
+      >
+        יציאה
+      </button>
+
+      <button
+        class="btn-action export"
+        onclick="openDonationPage()"
+      >
+        💳 מעבר לתרומה
+      </button>
+
+      <button
+        class="btn-action"
+        onclick="shareDonationLink()"
+      >
+        🔗 שיתוף קישור
       </button>
     </div>
   </div>
@@ -8265,6 +8315,76 @@ function downloadSpecialReport() {
 function emailSpecialReport() {
   closeSpecialReportChoice();
   openTempEmail('specialMonthly');
+}
+  const DONATION_URL =
+  'https://www.kesherhk.info/kehilot/#!/Label/50716/moked=kehilot-site';
+
+function openDonationChoice() {
+  document
+    .getElementById('donation-choice-overlay')
+    .classList.add('show');
+}
+
+function closeDonationChoice() {
+  document
+    .getElementById('donation-choice-overlay')
+    .classList.remove('show');
+}
+
+function openDonationPage() {
+  closeDonationChoice();
+
+  const donationWindow =
+    window.open(DONATION_URL, '_blank');
+
+  if (donationWindow) {
+    donationWindow.opener = null;
+  }
+}
+
+async function shareDonationLink() {
+  closeDonationChoice();
+
+  const institutionName =
+    document
+      .getElementById('main-title')
+      ?.value
+      ?.trim() ||
+    'כולל לב תורה';
+
+  const shareData = {
+    title: 'תרומה ל' + institutionName,
+    text:
+      'נשמח להשתתפותך בתרומה ל' +
+      institutionName,
+    url: DONATION_URL
+  };
+
+  if (navigator.share) {
+    try {
+      await navigator.share(shareData);
+      return;
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        return;
+      }
+    }
+  }
+
+  try {
+    await navigator.clipboard.writeText(
+      DONATION_URL
+    );
+
+    showToast(
+      '✅ קישור התרומה הועתק'
+    );
+  } catch (error) {
+    window.prompt(
+      'העתק את קישור התרומה:',
+      DONATION_URL
+    );
+  }
 }
 function exportSpecialMonthlyExcel() {
   if (!authToken) {
