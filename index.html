@@ -5862,10 +5862,17 @@ updatedAt: nowIso,
   branchCode:
     savedBankDetails.branchCode,
 
-  marked: false,
-  specialReport:
-  savedSpecialReport,
-  documents: []
+ marked: false,
+specialReport: savedSpecialReport,
+documents: [],
+
+history: [
+  {
+    amount: isNaN(amount) ? 0 : amount,
+    date: nowIso,
+    source: 'site'
+  }
+]
 });
 
     nameInput.value = ''; amtInput.value = ''; notesInput.value = '';
