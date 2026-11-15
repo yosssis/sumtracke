@@ -2977,6 +2977,24 @@ body:not(.month-picker-open) .month-back-bar {
       "
     ></span>
     <button
+  id="ten-days-toggle"
+  type="button"
+  class="btn-action"
+  onclick="toggleTenDays()"
+  style="
+    width:100%;
+    margin-top:10px;
+    justify-content:space-between;
+    color:#7656c9;
+    border-color:#ded3f7;
+  "
+>
+  <span>🕯️ עשרת ימי תשובה</span>
+  <span id="ten-days-toggle-state">
+    כבוי
+  </span>
+</button>
+    <button
   type="button"
   class="btn-action"
   onclick="openRecycleBin()"
@@ -10745,7 +10763,8 @@ function startApp() {
   document.body.classList.remove('auth-locked');
   showMonthPicker();
 
-  loadData();
+loadData();
+loadTenDaysStatus();
 startOnlineUsers();
   syncTimer = setInterval(() => {
     refreshPhoneUpdatesOnly();
@@ -11321,6 +11340,167 @@ let externalUpdateNoticeShown = false;
     const s = states[status] || {};
     el.textContent = s.text; el.style.color = s.color;
   }
+  let tenDaysEnabled = false;
+let tenDaysBusy = false;
+
+function renderTenDaysButton() {
+  const button =
+    document.getElementById(
+      'ten-days-toggle'
+    );
+
+  const state =
+    document.getElementById(
+      'ten-days-toggle-state'
+    );
+
+  if (!button || !state) {
+    return;
+  }
+
+  button.disabled = tenDaysBusy;
+
+  if (tenDaysBusy) {
+    state.textContent = 'מעדכן...';
+    button.style.opacity = '0.65';
+    return;
+  }
+
+  button.style.opacity = '1';
+
+  if (tenDaysEnabled) {
+    state.textContent = 'פעיל';
+    button.style.color = '#168a4a';
+    button.style.borderColor = '#8ed9ad';
+    button.style.background = '#effbf4';
+  } else {
+    state.textContent = 'כבוי';
+    button.style.color = '#7656c9';
+    button.style.borderColor = '#ded3f7';
+    button.style.background = '#ffffff';
+  }
+}
+
+async function loadTenDaysStatus() {
+  if (!authToken) {
+    return;
+  }
+
+  try {
+    const response =
+      await fetch(API_URL, {
+        method: 'POST',
+        redirect: 'follow',
+
+        body: JSON.stringify({
+          action:
+            'getTenDaysStatus',
+
+          token: authToken
+        }),
+
+        headers: {
+          'Content-Type':
+            'text/plain;charset=utf-8'
+        }
+      });
+
+    const result =
+      await response.json();
+
+    if (!result.ok) {
+      throw new Error(
+        result.error ||
+        'get_ten_days_failed'
+      );
+    }
+
+    tenDaysEnabled =
+      result.enabled === true;
+
+    renderTenDaysButton();
+
+  } catch (error) {
+    console.error(
+      'TEN DAYS STATUS ERROR:',
+      error
+    );
+
+    showToast(
+      '⚠️ לא ניתן לבדוק את מצב עשרת ימי תשובה'
+    );
+  }
+}
+
+function toggleTenDays() {
+  requireAuth(async () => {
+    if (tenDaysBusy) {
+      return;
+    }
+
+    const newStatus =
+      !tenDaysEnabled;
+
+    tenDaysBusy = true;
+    renderTenDaysButton();
+
+    try {
+      const response =
+        await fetch(API_URL, {
+          method: 'POST',
+          redirect: 'follow',
+
+          body: JSON.stringify({
+            action:
+              'setTenDaysStatus',
+
+            token: authToken,
+
+            enabled:
+              newStatus
+          }),
+
+          headers: {
+            'Content-Type':
+              'text/plain;charset=utf-8'
+          }
+        });
+
+      const result =
+        await response.json();
+
+      if (!result.ok) {
+        throw new Error(
+          result.error ||
+          'set_ten_days_failed'
+        );
+      }
+
+      tenDaysEnabled =
+        result.enabled === true;
+
+      showToast(
+        tenDaysEnabled
+          ? '✅ עשרת ימי תשובה הופעל'
+          : '✅ עשרת ימי תשובה כובה'
+      );
+
+    } catch (error) {
+      console.error(
+        'TEN DAYS UPDATE ERROR:',
+        error
+      );
+
+      showToast(
+        '❌ שינוי המצב לא נשמר'
+      );
+
+    } finally {
+      tenDaysBusy = false;
+      renderTenDaysButton();
+    }
+  });
+}
 function getPayload() {
   return JSON.stringify({
     months,
