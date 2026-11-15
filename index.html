@@ -3281,6 +3281,22 @@ body:not(.month-picker-open) .month-back-bar {
       placeholder="הערה"
       style="width:100%; padding:10px; margin:6px 0 16px; border:1.5px solid #ddd; border-radius:9px; font-family:Heebo;"
     />
+    <input
+  type="email"
+  id="edit-student-email"
+  placeholder="מייל לקבלת אישורי דיווח והעברה — אופציונלי"
+  autocomplete="email"
+  dir="ltr"
+  style="
+    width:100%;
+    padding:10px;
+    margin:6px 0 16px;
+    border:1.5px solid #ddd;
+    border-radius:9px;
+    font-family:Heebo;
+    text-align:left;
+  "
+/>
 
     <input
   type="text"
@@ -5767,6 +5783,54 @@ function getPreviousMonthNote(name) {
 
   return String(previousRow?.notes || '').trim();
 }
+  function getSavedStudentEmail(
+  name,
+  excludeRowId = null
+) {
+  const cleanName =
+    String(name || '')
+      .trim()
+      .toLowerCase();
+
+  if (!cleanName) {
+    return '';
+  }
+
+  for (
+    let monthIndex = months.length - 1;
+    monthIndex >= 0;
+    monthIndex--
+  ) {
+    const monthRows =
+      months[monthIndex].rows || [];
+
+    for (
+      let rowIndex = monthRows.length - 1;
+      rowIndex >= 0;
+      rowIndex--
+    ) {
+      const row = monthRows[rowIndex];
+
+      const sameName =
+        String(row.name || '')
+          .trim()
+          .toLowerCase() === cleanName;
+
+      const savedEmail =
+        String(row.email || '').trim();
+
+      if (
+        sameName &&
+        row.id !== excludeRowId &&
+        savedEmail
+      ) {
+        return savedEmail;
+      }
+    }
+  }
+
+  return '';
+}
 
   function getSavedBankDetails(name, excludeRowId = null) {
  
@@ -5884,6 +5948,8 @@ function getPreviousMonthNote(name) {
   getSavedBankDetails(name);
     const savedSpecialReport =
   getSavedSpecialReport(name);
+    const savedStudentEmail =
+  getSavedStudentEmail(name);
 
 const notes =
   enteredNotes ||
@@ -5899,7 +5965,7 @@ updatedAt: nowIso,
   name: name || '—',
   amount: isNaN(amount) ? 0 : amount,
   notes,
-
+email: savedStudentEmail,
   beneficiaryId:
     savedBankDetails.beneficiaryId,
 
@@ -5952,10 +6018,20 @@ renderChecksCenter();
 const filteredRows = m.rows.filter(r => {
   if (!query) return true;
 
-  const name = (r.name || '').toLowerCase();
-  const notes = (r.notes || '').toLowerCase();
+const name =
+  (r.name || '').toLowerCase();
 
-  return name.includes(query) || notes.includes(query);
+const notes =
+  (r.notes || '').toLowerCase();
+
+const email =
+  (r.email || '').toLowerCase();
+
+return (
+  name.includes(query) ||
+  notes.includes(query) ||
+  email.includes(query)
+);
 });
 
 filteredRows.forEach((r, i) => {
@@ -5972,6 +6048,24 @@ filteredRows.forEach((r, i) => {
       title="אל תכלול בדוח"
     />
     <span style="white-space:nowrap; flex-shrink:0;">${esc(r.name)}</span>
+    ${r.email
+  ? `<span
+      title="${esc(r.email)}"
+      style="
+        max-width:100%;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+        direction:ltr;
+        color:#1976d2;
+        font-size:0.70rem;
+        font-weight:600;
+      "
+    >
+      ✉️ ${esc(r.email)}
+    </span>`
+  : ''
+}
     ${r.reportSource === 'phone'
   ? `<span style="
       font-size:0.72rem;
@@ -6479,6 +6573,14 @@ async function editRow(rowId) {
   document.getElementById('edit-name').value = row.name || '';
   document.getElementById('edit-amount').value = row.amount ?? '';
   document.getElementById('edit-notes').value = row.notes || '';
+  document
+  .getElementById('edit-student-email')
+  .value =
+    row.email ||
+    getSavedStudentEmail(
+      row.name,
+      row.id
+    );
 
   document.getElementById('edit-beneficiary-id').value =
   row.beneficiaryId || '';
@@ -7324,6 +7426,38 @@ function saveEditRow() {
     document.getElementById('edit-amount').value
   );
   const newNotes = document.getElementById('edit-notes').value.trim();
+  const oldStudentEmail =
+  String(row.email || '').trim();
+  const oldBankDetails = {
+  beneficiaryId:
+    String(
+      row.beneficiaryId || ''
+    ).trim(),
+
+  accountNumber:
+    String(
+      row.accountNumber || ''
+    ).trim(),
+
+  bankCode:
+    String(
+      row.bankCode || ''
+    ).trim(),
+
+  branchCode:
+    String(
+      row.branchCode || ''
+    ).trim()
+};
+
+const newStudentEmail =
+  document
+    .getElementById(
+      'edit-student-email'
+    )
+    .value
+    .trim()
+    .toLowerCase();
   const newBeneficiaryId =
   document
     .getElementById('edit-beneficiary-id')
@@ -7351,6 +7485,18 @@ const newSpecialReport =
   document.getElementById(
     'edit-special-report'
   ).checked;
+  if (
+  newStudentEmail &&
+  !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+    newStudentEmail
+  )
+) {
+  showToast(
+    '❌ כתובת המייל אינה תקינה'
+  );
+
+  return;
+}
 if (
   newAccountNumber &&
   !/^\d{1,13}$/.test(newAccountNumber)
@@ -7389,11 +7535,36 @@ if (
   }
 
 const oldAmount = Number(row.amount) || 0;
+  const amountChanged =
+  oldAmount !== newAmount;
+
+const newBankDetails = {
+  beneficiaryId:
+    newBeneficiaryId,
+
+  accountNumber:
+    newAccountNumber,
+
+  bankCode:
+    newBankCode,
+
+  branchCode:
+    newBranchCode
+};
+
+const bankDetailsChanged =
+  Object.keys(
+    oldBankDetails
+  ).some(key =>
+    oldBankDetails[key] !==
+    newBankDetails[key]
+  );
   const manualUpdateTime =
   new Date().toISOString();
 
 row.name = newName || '—';
 row.notes = newNotes;
+  row.email = newStudentEmail;
 
 row.beneficiaryId =
   newBeneficiaryId;
@@ -7418,19 +7589,22 @@ months.forEach(month => {
         .trim()
         .toLowerCase();
 
-    if (
-      studentName ===
-      originalStudentName
-    ) {
-      studentRow.specialReport =
-        newSpecialReport;
-    }
+ if (
+  studentName ===
+  originalStudentName
+) {
+  studentRow.specialReport =
+    newSpecialReport;
+
+  studentRow.email =
+    newStudentEmail;
+}
   });
 });
 
 row.specialReport =
   newSpecialReport;
-if (oldAmount !== newAmount) {
+if (amountChanged) {
     row.reportSource = 'site';
   if (!Array.isArray(row.history)) {
     row.history = [];
@@ -7450,8 +7624,69 @@ if (oldAmount !== newAmount) {
 
   closeEditDialog();
   renderRows();
-  saveData('עריכת פריט', row.name);
-  showToast('✅ הפריט עודכן');
+ saveData(
+  'עריכת פריט',
+  row.name
+);
+
+const studentEmailNotifications = [];
+
+if (
+  amountChanged &&
+  newStudentEmail
+) {
+  studentEmailNotifications.push({
+    type: 'manualAmount',
+    email: newStudentEmail,
+    studentName: row.name,
+    monthName:
+      activeMonth().name || '',
+    oldAmount: oldAmount,
+    amount: newAmount,
+    updatedAt:
+      manualUpdateTime
+  });
+}
+
+if (bankDetailsChanged) {
+  const bankNotificationEmails =
+    [
+      oldStudentEmail,
+      newStudentEmail
+    ]
+      .map(email =>
+        String(email || '')
+          .trim()
+          .toLowerCase()
+      )
+      .filter(
+        (email, index, list) =>
+          email &&
+          list.indexOf(email) === index
+      );
+
+  bankNotificationEmails.forEach(
+    email => {
+      studentEmailNotifications.push({
+        type: 'bankDetails',
+        email: email,
+        studentName: row.name,
+        oldDetails:
+          oldBankDetails,
+        newDetails:
+          newBankDetails,
+        updatedAt:
+          manualUpdateTime
+      });
+    }
+  );
+}
+
+queueStudentEmailsFromSite(
+  studentEmailNotifications
+);
+
+showToast('✅ הפריט עודכן');
   }
   let historyRowId = null;
 
@@ -8896,6 +9131,83 @@ batch.approvedAt =
 
 batch.approvalDocument =
   approvalDocument;
+
+  const transferEmailNotifications =
+  (batch.items || [])
+    .filter(item =>
+      approvedRowIds.has(
+        String(item.rowId)
+      )
+    )
+    .map(item => {
+      const studentRow =
+        (month.rows || []).find(row =>
+          String(row.id) ===
+          String(item.rowId)
+        );
+
+      if (
+        !studentRow ||
+        !studentRow.email
+      ) {
+        return null;
+      }
+
+      return {
+        type: 'transfer',
+        email:
+          String(
+            studentRow.email
+          ).trim(),
+
+        studentName:
+          item.name ||
+          studentRow.name ||
+          'תלמיד',
+
+        monthName:
+          batch.monthName ||
+          month.name ||
+          '',
+
+        amount:
+          Number(item.amount) || 0,
+
+        transferDate:
+          transferDate,
+
+        reference:
+          reference,
+
+        bankDetails: {
+          beneficiaryId:
+            String(
+              item.beneficiaryId || ''
+            ),
+
+          accountNumber:
+            String(
+              item.accountNumber || ''
+            ),
+
+          bankCode:
+            String(
+              item.bankCode || ''
+            ),
+
+          branchCode:
+            String(
+              item.branchCode || ''
+            )
+        }
+      };
+    })
+    .filter(Boolean);
+
+queueStudentEmailsFromSite(
+  transferEmailNotifications
+);
+  
 
   closeMasavApprovalDialog();
   updateMasavApprovalButton();
@@ -11136,6 +11448,81 @@ updateMasavApprovalButton();
 }
 
   // save locally always, then push to Drive
+  async function queueStudentEmailsFromSite(
+  notifications
+) {
+  const items =
+    Array.isArray(notifications)
+      ? notifications.filter(
+          item =>
+            item &&
+            typeof item === 'object'
+        )
+      : [];
+
+  if (
+    !authToken ||
+    items.length === 0
+  ) {
+    return;
+  }
+
+  try {
+    const response =
+      await fetch(API_URL, {
+        method: 'POST',
+        redirect: 'follow',
+
+        body: JSON.stringify({
+          action:
+            'queueStudentEmails',
+
+          token: authToken,
+
+          notifications: items
+        }),
+
+        headers: {
+          'Content-Type':
+            'text/plain;charset=utf-8'
+        }
+      });
+
+    const result =
+      await response.json();
+
+    if (
+      !result.ok &&
+      result.error ===
+        'unauthorized'
+    ) {
+      authToken = '';
+
+      sessionStorage.removeItem(
+        'authToken'
+      );
+
+      return;
+    }
+
+    if (!result.ok) {
+      throw new Error(
+        result.error ||
+        'queue_email_failed'
+      );
+    }
+
+  } catch (error) {
+    console.error(
+      'STUDENT EMAIL QUEUE ERROR:',
+      error
+    );
+
+    showToast(
+      '⚠️ בקשת שליחת המייל לא נקלטה'
+    );
+  }
+}
 function saveData(auditAction = '', auditDetails = '') {
   localSavePending = true;
   const payload = getPayload();
