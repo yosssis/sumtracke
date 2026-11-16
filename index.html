@@ -2995,6 +2995,24 @@ body:not(.month-picker-open) .month-back-bar {
   </span>
 </button>
     <button
+  id="hanukkah-toggle"
+  type="button"
+  class="btn-action"
+  onclick="toggleHanukkah()"
+  style="
+    width:100%;
+    margin-top:10px;
+    justify-content:space-between;
+    color:#d58400;
+    border-color:#f3d28d;
+  "
+>
+  <span>🕎 חנוכה</span>
+  <span id="hanukkah-toggle-state">
+    כבוי
+  </span>
+</button>
+    <button
   type="button"
   class="btn-action"
   onclick="openRecycleBin()"
@@ -7823,6 +7841,7 @@ const isHourly =
                     <div><strong>העביר שיעור:</strong> ${phoneData.gaveLesson ? 'כן' : 'לא'}</div>
                     <div><strong>עשרת ימי תשובה - ימים:</strong> ${Number(phoneData.noteDays) || 0}</div>
                     <div><strong>עשרת ימי תשובה - דקות:</strong> ${Number(phoneData.noteMinutes) || 0}</div>
+                    <div><strong>חנוכה - ימים:</strong> ${Number(phoneData.hanukkahDays) || 0} × 100 ₪ = ${fmt((Number(phoneData.hanukkahDays) || 0) * 100)}</div>
                   </div>
                 `
           )
@@ -10727,6 +10746,7 @@ function startApp() {
 
 loadData();
 loadTenDaysStatus();
+  loadHanukkahStatus();
 startOnlineUsers();
   syncTimer = setInterval(() => {
     refreshPhoneUpdatesOnly();
@@ -11440,7 +11460,7 @@ function toggleTenDays() {
 
       tenDaysEnabled =
         result.enabled === true;
-
+await loadHanukkahStatus();
       showToast(
         tenDaysEnabled
           ? '✅ עשרת ימי תשובה הופעל'
@@ -11460,6 +11480,167 @@ function toggleTenDays() {
     } finally {
       tenDaysBusy = false;
       renderTenDaysButton();
+    }
+  });
+}
+  let hanukkahEnabled = false;
+let hanukkahBusy = false;
+
+function renderHanukkahButton() {
+  const button =
+    document.getElementById(
+      'hanukkah-toggle'
+    );
+
+  const state =
+    document.getElementById(
+      'hanukkah-toggle-state'
+    );
+
+  if (!button || !state) {
+    return;
+  }
+
+  button.disabled = hanukkahBusy;
+
+  if (hanukkahBusy) {
+    state.textContent = 'מעדכן...';
+    button.style.opacity = '0.65';
+    return;
+  }
+
+  button.style.opacity = '1';
+
+  if (hanukkahEnabled) {
+    state.textContent = 'פעיל';
+    button.style.color = '#168a4a';
+    button.style.borderColor = '#8ed9ad';
+    button.style.background = '#effbf4';
+  } else {
+    state.textContent = 'כבוי';
+    button.style.color = '#d58400';
+    button.style.borderColor = '#f3d28d';
+    button.style.background = '#ffffff';
+  }
+}
+
+async function loadHanukkahStatus() {
+  if (!authToken) {
+    return;
+  }
+
+  try {
+    const response =
+      await fetch(API_URL, {
+        method: 'POST',
+        redirect: 'follow',
+
+        body: JSON.stringify({
+          action:
+            'getHanukkahStatus',
+
+          token: authToken
+        }),
+
+        headers: {
+          'Content-Type':
+            'text/plain;charset=utf-8'
+        }
+      });
+
+    const result =
+      await response.json();
+
+    if (!result.ok) {
+      throw new Error(
+        result.error ||
+        'get_hanukkah_failed'
+      );
+    }
+
+    hanukkahEnabled =
+      result.enabled === true;
+
+    renderHanukkahButton();
+
+  } catch (error) {
+    console.error(
+      'HANUKKAH STATUS ERROR:',
+      error
+    );
+
+    showToast(
+      '⚠️ לא ניתן לבדוק את מצב חנוכה'
+    );
+  }
+}
+
+function toggleHanukkah() {
+  requireAuth(async () => {
+    if (hanukkahBusy) {
+      return;
+    }
+
+    const newStatus =
+      !hanukkahEnabled;
+
+    hanukkahBusy = true;
+    renderHanukkahButton();
+
+    try {
+      const response =
+        await fetch(API_URL, {
+          method: 'POST',
+          redirect: 'follow',
+
+          body: JSON.stringify({
+            action:
+              'setHanukkahStatus',
+
+            token: authToken,
+
+            enabled:
+              newStatus
+          }),
+
+          headers: {
+            'Content-Type':
+              'text/plain;charset=utf-8'
+          }
+        });
+
+      const result =
+        await response.json();
+
+      if (!result.ok) {
+        throw new Error(
+          result.error ||
+          'set_hanukkah_failed'
+        );
+      }
+
+      hanukkahEnabled =
+        result.enabled === true;
+await loadTenDaysStatus();
+      showToast(
+        hanukkahEnabled
+          ? '✅ חנוכה הופעל'
+          : '✅ חנוכה כובה'
+      );
+
+    } catch (error) {
+      console.error(
+        'HANUKKAH UPDATE ERROR:',
+        error
+      );
+
+      showToast(
+        '❌ שינוי מצב חנוכה לא נשמר'
+      );
+
+    } finally {
+      hanukkahBusy = false;
+      renderHanukkahButton();
     }
   });
 }
