@@ -7777,6 +7777,7 @@ function openHistory(rowId) {
 const isHourly =
   phoneData &&
   String(phoneData.reportType || '') === 'hourly';
+    
 
   const source =
   item.source === 'phone'
@@ -7796,7 +7797,9 @@ const isHourly =
             isHourly
               ? `
                 <div style="margin-top:8px;padding:9px 10px;background:#fff7f2;border-radius:10px;font-size:0.70rem;line-height:1.7;color:var(--text);">
+                
                   <div><strong>שעות שלמות:</strong> ${Number(phoneData.hourlyHours) || 0}</div>
+                  <div><strong>דקות:</strong> ${Number(phoneData.hourlyMinutes) || 0}</div>
                   <div><strong>חצאי שעות:</strong> ${Number(phoneData.hourlyHalfHours) || 0}</div>
                   <div><strong>מסירת שיעור:</strong> ${phoneData.hourlyGaveLesson ? 'כן' : 'לא'}</div>
                 </div>
