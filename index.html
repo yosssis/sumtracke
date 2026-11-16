@@ -4537,7 +4537,8 @@ function openMonthDetails(monthId) {
   let pendingDelete = null;
   let extraExpenses = [];
   let recycleBin = [];
-  let masavBatches = [];
+    let masavBatches = [];
+  let studentBankProfiles = [];
   let editingExtraExpenseId = null;
   let tempEmailExtraExpenseId = null;
   let tempEmailExtraExpenses = [];
@@ -5850,7 +5851,28 @@ function getPreviousMonthNote(name) {
   return '';
 }
 
-  function getSavedBankDetails(name, excludeRowId = null) {
+   function getSavedBankDetails(name, excludeRowId = null) {
+  const legacyDetails = getLegacyBankDetails(name, excludeRowId);
+  const cleanName = String(name || '').trim().toLowerCase();
+
+  const profiles = studentBankProfiles.filter(profile =>
+    profile &&
+    String(profile.studentName || '').trim().toLowerCase() === cleanName
+  );
+
+  if (profiles.length === 1) {
+    return {
+      ...legacyDetails,
+      bankCode: String(profiles[0].bankCode || ''),
+      branchCode: String(profiles[0].branchCode || ''),
+      accountNumber: String(profiles[0].accountNumber || '')
+    };
+  }
+
+  return legacyDetails;
+}
+
+function getLegacyBankDetails(name, excludeRowId = null) {
  
   const cleanName =
     String(name || '').trim().toLowerCase();
@@ -11508,7 +11530,8 @@ function getPayload() {
     nextMonthId,
     extraExpenses,
     recycleBin,
-    masavBatches,
+        masavBatches,
+    studentBankProfiles,
     _revision: dataRevision,
     title:
       document
@@ -11556,6 +11579,8 @@ function normalizeHebrewMonthName(name) {
 }
 
 function applyPayload(d) {
+  studentBankProfiles = Array.isArray(d.studentBankProfiles)
+    ? d.studentBankProfiles : [];
   if (
   d &&
   Number.isFinite(
@@ -11804,6 +11829,10 @@ if (!result.ok) {
 dataRevision =
   Number(result.revision) ||
   dataRevision;
+
+if (Array.isArray(result.studentBankProfiles)) {
+  studentBankProfiles = result.studentBankProfiles;
+}
 
 /*
   מעדכנים גם את העותק המקומי
