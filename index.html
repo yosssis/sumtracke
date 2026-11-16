@@ -7770,121 +7770,58 @@ function openHistory(rowId) {
         ? item.phoneData
         : null;
 
-    const isBranch2 =
-      phoneData &&
-      String(phoneData.reportType || '') === '2';
+  const isBranch2 =
+  phoneData &&
+  String(phoneData.reportType || '') === '2';
 
-    const source =
-      item.source === 'phone'
-        ? (
-            isBranch2
-              ? '📞 טלפון — שלוחה 2'
-              : '📞 טלפון — שלוחה 1'
-          )
-        : '✏️ שינוי באתר';
+const isHourly =
+  phoneData &&
+  String(phoneData.reportType || '') === 'hourly';
 
+  const source =
+  item.source === 'phone'
+    ? (
+        isHourly
+          ? '📞 טלפון — שלוחה 1/2'
+          : isBranch2
+            ? '📞 טלפון — שלוחה 2'
+            : '📞 טלפון — שלוחה 1/1'
+      )
+    : '✏️ שינוי באתר';
+
+   
     const phoneDetails =
       phoneData
         ? (
-            isBranch2
+            isHourly
               ? `
-                <div style="
-                  margin-top:8px;
-                  padding:9px 10px;
-                  background:#fff7f2;
-                  border-radius:10px;
-                  font-size:0.70rem;
-                  line-height:1.7;
-                  color:var(--text);
-                ">
-                  <div>
-                    <strong>שעה וחצי בבית המדרש:</strong>
-                    ${Number(phoneData.classHourHalfDays) || 0}
-                    ימים × 40 ₪ =
-                    ${fmt(
-                      (Number(phoneData.classHourHalfDays) || 0) * 40
-                    )}
-                  </div>
-
-                  <div>
-                    <strong>שעה בבית המדרש:</strong>
-                    ${Number(phoneData.classHourDays) || 0}
-                    ימים × 30 ₪ =
-                    ${fmt(
-                      (Number(phoneData.classHourDays) || 0) * 30
-                    )}
-                  </div>
-
-                  <div>
-                    <strong>שעה וחצי מחוץ לבית המדרש:</strong>
-                    ${Number(phoneData.outsideHourHalfDays) || 0}
-                    ימים × 30 ₪ =
-                    ${fmt(
-                      (Number(phoneData.outsideHourHalfDays) || 0) * 30
-                    )}
-                  </div>
-
-                  <div>
-                    <strong>שעה מחוץ לבית המדרש:</strong>
-                    ${Number(phoneData.outsideHourDays) || 0}
-                    ימים × 20 ₪ =
-                    ${fmt(
-                      (Number(phoneData.outsideHourDays) || 0) * 20
-                    )}
-                  </div>
+                <div style="margin-top:8px;padding:9px 10px;background:#fff7f2;border-radius:10px;font-size:0.70rem;line-height:1.7;color:var(--text);">
+                  <div><strong>שעות שלמות:</strong> ${Number(phoneData.hourlyHours) || 0}</div>
+                  <div><strong>חצאי שעות:</strong> ${Number(phoneData.hourlyHalfHours) || 0}</div>
+                  <div><strong>מסירת שיעור:</strong> ${phoneData.hourlyGaveLesson ? 'כן' : 'לא'}</div>
                 </div>
               `
-              : `
-                <div style="
-                  margin-top:8px;
-                  padding:9px 10px;
-                  background:#fff7f2;
-                  border-radius:10px;
-                  font-size:0.70rem;
-                  line-height:1.7;
-                  color:var(--text);
-                ">
-                  <div>
-                    <strong>שעות:</strong>
-                    ${Number(phoneData.hours) || 0}
+              : isBranch2
+                ? `
+                  <div style="margin-top:8px;padding:9px 10px;background:#fff7f2;border-radius:10px;font-size:0.70rem;line-height:1.7;color:var(--text);">
+                    <div><strong>שעה וחצי בבית המדרש:</strong> ${Number(phoneData.classHourHalfDays) || 0} ימים × 40 ₪ = ${fmt((Number(phoneData.classHourHalfDays) || 0) * 40)}</div>
+                    <div><strong>שעה בבית המדרש:</strong> ${Number(phoneData.classHourDays) || 0} ימים × 30 ₪ = ${fmt((Number(phoneData.classHourDays) || 0) * 30)}</div>
+                    <div><strong>שעה וחצי מחוץ לבית המדרש:</strong> ${Number(phoneData.outsideHourHalfDays) || 0} ימים × 30 ₪ = ${fmt((Number(phoneData.outsideHourHalfDays) || 0) * 30)}</div>
+                    <div><strong>שעה מחוץ לבית המדרש:</strong> ${Number(phoneData.outsideHourDays) || 0} ימים × 20 ₪ = ${fmt((Number(phoneData.outsideHourDays) || 0) * 20)}</div>
                   </div>
-
-                  <div>
-                    <strong>דקות:</strong>
-                    ${Number(phoneData.minutes) || 0}
+                `
+                : `
+                  <div style="margin-top:8px;padding:9px 10px;background:#fff7f2;border-radius:10px;font-size:0.70rem;line-height:1.7;color:var(--text);">
+                    <div><strong>שעות:</strong> ${Number(phoneData.hours) || 0}</div>
+                    <div><strong>דקות:</strong> ${Number(phoneData.minutes) || 0}</div>
+                    <div><strong>חצאי שעות:</strong> ${Number(phoneData.halfHours) || 0}</div>
+                    <div><strong>טלפון כבוי:</strong> ${phoneData.phoneOff ? 'כן' : 'לא'}</div>
+                    <div><strong>למד עם מישהו:</strong> ${phoneData.learnedWithSomeone ? 'כן' : 'לא'}</div>
+                    <div><strong>העביר שיעור:</strong> ${phoneData.gaveLesson ? 'כן' : 'לא'}</div>
+                    <div><strong>עשרת ימי תשובה - ימים:</strong> ${Number(phoneData.noteDays) || 0}</div>
+                    <div><strong>עשרת ימי תשובה - דקות:</strong> ${Number(phoneData.noteMinutes) || 0}</div>
                   </div>
-
-                  <div>
-                    <strong>חצאי שעות:</strong>
-                    ${Number(phoneData.halfHours) || 0}
-                  </div>
-
-                  <div>
-                    <strong>טלפון כבוי:</strong>
-                    ${phoneData.phoneOff ? 'כן' : 'לא'}
-                  </div>
-
-                  <div>
-                    <strong>למד עם מישהו:</strong>
-                    ${phoneData.learnedWithSomeone ? 'כן' : 'לא'}
-                  </div>
-
-                  <div>
-                    <strong>העביר שיעור:</strong>
-                    ${phoneData.gaveLesson ? 'כן' : 'לא'}
-                  </div>
-
-                  <div>
-                   <strong>עשרת ימי תשובה - ימים:</strong>
-                    ${Number(phoneData.noteDays) || 0}
-                  </div>
-
-                  <div>
-                   <strong>עשרת ימי תשובה - דקות:</strong>
-                    ${Number(phoneData.noteMinutes) || 0}
-                  </div>
-                </div>
-              `
+                `
           )
         : '';
 
