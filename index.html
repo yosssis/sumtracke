@@ -11550,9 +11550,13 @@ function toggleTenDays() {
         );
       }
 
-      tenDaysEnabled =
-        result.enabled === true;
-await loadHanukkahStatus();
+tenDaysEnabled =
+  result.enabled === true;
+
+if (tenDaysEnabled) {
+  hanukkahEnabled = false;
+  renderHanukkahButton();
+}
       showToast(
         tenDaysEnabled
           ? '✅ עשרת ימי תשובה הופעל'
@@ -11711,9 +11715,13 @@ function toggleHanukkah() {
         );
       }
 
-      hanukkahEnabled =
-        result.enabled === true;
-await loadTenDaysStatus();
+hanukkahEnabled =
+  result.enabled === true;
+
+if (hanukkahEnabled) {
+  tenDaysEnabled = false;
+  renderTenDaysButton();
+}
       showToast(
         hanukkahEnabled
           ? '✅ חנוכה הופעל'
