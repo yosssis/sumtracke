@@ -7679,7 +7679,26 @@ if (amountChanged) {
   row.amount = newAmount;
  
 }
+if (bankDetailsChanged) {
+  if (!Array.isArray(row.history)) {
+    row.history = [];
+  }
 
+  row.history.push({
+    type: 'bankDetails',
+    amount:
+      Number(row.amount) || 0,
+    date:
+      manualUpdateTime,
+    source: 'site',
+    oldDetails: {
+      ...oldBankDetails
+    },
+    newDetails: {
+      ...newBankDetails
+    }
+  });
+}
   closeEditDialog();
   renderRows();
  saveData(
@@ -7781,7 +7800,80 @@ function openHistory(rowId) {
   history.reverse();
 
   list.innerHTML = history.map(item => {
+if (item.type === 'bankDetails') {
+  const oldDetails =
+    item.oldDetails || {};
 
+  const newDetails =
+    item.newDetails || {};
+
+  const bankValue = value =>
+    esc(
+      String(value || '—')
+    );
+
+  const changeSource =
+    item.source === 'phone'
+      ? '📞 שינוי טלפוני'
+      : '✏️ שינוי באתר';
+
+  return `
+    <div style="
+      padding:12px 6px;
+      border-bottom:1px solid var(--border);
+    ">
+      <div style="
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        gap:12px;
+      ">
+        <div style="font-weight:800;">
+          🏦 שינוי פרטי חשבון בנק
+        </div>
+
+        <div style="
+          font-size:0.78rem;
+          color:var(--muted);
+          white-space:nowrap;
+        ">
+          ${formatReportedAt(item.date)}
+        </div>
+      </div>
+
+      <div style="
+        margin-top:5px;
+        font-size:0.72rem;
+        color:var(--muted);
+      ">
+        ${changeSource}
+      </div>
+
+      <div style="
+        margin-top:9px;
+        padding:9px 10px;
+        background:#fff7f2;
+        border-radius:10px;
+        font-size:0.72rem;
+        line-height:1.7;
+      ">
+        <div><strong>פרטים קודמים:</strong></div>
+        <div>מזהה מוטב: ${bankValue(oldDetails.beneficiaryId)}</div>
+        <div>בנק: ${bankValue(oldDetails.bankCode)}</div>
+        <div>סניף: ${bankValue(oldDetails.branchCode)}</div>
+        <div>מספר חשבון: ${bankValue(oldDetails.accountNumber)}</div>
+
+        <div style="margin-top:8px;">
+          <strong>פרטים חדשים:</strong>
+        </div>
+        <div>מזהה מוטב: ${bankValue(newDetails.beneficiaryId)}</div>
+        <div>בנק: ${bankValue(newDetails.bankCode)}</div>
+        <div>סניף: ${bankValue(newDetails.branchCode)}</div>
+        <div>מספר חשבון: ${bankValue(newDetails.accountNumber)}</div>
+      </div>
+    </div>
+  `;
+}
     const phoneData =
       item.source === 'phone' &&
       item.phoneData
