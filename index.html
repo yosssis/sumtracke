@@ -7931,9 +7931,39 @@ const isHourly =
                     <div><strong>טלפון כבוי:</strong> ${phoneData.phoneOff ? 'כן' : 'לא'}</div>
                     <div><strong>למד עם מישהו:</strong> ${phoneData.learnedWithSomeone ? 'כן' : 'לא'}</div>
                     <div><strong>העביר שיעור:</strong> ${phoneData.gaveLesson ? 'כן' : 'לא'}</div>
-                    <div><strong>עשרת ימי תשובה - ימים:</strong> ${Number(phoneData.noteDays) || 0}</div>
-                    <div><strong>עשרת ימי תשובה - דקות:</strong> ${Number(phoneData.noteMinutes) || 0}</div>
-                    <div><strong>חנוכה - ימים:</strong> ${Number(phoneData.hanukkahDays) || 0} × 100 ₪ = ${fmt((Number(phoneData.hanukkahDays) || 0) * 100)}</div>
+                   ${
+  (
+    (Number(phoneData.noteDays) || 0) > 0 ||
+    (Number(phoneData.noteMinutes) || 0) > 0
+  )
+    ? `
+      <div>
+        <strong>עשרת ימי תשובה - ימים:</strong>
+        ${Number(phoneData.noteDays) || 0}
+      </div>
+
+      <div>
+        <strong>עשרת ימי תשובה - דקות:</strong>
+        ${Number(phoneData.noteMinutes) || 0}
+      </div>
+    `
+    : ''
+}
+
+${
+  (Number(phoneData.hanukkahDays) || 0) > 0
+    ? `
+      <div>
+        <strong>חנוכה - ימים:</strong>
+        ${Number(phoneData.hanukkahDays) || 0}
+        × 100 ₪ =
+        ${fmt(
+          (Number(phoneData.hanukkahDays) || 0) * 100
+        )}
+      </div>
+    `
+    : ''
+}
                   </div>
                 `
           )
