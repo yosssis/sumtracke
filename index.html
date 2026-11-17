@@ -2631,6 +2631,302 @@ body:not(.month-picker-open) .month-back-bar {
     text-align: center;
   }
 }
+    /* KESHER MANAGEMENT CENTER */
+.kesher-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 360;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(19,27,38,.64);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .18s;
+}
+
+.kesher-overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.kesher-shell {
+  width: min(1180px,100%);
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  background: #f7f8fa;
+  border-radius: 18px;
+  box-shadow: 0 22px 70px rgba(0,0,0,.28);
+  direction: rtl;
+}
+
+.kesher-head {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 15px 18px;
+  color: white;
+  background: linear-gradient(
+    135deg,
+    #173f5f,
+    #20639b
+  );
+}
+
+.kesher-head-title {
+  font-size: 1.15rem;
+  font-weight: 900;
+}
+
+.kesher-head-subtitle {
+  font-size: .76rem;
+  opacity: .86;
+}
+
+.kesher-close {
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(255,255,255,.45);
+  border-radius: 10px;
+  color: white;
+  background: rgba(255,255,255,.12);
+  cursor: pointer;
+}
+
+.kesher-config-status {
+  margin: 14px 18px 0;
+  padding: 10px 12px;
+  border: 1px solid #cbd9e6;
+  border-radius: 10px;
+  color: #173f5f;
+  background: #edf5fb;
+  font-weight: 700;
+}
+
+.kesher-config-status.error {
+  color: #8b1e19;
+  background: #fff1f0;
+  border-color: #f2b8b5;
+}
+
+.kesher-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 14px 18px 0;
+  overflow-x: auto;
+}
+
+.kesher-tab-btn {
+  flex: 0 0 auto;
+  border: 1px solid #cbd4dc;
+  border-radius: 10px;
+  padding: 9px 14px;
+  color: #43515e;
+  background: white;
+  font-family: Heebo;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.kesher-tab-btn.active {
+  color: white;
+  background: #20639b;
+  border-color: #20639b;
+}
+
+.kesher-content {
+  padding: 14px 18px 20px;
+}
+
+.kesher-panel {
+  display: none;
+}
+
+.kesher-panel.active {
+  display: block;
+}
+
+.kesher-card {
+  padding: 16px;
+  border: 1px solid #dfe4e8;
+  border-radius: 14px;
+  background: white;
+}
+
+.kesher-card-title {
+  margin-bottom: 12px;
+  color: #173f5f;
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.kesher-form-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(3,minmax(0,1fr));
+  gap: 12px;
+}
+
+.kesher-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.kesher-field.wide {
+  grid-column: 1 / -1;
+}
+
+.kesher-field label {
+  font-size: .77rem;
+  font-weight: 800;
+}
+
+.kesher-field input,
+.kesher-field textarea {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid #cbd4dc;
+  border-radius: 9px;
+  padding: 9px 10px;
+  font-family: Heebo;
+}
+
+.kesher-field textarea {
+  min-height: 76px;
+  resize: vertical;
+}
+
+.kesher-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-top: 14px;
+}
+
+.kesher-primary,
+.kesher-secondary {
+  min-height: 42px;
+  border-radius: 9px;
+  padding: 9px 17px;
+  font-family: Heebo;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.kesher-primary {
+  border: 1px solid #20639b;
+  color: white;
+  background: #20639b;
+}
+
+.kesher-secondary {
+  border: 1px solid #bdc8d1;
+  color: #354553;
+  background: white;
+}
+
+.kesher-primary:disabled {
+  opacity: .55;
+  cursor: wait;
+}
+
+.kesher-result {
+  display: none;
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid #b9dec7;
+  border-radius: 10px;
+  color: #14532d;
+  background: #f0fff5;
+  overflow-wrap: anywhere;
+}
+
+.kesher-result.show {
+  display: block;
+}
+
+.kesher-result.error {
+  color: #8b1e19;
+  background: #fff1f0;
+  border-color: #f2b8b5;
+}
+
+.kesher-confirm-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+  font-size: .8rem;
+}
+
+.kesher-table-wrap {
+  margin-top: 14px;
+  overflow: auto;
+  border: 1px solid #dfe4e8;
+  border-radius: 11px;
+}
+
+.kesher-table {
+  width: 100%;
+  min-width: 850px;
+  border-collapse: collapse;
+  background: white;
+  font-size: .79rem;
+}
+
+.kesher-table th,
+.kesher-table td {
+  padding: 9px 10px;
+  border-bottom: 1px solid #e6eaed;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.kesher-table th {
+  color: white;
+  background: #315a78;
+}
+
+.kesher-summary {
+  margin-top: 12px;
+  font-weight: 800;
+}
+
+@media (max-width:820px) {
+  .kesher-overlay {
+    padding: 0;
+  }
+
+  .kesher-shell {
+    width: 100%;
+    height: 100%;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+
+  .kesher-form-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width:560px) {
+  .kesher-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .kesher-field.wide {
+    grid-column: auto;
+  }
+
+  .kesher-actions button {
+    width: 100%;
+  }
+}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
@@ -3670,6 +3966,664 @@ body:not(.month-picker-open) .month-back-bar {
       >
         🔗 שיתוף קישור
       </button>
+      <button
+  class="btn-action"
+  onclick="openKesherCenter()"
+>
+  🏦 מרכז קשר המלא
+</button>
+    </div>
+  </div>
+</div>
+  <!-- Kesher Management Center -->
+<div
+  id="kesher-center-overlay"
+  class="kesher-overlay"
+>
+  <div class="kesher-shell">
+
+    <div class="kesher-head">
+      <div>
+        <div class="kesher-head-title">
+          🏦 מרכז קשר
+        </div>
+
+        <div class="kesher-head-subtitle">
+          עסקאות, קישורי תשלום, Bit, לקוחות והוראות קבע
+        </div>
+      </div>
+
+      <button
+        type="button"
+        class="kesher-close"
+        onclick="closeKesherCenter()"
+      >
+        ✕
+      </button>
+    </div>
+
+    <div
+      id="kesher-config-status"
+      class="kesher-config-status"
+    >
+      בודק את הגדרות החיבור לקשר...
+    </div>
+
+    <div class="kesher-tabs">
+      <button
+        class="kesher-tab-btn active"
+        data-kesher-tab="transactions"
+        onclick="selectKesherTab('transactions',this)"
+      >
+        📊 עסקאות
+      </button>
+
+      <button
+        class="kesher-tab-btn"
+        data-kesher-tab="payment-link"
+        onclick="selectKesherTab('payment-link',this)"
+      >
+        🔗 קישור תשלום
+      </button>
+
+      <button
+        class="kesher-tab-btn"
+        data-kesher-tab="bit"
+        onclick="selectKesherTab('bit',this)"
+      >
+        📱 Bit
+      </button>
+
+      <button
+        class="kesher-tab-btn"
+        data-kesher-tab="token-charge"
+        onclick="selectKesherTab('token-charge',this)"
+      >
+        💳 חיוב טוקן
+      </button>
+
+      <button
+        class="kesher-tab-btn"
+        data-kesher-tab="customer"
+        onclick="selectKesherTab('customer',this)"
+      >
+        👤 עדכון לקוח
+      </button>
+
+      <button
+        class="kesher-tab-btn"
+        data-kesher-tab="bank"
+        onclick="selectKesherTab('bank',this)"
+      >
+        🏦 הוראת קבע
+      </button>
+    </div>
+
+    <div class="kesher-content">
+
+      <section
+        class="kesher-panel active"
+        data-kesher-panel="transactions"
+      >
+        <div class="kesher-card">
+          <div class="kesher-card-title">
+            דוח עסקאות
+          </div>
+
+          <div class="kesher-form-grid">
+            <div class="kesher-field">
+              <label>מתאריך</label>
+              <input
+                id="kesher-from-date"
+                type="date"
+              >
+            </div>
+
+            <div class="kesher-field">
+              <label>עד תאריך</label>
+              <input
+                id="kesher-to-date"
+                type="date"
+              >
+            </div>
+          </div>
+
+          <div class="kesher-actions">
+            <button
+              id="kesher-transactions-load"
+              class="kesher-primary"
+              onclick="loadKesherTransactions()"
+            >
+              רענון עסקאות
+            </button>
+          </div>
+
+          <div
+            id="kesher-transactions-result"
+            class="kesher-result"
+          ></div>
+
+          <div
+            id="kesher-transactions-summary"
+            class="kesher-summary"
+          ></div>
+
+          <div class="kesher-table-wrap">
+            <table class="kesher-table">
+              <thead>
+                <tr>
+                  <th>תאריך</th>
+                  <th>עסקה</th>
+                  <th>שם</th>
+                  <th>טלפון</th>
+                  <th>סכום</th>
+                  <th>סטטוס</th>
+                  <th>אמצעי תשלום</th>
+                  <th>כרטיס</th>
+                  <th>אישור</th>
+                </tr>
+              </thead>
+
+              <tbody
+                id="kesher-transactions-body"
+              >
+                <tr>
+                  <td colspan="9">
+                    טרם נטענו עסקאות
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section
+        class="kesher-panel"
+        data-kesher-panel="payment-link"
+      >
+        <div class="kesher-card">
+          <div class="kesher-card-title">
+            יצירת קישור תשלום
+          </div>
+
+          <div class="kesher-form-grid">
+            <div class="kesher-field">
+              <label>סכום *</label>
+              <input
+                id="kesher-link-amount"
+                type="number"
+                min="0.01"
+                step="0.01"
+              >
+            </div>
+
+            <div class="kesher-field">
+              <label>שם מלא</label>
+              <input
+                id="kesher-link-name"
+                type="text"
+              >
+            </div>
+
+            <div class="kesher-field">
+              <label>שם על הקבלה</label>
+              <input
+                id="kesher-link-receipt-name"
+                type="text"
+              >
+            </div>
+
+            <div class="kesher-field">
+              <label>טלפון</label>
+              <input
+                id="kesher-link-phone"
+                type="tel"
+              >
+            </div>
+
+            <div class="kesher-field">
+              <label>אימייל</label>
+              <input
+                id="kesher-link-mail"
+                type="email"
+              >
+            </div>
+
+            <div class="kesher-field">
+              <label>תעודת זהות</label>
+              <input
+                id="kesher-link-identity"
+                type="text"
+              >
+            </div>
+
+            <div class="kesher-field">
+              <label>כתובת</label>
+              <input
+                id="kesher-link-address"
+                type="text"
+              >
+            </div>
+
+            <div class="kesher-field">
+              <label>עיר</label>
+              <input
+                id="kesher-link-city"
+                type="text"
+              >
+            </div>
+
+            <div class="kesher-field">
+              <label>מספר תשלומים</label>
+              <input
+                id="kesher-link-payments"
+                type="number"
+                value="1"
+                min="1"
+                max="36"
+              >
+            </div>
+
+            <div class="kesher-field wide">
+              <label>הערה</label>
+              <textarea
+                id="kesher-link-comment"
+              ></textarea>
+            </div>
+          </div>
+
+          <div class="kesher-actions">
+            <button
+              id="kesher-link-create"
+              class="kesher-primary"
+              onclick="createKesherPaymentLink()"
+            >
+              יצירת קישור
+            </button>
+          </div>
+
+          <div
+            id="kesher-link-result"
+            class="kesher-result"
+          ></div>
+        </div>
+      </section>
+
+      <section
+        class="kesher-panel"
+        data-kesher-panel="bit"
+      >
+        <div class="kesher-card">
+          <div class="kesher-card-title">
+            יצירת תשלום Bit
+          </div>
+
+          <div class="kesher-form-grid">
+            <div class="kesher-field">
+              <label>סכום *</label>
+              <input
+                id="kesher-bit-amount"
+                type="number"
+                min="0.01"
+                step="0.01"
+              >
+            </div>
+
+            <div class="kesher-field">
+              <label>טלפון *</label>
+              <input
+                id="kesher-bit-phone"
+                type="tel"
+              >
+            </div>
+          </div>
+
+          <div class="kesher-actions">
+            <button
+              id="kesher-bit-create"
+              class="kesher-primary"
+              onclick="createKesherBitPayment()"
+            >
+              יצירת בקשת Bit
+            </button>
+          </div>
+
+          <div
+            id="kesher-bit-result"
+            class="kesher-result"
+          ></div>
+        </div>
+      </section>
+
+      <section
+        class="kesher-panel"
+        data-kesher-panel="token-charge"
+      >
+        <div class="kesher-card">
+          <div class="kesher-card-title">
+            חיוב בטוקן שמור
+          </div>
+
+          <div class="kesher-form-grid">
+            <div class="kesher-field">
+              <label>טוקן *</label>
+              <input
+                id="kesher-token-value"
+                type="password"
+              >
+            </div>
+
+            <div class="kesher-field">
+              <label>תוקף YYMM *</label>
+              <input
+                id="kesher-token-expiry"
+                type="text"
+                maxlength="4"
+              >
+            </div>
+
+            <div class="kesher-field">
+              <label>סכום *</label>
+              <input
+                id="kesher-token-amount"
+                type="number"
+                min="0.01"
+                step="0.01"
+              >
+            </div>
+
+            <div class="kesher-field">
+              <label>שם פרטי</label>
+              <input
+                id="kesher-token-first-name"
+                type="text"
+              >
+            </div>
+
+            <div class="kesher-field">
+              <label>שם משפחה</label>
+              <input
+                id="kesher-token-last-name"
+                type="text"
+              >
+            </div>
+
+            <div class="kesher-field">
+              <label>טלפון</label>
+              <input
+                id="kesher-token-phone"
+                type="tel"
+              >
+            </div>
+
+            <div class="kesher-field">
+              <label>אימייל</label>
+              <input
+                id="kesher-token-mail"
+                type="email"
+              >
+            </div>
+
+            <div class="kesher-field wide">
+              <label>הערה</label>
+              <textarea
+                id="kesher-token-comment"
+              ></textarea>
+            </div>
+          </div>
+
+          <div class="kesher-actions">
+            <button
+              id="kesher-token-charge"
+              class="kesher-primary"
+              onclick="chargeKesherSavedToken()"
+            >
+              ביצוע חיוב
+            </button>
+          </div>
+
+          <div
+            id="kesher-token-result"
+            class="kesher-result"
+          ></div>
+        </div>
+      </section>
+
+      <section
+        class="kesher-panel"
+        data-kesher-panel="customer"
+      >
+        <div class="kesher-card">
+          <div class="kesher-card-title">
+            עדכון פרטי לקוח
+          </div>
+
+          <div class="kesher-form-grid">
+            <div class="kesher-field">
+              <label>מזהה לקוח *</label>
+              <input
+                id="kesher-customer-api-id"
+                type="text"
+              >
+            </div>
+
+            <div class="kesher-field">
+              <label>שם פרטי</label>
+              <input
+                id="kesher-customer-first-name"
+                type="text"
+              >
+            </div>
+
+            <div class="kesher-field">
+              <label>שם משפחה</label>
+              <input
+                id="kesher-customer-last-name"
+                type="text"
+              >
+            </div>
+
+            <div class="kesher-field">
+              <label>תעודת זהות</label>
+              <input
+                id="kesher-customer-identity"
+                type="text"
+              >
+            </div>
+
+            <div class="kesher-field">
+              <label>טלפון</label>
+              <input
+                id="kesher-customer-phone"
+                type="tel"
+              >
+            </div>
+
+            <div class="kesher-field">
+              <label>טלפון נוסף</label>
+              <input
+                id="kesher-customer-phone2"
+                type="tel"
+              >
+            </div>
+
+            <div class="kesher-field">
+              <label>אימייל</label>
+              <input
+                id="kesher-customer-mail"
+                type="email"
+              >
+            </div>
+
+            <div class="kesher-field">
+              <label>כתובת</label>
+              <input
+                id="kesher-customer-address"
+                type="text"
+              >
+            </div>
+
+            <div class="kesher-field">
+              <label>עיר</label>
+              <input
+                id="kesher-customer-city"
+                type="text"
+              >
+            </div>
+
+            <div class="kesher-field wide">
+              <label>הערה</label>
+              <textarea
+                id="kesher-customer-comment"
+              ></textarea>
+            </div>
+          </div>
+
+          <div class="kesher-actions">
+            <button
+              id="kesher-customer-update"
+              class="kesher-primary"
+              onclick="updateKesherCustomer()"
+            >
+              עדכון הלקוח
+            </button>
+          </div>
+
+          <div
+            id="kesher-customer-result"
+            class="kesher-result"
+          ></div>
+        </div>
+      </section>
+
+      <section
+        class="kesher-panel"
+        data-kesher-panel="bank"
+      >
+        <div class="kesher-card">
+          <div class="kesher-card-title">
+            הקמת הוראת קבע בנקאית
+          </div>
+
+          <div class="kesher-form-grid">
+            <div class="kesher-field">
+              <label>סכום חודשי *</label>
+              <input
+                id="kesher-bank-amount"
+                type="number"
+                min="0.01"
+                step="0.01"
+              >
+            </div>
+
+            <div class="kesher-field">
+              <label>קוד בנק *</label>
+              <input
+                id="kesher-bank-code"
+                type="text"
+              >
+            </div>
+
+            <div class="kesher-field">
+              <label>סניף *</label>
+              <input
+                id="kesher-bank-branch"
+                type="text"
+              >
+            </div>
+
+            <div class="kesher-field">
+              <label>מספר חשבון *</label>
+              <input
+                id="kesher-bank-account"
+                type="text"
+              >
+            </div>
+
+            <div class="kesher-field">
+              <label>מספר תשלומים</label>
+              <input
+                id="kesher-bank-payments"
+                type="number"
+                value="9999"
+              >
+            </div>
+
+            <div class="kesher-field">
+              <label>תאריך התחלה</label>
+              <input
+                id="kesher-bank-start-date"
+                type="date"
+              >
+            </div>
+
+            <div class="kesher-field">
+              <label>שם פרטי</label>
+              <input
+                id="kesher-bank-first-name"
+                type="text"
+              >
+            </div>
+
+            <div class="kesher-field">
+              <label>שם משפחה</label>
+              <input
+                id="kesher-bank-last-name"
+                type="text"
+              >
+            </div>
+
+            <div class="kesher-field">
+              <label>טלפון</label>
+              <input
+                id="kesher-bank-phone"
+                type="tel"
+              >
+            </div>
+
+            <div class="kesher-field">
+              <label>אימייל</label>
+              <input
+                id="kesher-bank-mail"
+                type="email"
+              >
+            </div>
+
+            <div class="kesher-field">
+              <label>מזהה לקוח</label>
+              <input
+                id="kesher-bank-client-id"
+                type="text"
+              >
+            </div>
+          </div>
+
+          <label class="kesher-confirm-row">
+            <input
+              id="kesher-bank-confirm"
+              type="checkbox"
+            >
+            בדקתי את פרטי החשבון ואני מאשר את הקמת הוראת הקבע
+          </label>
+
+          <div class="kesher-actions">
+            <button
+              id="kesher-bank-create"
+              class="kesher-primary"
+              onclick="createKesherBankObligation()"
+            >
+              הקמת הוראת קבע
+            </button>
+          </div>
+
+          <div
+            id="kesher-bank-result"
+            class="kesher-result"
+          ></div>
+        </div>
+      </section>
+
     </div>
   </div>
 </div>
@@ -16607,6 +17561,899 @@ function closeDashboard() {
 
   document.body.classList.remove('dashboard-side-open');
 }
+  // ── KESHER MANAGEMENT CENTER ─────────────────────────
+let kesherConfig = null;
+let kesherTransactions = [];
+
+function kesherValue(id) {
+  return String(
+    document.getElementById(id)?.value || ''
+  ).trim();
+}
+
+function kesherLocalDate(offsetDays = 0) {
+  const date = new Date(
+    Date.now() +
+    Number(offsetDays || 0) * 86400000
+  );
+
+  const parts =
+    new Intl.DateTimeFormat(
+      'en-CA',
+      {
+        timeZone: 'Asia/Jerusalem',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      }
+    ).formatToParts(date);
+
+  const values = {};
+
+  parts.forEach(part => {
+    values[part.type] = part.value;
+  });
+
+  return (
+    values.year + '-' +
+    values.month + '-' +
+    values.day
+  );
+}
+
+function kesherSetBusy(
+  buttonId,
+  busy,
+  busyText = 'מבצע...'
+) {
+  const button =
+    document.getElementById(buttonId);
+
+  if (!button) return;
+
+  if (busy) {
+    button.dataset.originalText =
+      button.dataset.originalText ||
+      button.textContent.trim();
+
+    button.disabled = true;
+    button.textContent = busyText;
+  } else {
+    button.disabled = false;
+    button.textContent =
+      button.dataset.originalText ||
+      button.textContent;
+  }
+}
+
+function kesherShowResult(
+  elementId,
+  html,
+  isError = false
+) {
+  const element =
+    document.getElementById(elementId);
+
+  if (!element) return;
+
+  element.classList.toggle(
+    'error',
+    isError
+  );
+
+  element.classList.add('show');
+  element.innerHTML = html;
+}
+
+function kesherClearResult(elementId) {
+  const element =
+    document.getElementById(elementId);
+
+  if (!element) return;
+
+  element.classList.remove(
+    'show',
+    'error'
+  );
+
+  element.innerHTML = '';
+}
+
+async function kesherApi(
+  action,
+  payload = {}
+) {
+  if (!authToken) {
+    throw new Error(
+      'יש להתחבר מחדש למערכת'
+    );
+  }
+
+  const response = await fetch(
+    API_URL,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type':
+          'text/plain;charset=utf-8'
+      },
+      body: JSON.stringify({
+        action: action,
+        token: authToken,
+        ...payload
+      })
+    }
+  );
+
+  const responseText =
+    await response.text();
+
+  let result;
+
+  try {
+    result = JSON.parse(responseText);
+  } catch (error) {
+    throw new Error(
+      'התקבלה תשובה לא תקינה מהשרת'
+    );
+  }
+
+  if (
+    !response.ok ||
+    !result ||
+    result.ok !== true
+  ) {
+    throw new Error(
+      result?.message ||
+      'הפעולה בקשר נכשלה'
+    );
+  }
+
+  return result;
+}
+
+function openKesherCenter() {
+  if (!authToken) {
+    requireAuth(openKesherCenter);
+    return;
+  }
+
+  closeDonationChoice();
+
+  const overlay =
+    document.getElementById(
+      'kesher-center-overlay'
+    );
+
+  if (!overlay) return;
+
+  const fromInput =
+    document.getElementById(
+      'kesher-from-date'
+    );
+
+  const toInput =
+    document.getElementById(
+      'kesher-to-date'
+    );
+
+  if (fromInput && !fromInput.value) {
+    fromInput.value =
+      kesherLocalDate(-30);
+  }
+
+  if (toInput && !toInput.value) {
+    toInput.value =
+      kesherLocalDate(0);
+  }
+
+  overlay.classList.add('show');
+  document.body.style.overflow =
+    'hidden';
+
+  loadKesherConfig();
+}
+
+function closeKesherCenter() {
+  document
+    .getElementById(
+      'kesher-center-overlay'
+    )
+    ?.classList.remove('show');
+
+  document.body.style.overflow = '';
+}
+
+function selectKesherTab(
+  tabName,
+  selectedButton
+) {
+  document
+    .querySelectorAll(
+      '[data-kesher-panel]'
+    )
+    .forEach(panel => {
+      panel.classList.toggle(
+        'active',
+        panel.dataset.kesherPanel ===
+          tabName
+      );
+    });
+
+  document
+    .querySelectorAll(
+      '[data-kesher-tab]'
+    )
+    .forEach(button => {
+      button.classList.toggle(
+        'active',
+        button === selectedButton
+      );
+    });
+}
+
+async function loadKesherConfig() {
+  const statusElement =
+    document.getElementById(
+      'kesher-config-status'
+    );
+
+  statusElement.classList.remove(
+    'error'
+  );
+
+  statusElement.textContent =
+    'בודק את הגדרות החיבור לקשר...';
+
+  try {
+    const result = await kesherApi(
+      'getKesherConfig'
+    );
+
+    kesherConfig = result;
+
+    if (!result.configured) {
+      statusElement.classList.add(
+        'error'
+      );
+
+      statusElement.textContent =
+        'חסרות הגדרות: ' +
+        (result.missing || []).join(', ');
+
+      return;
+    }
+
+    statusElement.textContent =
+      '✅ מחובר לקשר · פרויקט ' +
+      result.projectNumber;
+
+    if (
+      kesherTransactions.length === 0
+    ) {
+      loadKesherTransactions();
+    }
+
+  } catch (error) {
+    statusElement.classList.add('error');
+    statusElement.textContent =
+      '❌ ' + error.message;
+  }
+}
+
+function kesherFormatDate(value) {
+  if (!value) return '—';
+
+  const date = new Date(value);
+
+  if (!Number.isFinite(date.getTime())) {
+    return String(value);
+  }
+
+  return date.toLocaleString(
+    'he-IL',
+    {
+      timeZone: 'Asia/Jerusalem',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }
+  );
+}
+
+function renderKesherTransactions() {
+  const body =
+    document.getElementById(
+      'kesher-transactions-body'
+    );
+
+  const summary =
+    document.getElementById(
+      'kesher-transactions-summary'
+    );
+
+  if (kesherTransactions.length === 0) {
+    body.innerHTML =
+      '<tr><td colspan="9">לא נמצאו עסקאות</td></tr>';
+
+    summary.textContent =
+      '0 עסקאות · סה״כ ₪0.00';
+
+    return;
+  }
+
+  const total =
+    kesherTransactions.reduce(
+      (sum, item) =>
+        sum +
+        (Number(item.amount) || 0),
+      0
+    );
+
+  summary.textContent =
+    kesherTransactions.length +
+    ' עסקאות · סה״כ ' +
+    fmt(total);
+
+  body.innerHTML =
+    kesherTransactions
+      .map(item => `
+        <tr>
+          <td>${esc(kesherFormatDate(item.date))}</td>
+          <td>${esc(item.id || '—')}</td>
+          <td>${esc(item.name || '—')}</td>
+          <td dir="ltr">${esc(item.phone || '—')}</td>
+          <td dir="ltr">${esc(fmt(Number(item.amount) || 0))}</td>
+          <td>${esc(item.status || '—')}</td>
+          <td>${esc(item.paymentMethod || '—')}</td>
+          <td dir="ltr">${esc(item.maskedCard || '—')}</td>
+          <td>${esc(item.approvalNumber || '—')}</td>
+        </tr>
+      `)
+      .join('');
+}
+
+async function loadKesherTransactions() {
+  kesherSetBusy(
+    'kesher-transactions-load',
+    true,
+    'טוען...'
+  );
+
+  try {
+    const result = await kesherApi(
+      'getKesherTransactions',
+      {
+        fromDate: kesherValue(
+          'kesher-from-date'
+        ),
+        toDate: kesherValue(
+          'kesher-to-date'
+        )
+      }
+    );
+
+    kesherTransactions =
+      result.transactions || [];
+
+    renderKesherTransactions();
+
+  } catch (error) {
+    kesherShowResult(
+      'kesher-transactions-result',
+      '❌ ' + esc(error.message),
+      true
+    );
+
+  } finally {
+    kesherSetBusy(
+      'kesher-transactions-load',
+      false
+    );
+  }
+}
+
+function openKesherUrl(url) {
+  if (!/^https:\/\//i.test(url || '')) {
+    showToast('❌ הקישור אינו תקין');
+    return;
+  }
+
+  window.open(
+    url,
+    '_blank',
+    'noopener,noreferrer'
+  );
+}
+
+async function copyKesherText(value) {
+  try {
+    await navigator.clipboard.writeText(
+      String(value)
+    );
+
+    showToast('✅ הקישור הועתק');
+
+  } catch (error) {
+    window.prompt(
+      'העתק את הקישור:',
+      String(value)
+    );
+  }
+}
+
+function renderKesherLinkResult(
+  elementId,
+  url,
+  message
+) {
+  const element =
+    document.getElementById(elementId);
+
+  element.classList.remove('error');
+  element.classList.add('show');
+  element.innerHTML = '';
+
+  const title =
+    document.createElement('div');
+
+  title.textContent = message;
+
+  const link =
+    document.createElement('a');
+
+  link.href = url;
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+  link.textContent = url;
+  link.style.display = 'block';
+  link.style.marginTop = '8px';
+
+  const actions =
+    document.createElement('div');
+
+  actions.className =
+    'kesher-actions';
+
+  const openButton =
+    document.createElement('button');
+
+  openButton.type = 'button';
+  openButton.className =
+    'kesher-primary';
+  openButton.textContent =
+    'פתיחת הקישור';
+
+  openButton.onclick =
+    () => openKesherUrl(url);
+
+  const copyButton =
+    document.createElement('button');
+
+  copyButton.type = 'button';
+  copyButton.className =
+    'kesher-secondary';
+  copyButton.textContent =
+    'העתקת הקישור';
+
+  copyButton.onclick =
+    () => copyKesherText(url);
+
+  actions.append(
+    openButton,
+    copyButton
+  );
+
+  element.append(
+    title,
+    link,
+    actions
+  );
+}
+
+async function createKesherPaymentLink() {
+  kesherSetBusy(
+    'kesher-link-create',
+    true,
+    'יוצר קישור...'
+  );
+
+  try {
+    const result = await kesherApi(
+      'createKesherPaymentLink',
+      {
+        amount: kesherValue(
+          'kesher-link-amount'
+        ),
+        name: kesherValue(
+          'kesher-link-name'
+        ),
+        receiptName: kesherValue(
+          'kesher-link-receipt-name'
+        ),
+        phone: kesherValue(
+          'kesher-link-phone'
+        ),
+        mail: kesherValue(
+          'kesher-link-mail'
+        ),
+        identityNumber: kesherValue(
+          'kesher-link-identity'
+        ),
+        address: kesherValue(
+          'kesher-link-address'
+        ),
+        city: kesherValue(
+          'kesher-link-city'
+        ),
+        numPayments: kesherValue(
+          'kesher-link-payments'
+        ),
+        comment: kesherValue(
+          'kesher-link-comment'
+        )
+      }
+    );
+
+    renderKesherLinkResult(
+      'kesher-link-result',
+      result.paymentUrl,
+      '✅ הקישור נוצר על סך ' +
+      fmt(Number(result.amount) || 0)
+    );
+
+  } catch (error) {
+    kesherShowResult(
+      'kesher-link-result',
+      '❌ ' + esc(error.message),
+      true
+    );
+
+  } finally {
+    kesherSetBusy(
+      'kesher-link-create',
+      false
+    );
+  }
+}
+
+async function createKesherBitPayment() {
+  kesherSetBusy(
+    'kesher-bit-create',
+    true,
+    'יוצר Bit...'
+  );
+
+  try {
+    const result = await kesherApi(
+      'createKesherBitPayment',
+      {
+        amount: kesherValue(
+          'kesher-bit-amount'
+        ),
+        phone: kesherValue(
+          'kesher-bit-phone'
+        )
+      }
+    );
+
+    renderKesherLinkResult(
+      'kesher-bit-result',
+      result.bitUrl,
+      '✅ קישור Bit נוצר'
+    );
+
+  } catch (error) {
+    kesherShowResult(
+      'kesher-bit-result',
+      '❌ ' + esc(error.message),
+      true
+    );
+
+  } finally {
+    kesherSetBusy(
+      'kesher-bit-create',
+      false
+    );
+  }
+}
+
+async function chargeKesherSavedToken() {
+  const amount = Number(
+    kesherValue(
+      'kesher-token-amount'
+    )
+  );
+
+  if (
+    !Number.isFinite(amount) ||
+    amount <= 0
+  ) {
+    showToast(
+      '❌ יש להזין סכום תקין'
+    );
+    return;
+  }
+
+  if (
+    !window.confirm(
+      'לבצע חיוב בפועל על סך ' +
+      fmt(amount) +
+      '?'
+    )
+  ) {
+    return;
+  }
+
+  kesherSetBusy(
+    'kesher-token-charge',
+    true,
+    'מבצע חיוב...'
+  );
+
+  try {
+    const result = await kesherApi(
+      'chargeKesherSavedToken',
+      {
+        savedToken: kesherValue(
+          'kesher-token-value'
+        ),
+        expiry: kesherValue(
+          'kesher-token-expiry'
+        ),
+        amount: amount,
+        firstName: kesherValue(
+          'kesher-token-first-name'
+        ),
+        lastName: kesherValue(
+          'kesher-token-last-name'
+        ),
+        phone: kesherValue(
+          'kesher-token-phone'
+        ),
+        mail: kesherValue(
+          'kesher-token-mail'
+        ),
+        comment: kesherValue(
+          'kesher-token-comment'
+        )
+      }
+    );
+
+    kesherShowResult(
+      'kesher-token-result',
+      '✅ החיוב בוצע' +
+      '<br>עסקה: ' +
+      esc(
+        result.transactionId || '—'
+      ) +
+      '<br>אישור: ' +
+      esc(
+        result.approvalNumber || '—'
+      )
+    );
+
+    document.getElementById(
+      'kesher-token-value'
+    ).value = '';
+
+  } catch (error) {
+    kesherShowResult(
+      'kesher-token-result',
+      '❌ ' + esc(error.message),
+      true
+    );
+
+  } finally {
+    kesherSetBusy(
+      'kesher-token-charge',
+      false
+    );
+  }
+}
+
+async function updateKesherCustomer() {
+  const apiIdentity =
+    kesherValue(
+      'kesher-customer-api-id'
+    );
+
+  if (!apiIdentity) {
+    showToast(
+      '❌ חובה להזין מזהה לקוח'
+    );
+    return;
+  }
+
+  if (
+    !window.confirm(
+      'לעדכן את הלקוח בקשר?'
+    )
+  ) {
+    return;
+  }
+
+  kesherSetBusy(
+    'kesher-customer-update',
+    true,
+    'מעדכן...'
+  );
+
+  try {
+    await kesherApi(
+      'updateKesherCustomer',
+      {
+        apiIdentity: apiIdentity,
+        firstName: kesherValue(
+          'kesher-customer-first-name'
+        ),
+        lastName: kesherValue(
+          'kesher-customer-last-name'
+        ),
+        identityNumber: kesherValue(
+          'kesher-customer-identity'
+        ),
+        phone: kesherValue(
+          'kesher-customer-phone'
+        ),
+        phone2: kesherValue(
+          'kesher-customer-phone2'
+        ),
+        mail: kesherValue(
+          'kesher-customer-mail'
+        ),
+        address: kesherValue(
+          'kesher-customer-address'
+        ),
+        city: kesherValue(
+          'kesher-customer-city'
+        ),
+        comment: kesherValue(
+          'kesher-customer-comment'
+        )
+      }
+    );
+
+    kesherShowResult(
+      'kesher-customer-result',
+      '✅ פרטי הלקוח עודכנו'
+    );
+
+  } catch (error) {
+    kesherShowResult(
+      'kesher-customer-result',
+      '❌ ' + esc(error.message),
+      true
+    );
+
+  } finally {
+    kesherSetBusy(
+      'kesher-customer-update',
+      false
+    );
+  }
+}
+
+async function createKesherBankObligation() {
+  const confirmation =
+    document.getElementById(
+      'kesher-bank-confirm'
+    );
+
+  if (!confirmation.checked) {
+    showToast(
+      '❌ חובה לאשר את הפרטים'
+    );
+    return;
+  }
+
+  const amount = Number(
+    kesherValue(
+      'kesher-bank-amount'
+    )
+  );
+
+  if (
+    !window.confirm(
+      'להקים הוראת קבע על סך ' +
+      fmt(amount) +
+      ' לכל גבייה?'
+    )
+  ) {
+    return;
+  }
+
+  kesherSetBusy(
+    'kesher-bank-create',
+    true,
+    'מקים הוראת קבע...'
+  );
+
+  try {
+    const result = await kesherApi(
+      'createKesherBankObligation',
+      {
+        amount: amount,
+        bank: kesherValue(
+          'kesher-bank-code'
+        ),
+        branch: kesherValue(
+          'kesher-bank-branch'
+        ),
+        account: kesherValue(
+          'kesher-bank-account'
+        ),
+        numPayments: kesherValue(
+          'kesher-bank-payments'
+        ),
+        startDate: kesherValue(
+          'kesher-bank-start-date'
+        ),
+        firstName: kesherValue(
+          'kesher-bank-first-name'
+        ),
+        lastName: kesherValue(
+          'kesher-bank-last-name'
+        ),
+        phone: kesherValue(
+          'kesher-bank-phone'
+        ),
+        mail: kesherValue(
+          'kesher-bank-mail'
+        ),
+        clientApiIdentity:
+          kesherValue(
+            'kesher-bank-client-id'
+          ),
+        confirmed: true
+      }
+    );
+
+    kesherShowResult(
+      'kesher-bank-result',
+      '✅ הוראת הקבע הוקמה' +
+      '<br>אסמכתא: ' +
+      esc(
+        result.obligationReference ||
+        'לא התקבלה'
+      )
+    );
+
+    confirmation.checked = false;
+
+  } catch (error) {
+    kesherShowResult(
+      'kesher-bank-result',
+      '❌ ' + esc(error.message),
+      true
+    );
+
+  } finally {
+    kesherSetBusy(
+      'kesher-bank-create',
+      false
+    );
+  }
+}
+
+const kesherCenterOverlay =
+  document.getElementById(
+    'kesher-center-overlay'
+  );
+
+kesherCenterOverlay?.addEventListener(
+  'click',
+  event => {
+    if (
+      event.target ===
+      kesherCenterOverlay
+    ) {
+      closeKesherCenter();
+    }
+  }
+);
 // ── INIT ──────────────────────────────────────────────
 if (authToken) {
   const savedUsername =
