@@ -7472,15 +7472,25 @@ function getExtraExpenseMonthName(expense) {
     .trim();
 }
 
-function getExtraExpenseCreatedTime(expense) {
-  const time =
-    new Date(
-      expense?.createdAt ||
-      expense?.updatedAt ||
-      0
-    ).getTime();
+function getExtraExpenseDateTime(expense) {
+  const expenseDateTime =
+    getExtraExpenseDateTimestamp(
+      expense?.hebrewDate
+    );
 
-  return Number.isFinite(time) ? time : 0;
+  if (Number.isFinite(expenseDateTime)) {
+    return expenseDateTime;
+  }
+
+  const createdTime = new Date(
+    expense?.createdAt ||
+    expense?.updatedAt ||
+    0
+  ).getTime();
+
+  return Number.isFinite(createdTime)
+    ? createdTime
+    : 0;
 }
 
 function updateExtraExpenseSummary() {
@@ -7616,8 +7626,8 @@ function fillExtraExpenseMonthFilter() {
       [...(extraExpenses || [])]
         .sort(
           (a, b) =>
-            getExtraExpenseCreatedTime(b) -
-            getExtraExpenseCreatedTime(a)
+            getExtraExpenseDateTime(b) -
+            getExtraExpenseDateTime(a)
         )
         .map(getExtraExpenseMonthName)
         .filter(Boolean)
@@ -7637,7 +7647,6 @@ function fillExtraExpenseMonthFilter() {
     select.value = currentValue;
   }
 }
-
 function renderExtraExpenses() {
   updateExtraExpenseSummary();
 
@@ -7738,34 +7747,33 @@ function renderExtraExpenseManager() {
       }
     );
 
-  items.sort((a, b) => {
-    if (selectedSort === 'oldest') {
-      return (
-        getExtraExpenseCreatedTime(a) -
-        getExtraExpenseCreatedTime(b)
-      );
-    }
-
-    if (selectedSort === 'amount-desc') {
-      return (
-        (Number(b.amount) || 0) -
-        (Number(a.amount) || 0)
-      );
-    }
-
-    if (selectedSort === 'amount-asc') {
-      return (
-        (Number(a.amount) || 0) -
-        (Number(b.amount) || 0)
-      );
-    }
-
+items.sort((a, b) => {
+  if (selectedSort === 'oldest') {
     return (
-      getExtraExpenseCreatedTime(b) -
-      getExtraExpenseCreatedTime(a)
+      getExtraExpenseDateTime(a) -
+      getExtraExpenseDateTime(b)
     );
-  });
+  }
 
+  if (selectedSort === 'amount-desc') {
+    return (
+      (Number(b.amount) || 0) -
+      (Number(a.amount) || 0)
+    );
+  }
+
+  if (selectedSort === 'amount-asc') {
+    return (
+      (Number(a.amount) || 0) -
+      (Number(b.amount) || 0)
+    );
+  }
+
+  return (
+    getExtraExpenseDateTime(b) -
+    getExtraExpenseDateTime(a)
+  );
+});
   const filteredTotal =
     items.reduce(
       (sum, expense) =>
