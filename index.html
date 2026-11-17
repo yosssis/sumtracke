@@ -3972,7 +3972,18 @@ readonly
       style="margin:14px 0;"
     ></div>
 
-    <div class="dialog-btns" style="flex-wrap:wrap;">
+   <div
+  class="dialog-btns"
+  style="
+    flex-wrap:wrap;
+    position:sticky;
+    bottom:0;
+    z-index:10;
+    background:white;
+    padding:12px 4px 6px;
+    border-top:1px solid var(--border);
+  "
+>
       <button
         type="button"
         class="btn-cancel"
@@ -3984,7 +3995,7 @@ readonly
       <button
         type="button"
         class="btn-action"
-        onclick="closeExtraExpenseManager(); openExtraExpense()"
+       onclick="openNewExtraExpenseFromManager()"
       >
         ➕ הוצאה חדשה
       </button>
@@ -4796,6 +4807,7 @@ function openMonthDetails(monthId) {
   let pendingDelete = null;
   let extraExpenses = [];
   let extraExpenseManagerPage = 1;
+  let returnToExtraExpenseManager = false;
 
 const EXTRA_EXPENSE_MANAGER_PAGE_SIZE = 20;
   let recycleBin = [];
@@ -7103,6 +7115,18 @@ function closeExtraExpense() {
   document
     .getElementById('extra-expense-overlay')
     .classList.remove('show');
+
+  if (returnToExtraExpenseManager) {
+    returnToExtraExpenseManager = false;
+
+    renderExtraExpenseManager();
+
+    document
+      .getElementById(
+        'extra-expense-manager-overlay'
+      )
+      .classList.add('show');
+  }
 }
   function openExtraExpenseDashboard() {
   renderExtraExpenseDashboard();
@@ -7516,9 +7540,18 @@ function closeExtraExpenseManager() {
 }
 
 function openExtraExpenseForEdit(id) {
+  returnToExtraExpenseManager = true;
+
   closeExtraExpenseManager();
   openExtraExpense();
   editExtraExpense(id);
+}
+
+function openNewExtraExpenseFromManager() {
+  returnToExtraExpenseManager = true;
+
+  closeExtraExpenseManager();
+  openExtraExpense();
 }
 
 function clearExtraExpenseManagerFilters() {
