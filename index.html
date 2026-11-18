@@ -4053,7 +4053,13 @@ body:not(.month-picker-open) .month-back-bar {
       >
         📊 עסקאות
       </button>
-
+<button
+  class="kesher-tab-btn"
+  data-kesher-tab="returns"
+  onclick="selectKesherTab('returns',this)"
+>
+  🔴 הו״ק חוזרות
+</button>
       <button
         class="kesher-tab-btn"
         data-kesher-tab="payment-link"
@@ -4170,6 +4176,94 @@ body:not(.month-picker-open) .month-back-bar {
 
       <section
         class="kesher-panel"
+		  <section class="kesher-panel" data-kesher-panel="returns">
+  <div class="kesher-card">
+
+    <div class="kesher-card-title">
+      הו״ק חוזרות - התראות ודוח סטטוסים
+    </div>
+
+    <div class="kesher-form-grid">
+      <div class="kesher-field">
+        <label>סטטוס</label>
+        <select
+          id="kesher-returns-filter"
+          onchange="renderKesherReturns()"
+        >
+          <option value="9">חזר (9)</option>
+          <option value="review">
+            דורש בדיקה (6, 14, 16)
+          </option>
+          <option value="all">
+            כל הסטטוסים שנקלטו
+          </option>
+        </select>
+      </div>
+
+      <div class="kesher-field">
+        <label>
+          חיפוש לפי לקוח / טלפון / אסמכתא / עסקה
+        </label>
+        <input
+          id="kesher-returns-search"
+          type="search"
+          oninput="renderKesherReturns()"
+          placeholder="חיפוש"
+        >
+      </div>
+    </div>
+
+    <div class="kesher-actions">
+      <button
+        id="kesher-returns-refresh"
+        class="kesher-primary"
+        onclick="loadKesherReturns()"
+      >
+        רענון הו״ק חוזרות
+      </button>
+    </div>
+
+    <div
+      id="kesher-returns-result"
+      class="kesher-result"
+    ></div>
+
+    <div
+      id="kesher-returns-summary"
+      class="kesher-summary"
+    ></div>
+
+    <div class="kesher-table-wrap">
+      <table class="kesher-table">
+        <thead>
+          <tr>
+            <th>נקלט</th>
+            <th>לקוח</th>
+            <th>טלפון</th>
+            <th>מזהה עסקה</th>
+            <th>אסמכתת הו״ק</th>
+            <th>תאריך חיוב</th>
+            <th>סכום לפי קשר</th>
+            <th>סטטוס</th>
+            <th>סיבת חזרה</th>
+            <th>תשובת אשראי</th>
+            <th>מייל</th>
+            <th>מידע נוסף</th>
+          </tr>
+        </thead>
+
+        <tbody id="kesher-returns-body">
+          <tr>
+            <td colspan="12">
+              לחץ על רענון לטעינת נתונים
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</section>
         data-kesher-panel="payment-link"
       >
         <div class="kesher-card">
@@ -18278,7 +18372,10 @@ function selectKesherTab(
         button === selectedButton
       );
     });
-}
+	  if (tabName === 'returns') {
+    loadKesherReturns();
+  }
+}		
 
 async function loadKesherConfig() {
   const statusElement =
@@ -18443,7 +18540,173 @@ async function loadKesherTransactions() {
     );
   }
 }
+let kesherReturns = [];
 
+function kesherReturnStatusText(item) {
+  const statuses = {
+    1: 'ממתין לשידור',
+    2: 'בוטל לפני שידור',
+    4: 'עבר בהצלחה',
+    5: 'נתונים שגויים',
+    6: 'נכשל בשידור',
+    7: 'בוטל',
+    8: 'ממתין לסליקה',
+    9: 'חזר',
+    10: 'בבירור',
+    11: 'עבר בהצלחה',
+    14: 'עסקה שלא עברה והוחזרה מהדוח',
+    15: 'נתונים שגויים',
+    16: 'לא סולק',
+    21: 'חיוב ממתין לאישור תשלום',
+    22: 'אישור חלקי',
+    23: 'בוטל בשידור היום'
+  };
+
+  return (
+    (statuses[item.statusCode] ||
+      item.statusText ||
+      'לא ידוע') +
+    ' (' + item.statusCode + ')'
+  );
+}
+
+function renderKesherReturns() {
+  const body = document.getElementById(
+    'kesher-returns-body'
+  );
+
+  const summary = document.getElementById(
+    'kesher-returns-summary'
+  );
+
+  if (!body || !summary) return;
+
+  const filter = document.getElementById(
+    'kesher-returns-filter'
+  ).value;
+
+  const query = document.getElementById(
+    'kesher-returns-search'
+  ).value.trim().toLowerCase();
+
+  const visible = kesherReturns.filter(item => {
+    if (
+      filter === '9' &&
+      item.statusCode !== 9
+    ) {
+      return false;
+    }
+
+    if (
+      filter === 'review' &&
+      ![6, 14, 16].includes(item.statusCode)
+    ) {
+      return false;
+    }
+
+    const haystack = [
+      item.customer,
+      item.phone,
+      item.transactionId,
+      item.obligationRef,
+      item.cancelReason
+    ].join(' ').toLowerCase();
+
+    return !query || haystack.includes(query);
+  });
+
+  summary.textContent =
+    visible.length +
+    ' רשומות מוצגות מתוך ' +
+    kesherReturns.length +
+    ' האחרונות · מייל נשלח רק על סטטוס 9';
+
+  if (!visible.length) {
+    body.innerHTML =
+      '<tr><td colspan="12">לא נמצאו רשומות התואמות לסינון</td></tr>';
+    return;
+  }
+
+  body.innerHTML = visible.map(item => `
+    <tr>
+      <td>${esc(item.receivedAt || '—')}</td>
+
+      <td>
+        ${esc(item.customer || '—')}
+        <div>${esc(item.email || '')}</div>
+        <div>${esc(item.maskedIdentity || '')}</div>
+      </td>
+
+      <td dir="ltr">${esc(item.phone || '—')}</td>
+      <td>${esc(item.transactionId || '—')}</td>
+      <td>${esc(item.obligationRef || '—')}</td>
+      <td>${esc(item.eventDate || '—')}</td>
+      <td>${esc(item.amountRaw || '—')}</td>
+      <td>${esc(kesherReturnStatusText(item))}</td>
+      <td>${esc(item.cancelReason || '—')}</td>
+
+      <td>
+        ${esc(
+          [
+            item.creditCode,
+            item.creditStatus,
+            item.creditDescription
+          ].filter(Boolean).join(' | ') || '—'
+        )}
+      </td>
+
+      <td>
+        ${esc(
+          item.emailStatus === 'SENT'
+            ? 'נשלח'
+            : item.emailStatus === 'NOT_REQUIRED'
+              ? 'לא נדרש'
+              : 'ממתין / שגיאה'
+        )}
+      </td>
+
+      <td>
+        <details>
+          <summary>הצג נתונים</summary>
+          <pre style="white-space:pre-wrap;max-width:400px;overflow-wrap:anywhere;">${esc(item.details || '')}</pre>
+        </details>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function loadKesherReturns() {
+  kesherClearResult('kesher-returns-result');
+
+  kesherSetBusy(
+    'kesher-returns-refresh',
+    true,
+    'טוען...'
+  );
+
+  try {
+    const result = await kesherApi(
+      'getKesherReturns'
+    );
+
+    kesherReturns = Array.isArray(result.items)
+      ? result.items
+      : [];
+
+    renderKesherReturns();
+  } catch (error) {
+    kesherShowResult(
+      'kesher-returns-result',
+      '❌ ' + esc(error.message),
+      true
+    );
+  } finally {
+    kesherSetBusy(
+      'kesher-returns-refresh',
+      false
+    );
+  }
+}
 function openKesherUrl(url) {
   if (!/^https:\/\//i.test(url || '')) {
     showToast('❌ הקישור אינו תקין');
