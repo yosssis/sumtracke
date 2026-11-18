@@ -17710,10 +17710,7 @@ function kesherClearResult(elementId) {
 }
 
 function kesherOperationUi(action) {
-  return {
-
-    createKesherBankObligation: 'kesher-bank-result'
-  }[action] || '';
+  return '';
 }
 function kesherOperationKey(action) {
   const user =
@@ -18121,22 +18118,8 @@ function kesherClearFinancialFields(action) {
 }
 
 function kesherRefreshOpenOperations() {
-  [
-  
-    'createKesherBankObligation'
-  ].forEach(action => {
-    kesherRefreshOperation(action).catch(error => {
-      if (authToken) {
-        kesherShowResult(
-          kesherOperationUi(action),
-          esc(error.message),
-          true
-        );
-      }
-    });
-  });
+  kesherClearResult('kesher-bank-result');
 }
-
 
 function openKesherCenter() {
   if (!authToken) {
@@ -18744,6 +18727,8 @@ async function createKesherBankObligation() {
   ) {
     return;
   }
+
+  kesherClearResult('kesher-bank-result');
 
   kesherSetBusy(
     'kesher-bank-create',
