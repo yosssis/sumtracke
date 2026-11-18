@@ -18814,11 +18814,17 @@ async function createKesherBankObligation() {
 
     kesherShowResult(
       'kesher-bank-result',
-     'התקבלה תשובה מקשר לבקשת הוראת הקבע' +
+      '✅ ' + esc(
+        result.description ||
+        'הוראת קבע נקלטה בהצלחה'
+      ) +
       '<br>אסמכתא: ' +
-      esc(
-        result.obligationReference ||
-        'לא התקבלה'
+      esc(result.obligationReference || '') +
+      (
+        result.statusCode == null
+          ? ''
+          : '<br>קוד תשובה: ' +
+            esc(result.statusCode)
       )
     );
 
