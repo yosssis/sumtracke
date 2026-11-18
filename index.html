@@ -17716,10 +17716,12 @@ function kesherDateInHebrewOrder(value) {
 }
 
 function kesherPrepareDateFields() {
-  [
+   [
     'kesher-from-date',
     'kesher-to-date',
-    'kesher-bank-start-date'
+    'kesher-bank-start-date',
+    'kesher-returns-from-date',
+    'kesher-returns-to-date'
   ].forEach(id => {
     const input =
       document.getElementById(id);
