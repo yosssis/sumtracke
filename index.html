@@ -17810,11 +17810,9 @@ function kesherClearResult(elementId) {
 function kesherOperationUi(action) {
   return {
     chargeKesherSavedToken: 'kesher-token-result',
-    createKesherBankObligation: 'kesher-bank-result',
-    createKesherBitPayment: 'kesher-bit-result'
+    createKesherBankObligation: 'kesher-bank-result'
   }[action] || '';
 }
-
 function kesherOperationKey(action) {
   const user =
     sessionStorage.getItem('loggedInUsername') || '';
@@ -17994,8 +17992,7 @@ async function kesherApi(action, payload = {}) {
 function kesherAttachOperationControls(elementId) {
   const action = [
     'chargeKesherSavedToken',
-    'createKesherBankObligation',
-    'createKesherBitPayment'
+    'createKesherBankObligation'
   ].find(value => kesherOperationUi(value) === elementId);
 
   if (!action || !authToken) return;
@@ -18229,8 +18226,7 @@ function kesherClearFinancialFields(action) {
 function kesherRefreshOpenOperations() {
   [
     'chargeKesherSavedToken',
-    'createKesherBankObligation',
-    'createKesherBitPayment'
+    'createKesherBankObligation'
   ].forEach(action => {
     kesherRefreshOperation(action).catch(error => {
       if (authToken) {
@@ -18698,6 +18694,7 @@ async function createKesherPaymentLink() {
 }
 
 async function createKesherBitPayment() {
+  kesherClearResult('kesher-bit-result');
   kesherSetBusy(
     'kesher-bit-create',
     true,
