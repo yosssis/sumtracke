@@ -12476,6 +12476,41 @@ startOnlineUsers();
   syncTimer = setInterval(() => {
     refreshPhoneUpdatesOnly();
   }, 5000);
+
+  if (
+    sessionStorage.getItem(
+      'kesherRefreshCustomerTab'
+    ) === '1'
+  ) {
+    sessionStorage.removeItem(
+      'kesherRefreshCustomerTab'
+    );
+
+    openKesherCenter();
+
+    const customerButton =
+      document.querySelector(
+        '[data-kesher-tab="customer"]'
+      );
+
+    if (customerButton) {
+      selectKesherTab(
+        'customer',
+        customerButton
+      );
+    }
+
+    kesherShowResult(
+      'kesher-customer-result',
+      '✅ פרטי הלקוח עודכנו בהצלחה'
+    );
+
+    setTimeout(() => {
+      kesherClearResult(
+        'kesher-customer-result'
+      );
+    }, 4000);
+  }
 }
 function closeLogin() {
   if (initialLoginRequired) {
@@ -18679,11 +18714,12 @@ async function updateKesherCustomer() {
       }
     );
 
-    kesherShowResult(
-      'kesher-customer-result',
-     'קשר החזירה אישור לבקשת עדכון הלקוח'
+     sessionStorage.setItem(
+      'kesherRefreshCustomerTab',
+      '1'
     );
 
+    window.location.reload();
   } catch (error) {
     kesherShowResult(
       'kesher-customer-result',
