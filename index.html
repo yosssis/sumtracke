@@ -4070,13 +4070,7 @@ body:not(.month-picker-open) .month-back-bar {
         📱 Bit
       </button>
 
-      <button
-        class="kesher-tab-btn"
-        data-kesher-tab="token-charge"
-        onclick="selectKesherTab('token-charge',this)"
-      >
-        💳 חיוב טוקן
-      </button>
+     
 
       <button
         class="kesher-tab-btn"
@@ -4332,99 +4326,7 @@ body:not(.month-picker-open) .month-back-bar {
         </div>
       </section>
 
-      <section
-        class="kesher-panel"
-        data-kesher-panel="token-charge"
-      >
-        <div class="kesher-card">
-          <div class="kesher-card-title">
-            חיוב בטוקן שמור
-          </div>
-
-          <div class="kesher-form-grid">
-            <div class="kesher-field">
-              <label>טוקן *</label>
-              <input
-                id="kesher-token-value"
-                type="password"
-              >
-            </div>
-
-            <div class="kesher-field">
-              <label>תוקף YYMM *</label>
-              <input
-                id="kesher-token-expiry"
-                type="text"
-                maxlength="4"
-              >
-            </div>
-
-            <div class="kesher-field">
-              <label>סכום *</label>
-              <input
-                id="kesher-token-amount"
-                type="number"
-                min="0.01"
-                step="0.01"
-              >
-            </div>
-
-            <div class="kesher-field">
-              <label>שם פרטי</label>
-              <input
-                id="kesher-token-first-name"
-                type="text"
-              >
-            </div>
-
-            <div class="kesher-field">
-              <label>שם משפחה</label>
-              <input
-                id="kesher-token-last-name"
-                type="text"
-              >
-            </div>
-
-            <div class="kesher-field">
-              <label>טלפון</label>
-              <input
-                id="kesher-token-phone"
-                type="tel"
-              >
-            </div>
-
-            <div class="kesher-field">
-              <label>אימייל</label>
-              <input
-                id="kesher-token-mail"
-                type="email"
-              >
-            </div>
-
-            <div class="kesher-field wide">
-              <label>הערה</label>
-              <textarea
-                id="kesher-token-comment"
-              ></textarea>
-            </div>
-          </div>
-
-          <div class="kesher-actions">
-            <button
-              id="kesher-token-charge"
-              class="kesher-primary"
-              onclick="chargeKesherSavedToken()"
-            >
-              ביצוע חיוב
-            </button>
-          </div>
-
-          <div
-            id="kesher-token-result"
-            class="kesher-result"
-          ></div>
-        </div>
-      </section>
+     
 
       <section
         class="kesher-panel"
@@ -17809,7 +17711,7 @@ function kesherClearResult(elementId) {
 
 function kesherOperationUi(action) {
   return {
-    chargeKesherSavedToken: 'kesher-token-result',
+
     createKesherBankObligation: 'kesher-bank-result'
   }[action] || '';
 }
@@ -17991,7 +17893,7 @@ async function kesherApi(action, payload = {}) {
 
 function kesherAttachOperationControls(elementId) {
   const action = [
-    'chargeKesherSavedToken',
+  
     'createKesherBankObligation'
   ].find(value => kesherOperationUi(value) === elementId);
 
@@ -18210,22 +18112,17 @@ async function kesherResolveOperation(action, outcome) {
 }
 
 function kesherClearFinancialFields(action) {
-  if (action === 'chargeKesherSavedToken') {
-    document.getElementById(
-      'kesher-token-value'
-    ).value = '';
-  }
-
   if (action === 'createKesherBankObligation') {
-    document.getElementById(
-      'kesher-bank-confirm'
-    ).checked = false;
+    const checkbox = document.getElementById('kesher-bank-confirm');
+    if (checkbox) {
+      checkbox.checked = false;
+    }
   }
 }
 
 function kesherRefreshOpenOperations() {
   [
-    'chargeKesherSavedToken',
+  
     'createKesherBankObligation'
   ].forEach(action => {
     kesherRefreshOperation(action).catch(error => {
@@ -18735,99 +18632,7 @@ async function createKesherBitPayment() {
   }
 }
 
-async function chargeKesherSavedToken() {
-  const amount = Number(
-    kesherValue(
-      'kesher-token-amount'
-    )
-  );
 
-  if (
-    !Number.isFinite(amount) ||
-    amount <= 0
-  ) {
-    showToast(
-      '❌ יש להזין סכום תקין'
-    );
-    return;
-  }
-
-  if (
-    !window.confirm(
-      'לבצע חיוב בפועל על סך ' +
-      fmt(amount) +
-      '?'
-    )
-  ) {
-    return;
-  }
-
-  kesherSetBusy(
-    'kesher-token-charge',
-    true,
-    'מבצע חיוב...'
-  );
-
-  try {
-    const result = await kesherApi(
-      'chargeKesherSavedToken',
-      {
-        savedToken: kesherValue(
-          'kesher-token-value'
-        ),
-        expiry: kesherValue(
-          'kesher-token-expiry'
-        ),
-        amount: amount,
-        firstName: kesherValue(
-          'kesher-token-first-name'
-        ),
-        lastName: kesherValue(
-          'kesher-token-last-name'
-        ),
-        phone: kesherValue(
-          'kesher-token-phone'
-        ),
-        mail: kesherValue(
-          'kesher-token-mail'
-        ),
-        comment: kesherValue(
-          'kesher-token-comment'
-        )
-      }
-    );
-
-    kesherShowResult(
-      'kesher-token-result',
-     	'התקבלה תשובה מקשר לבקשת החיוב' +
-      '<br>עסקה: ' +
-      esc(
-        result.transactionId || '—'
-      ) +
-      '<br>אישור: ' +
-      esc(
-        result.approvalNumber || '—'
-      )
-    );
-
-    document.getElementById(
-      'kesher-token-value'
-    ).value = '';
-
-  } catch (error) {
-    kesherShowResult(
-      'kesher-token-result',
-      '❌ ' + esc(error.message),
-      true
-    );
-
-  } finally {
-    kesherSetBusy(
-      'kesher-token-charge',
-      false
-    );
-  }
-}
 
 async function updateKesherCustomer() {
   const apiIdentity =
