@@ -4174,9 +4174,10 @@ body:not(.month-picker-open) .month-back-bar {
         </div>
       </section>
 
-      <section
+           <section
         class="kesher-panel"
-		  <section class="kesher-panel" data-kesher-panel="returns">
+        data-kesher-panel="returns"
+      >
   <div class="kesher-card">
 
     <div class="kesher-card-title">
@@ -4264,6 +4265,8 @@ body:not(.month-picker-open) .month-back-bar {
 
   </div>
 </section>
+            <section
+        class="kesher-panel"
         data-kesher-panel="payment-link"
       >
         <div class="kesher-card">
@@ -18308,8 +18311,9 @@ function closeKesherCenter() {
 function resetKesherCenterState() {
   closeKesherCenter();
 
-  kesherConfig = null;
+   kesherConfig = null;
   kesherTransactions = [];
+  kesherReturns = [];
 
   const overlay = document.getElementById(
     'kesher-center-overlay'
@@ -18333,6 +18337,7 @@ function resetKesherCenterState() {
   });
 
   renderKesherTransactions();
+  renderKesherReturns();
 
   const status = document.getElementById(
     'kesher-config-status'
