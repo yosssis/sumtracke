@@ -4184,35 +4184,63 @@ body:not(.month-picker-open) .month-back-bar {
       הו״ק חוזרות - התראות ודוח סטטוסים
     </div>
 
-    <div class="kesher-form-grid">
-      <div class="kesher-field">
-        <label>סטטוס</label>
-        <select
-          id="kesher-returns-filter"
-          onchange="renderKesherReturns()"
-        >
-          <option value="9">חזר (9)</option>
-          <option value="review">
-            דורש בדיקה (6, 14, 16)
-          </option>
-          <option value="all">
-            כל הסטטוסים שנקלטו
-          </option>
-        </select>
-      </div>
+   <div class="kesher-form-grid">
 
-      <div class="kesher-field">
-        <label>
-          חיפוש לפי לקוח / טלפון / אסמכתא / עסקה
-        </label>
-        <input
-          id="kesher-returns-search"
-          type="search"
-          oninput="renderKesherReturns()"
-          placeholder="חיפוש"
-        >
-      </div>
-    </div>
+  <div class="kesher-field">
+    <label>סטטוס</label>
+
+    <select
+      id="kesher-returns-filter"
+      onchange="renderKesherReturns()"
+    >
+      <option value="all" selected>
+        הכל
+      </option>
+
+      <option value="9">
+        חזר (9)
+      </option>
+
+      <option value="review">
+        דורש בדיקה (6, 14, 16)
+      </option>
+    </select>
+  </div>
+
+  <div class="kesher-field">
+    <label>מתאריך</label>
+
+    <input
+      id="kesher-returns-from-date"
+      type="date"
+      onchange="renderKesherReturns()"
+    >
+  </div>
+
+  <div class="kesher-field">
+    <label>עד תאריך</label>
+
+    <input
+      id="kesher-returns-to-date"
+      type="date"
+      onchange="renderKesherReturns()"
+    >
+  </div>
+
+  <div class="kesher-field">
+    <label>
+      חיפוש לפי לקוח / טלפון / אסמכתא / עסקה
+    </label>
+
+    <input
+      id="kesher-returns-search"
+      type="search"
+      oninput="renderKesherReturns()"
+      placeholder="חיפוש"
+    >
+  </div>
+
+</div>
 
     <div class="kesher-actions">
       <button
@@ -18575,6 +18603,50 @@ function kesherReturnStatusText(item) {
   );
 }
 
+function kesherReturnDateKey(value) {
+  const text = String(value || '').trim();
+
+  if (!text) {
+    return '';
+  }
+
+  let match = text.match(
+    /^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/
+  );
+
+  if (match) {
+    return (
+      match[1] + '-' +
+      String(match[2]).padStart(2, '0') + '-' +
+      String(match[3]).padStart(2, '0')
+    );
+  }
+
+  match = text.match(
+    /^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/
+  );
+
+  if (match) {
+    return (
+      match[3] + '-' +
+      String(match[2]).padStart(2, '0') + '-' +
+      String(match[1]).padStart(2, '0')
+    );
+  }
+
+  const parsed = new Date(text);
+
+  if (!Number.isNaN(parsed.getTime())) {
+    return [
+      parsed.getFullYear(),
+      String(parsed.getMonth() + 1).padStart(2, '0'),
+      String(parsed.getDate()).padStart(2, '0')
+    ].join('-');
+  }
+
+  return '';
+}
+
 function renderKesherReturns() {
   const body = document.getElementById(
     'kesher-returns-body'
@@ -18594,6 +18666,18 @@ function renderKesherReturns() {
     'kesher-returns-search'
   ).value.trim().toLowerCase();
 
+  const fromDate = String(
+    document.getElementById(
+      'kesher-returns-from-date'
+    )?.value || ''
+  ).trim();
+
+  const toDate = String(
+    document.getElementById(
+      'kesher-returns-to-date'
+    )?.value || ''
+  ).trim();
+
   const visible = kesherReturns.filter(item => {
     if (
       filter === '9' &&
@@ -18609,6 +18693,24 @@ function renderKesherReturns() {
       return false;
     }
 
+    const itemDate =
+      kesherReturnDateKey(item.eventDate) ||
+      kesherReturnDateKey(item.receivedAt);
+
+    if (
+      fromDate &&
+      (!itemDate || itemDate < fromDate)
+    ) {
+      return false;
+    }
+
+    if (
+      toDate &&
+      (!itemDate || itemDate > toDate)
+    ) {
+      return false;
+    }
+
     const haystack = [
       item.customer,
       item.phone,
@@ -18617,7 +18719,14 @@ function renderKesherReturns() {
       item.cancelReason
     ].join(' ').toLowerCase();
 
-    return !query || haystack.includes(query);
+    if (
+      query &&
+      !haystack.includes(query)
+    ) {
+      return false;
+    }
+
+    return true;
   });
 
   summary.textContent =
@@ -18679,7 +18788,6 @@ function renderKesherReturns() {
     </tr>
   `).join('');
 }
-
 async function loadKesherReturns() {
   kesherClearResult('kesher-returns-result');
 
