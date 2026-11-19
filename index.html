@@ -1336,7 +1336,96 @@ body.auth-locked #login-overlay .btn-action {
   
 }
     /* ===== GLOBAL SEARCH ===== */
+.global-search-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  direction: ltr;
+  margin: 18px auto 22px;
+}
 
+.global-search-row .global-search-wrap {
+  margin: 0;
+  width: 620px;
+  max-width: calc(100% - 170px);
+}
+
+.email-quota-card {
+  height: 52px;
+  min-width: 150px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 12px;
+  background: rgba(255,255,255,0.92);
+  border: 1px solid rgba(0,0,0,0.07);
+  border-radius: 14px;
+  box-shadow: 0 7px 22px rgba(0,0,0,0.055);
+  direction: rtl;
+}
+
+.email-quota-icon {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: #fff3ed;
+  font-size: 1rem;
+}
+
+.email-quota-info {
+  line-height: 1.15;
+  white-space: nowrap;
+}
+
+.email-quota-title {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+#email-quota-count {
+  margin-top: 2px;
+  font-size: 0.85rem;
+  font-weight: 900;
+  color: var(--text);
+}
+
+#email-quota-remaining {
+  margin-top: 2px;
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.email-quota-card.warning {
+  border-color: #ff9f43;
+}
+
+.email-quota-card.danger {
+  border-color: #ff4757;
+  background: #fff6f6;
+}
+
+@media (max-width: 700px) {
+  .global-search-row {
+    display: block;
+    margin: 14px auto 17px;
+  }
+
+  .global-search-row .global-search-wrap {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .email-quota-card {
+    display: none;
+  }
+}
 .global-search-wrap {
   max-width: 620px;
   margin: 18px auto 22px;
@@ -3028,25 +3117,49 @@ body:not(.month-picker-open) .month-back-bar {
 </button>
    
   </div>
-<div class="global-search-wrap">
+<div class="global-search-row">
+
   <div
-    class="global-search-launcher"
-    onclick="openGlobalSearch()"
+    id="email-quota-card"
+    class="email-quota-card"
+    title="מכסת שליחת המיילים"
   >
-    <div class="global-search-icon">🔎</div>
+    <div class="email-quota-icon">📧</div>
 
-    <input
-      id="global-search-input"
-      type="text"
-      placeholder="חיפוש בכל המערכת..."
-      autocomplete="off"
-      readonly
-    />
+    <div class="email-quota-info">
+      <div class="email-quota-title">
+        מיילים היום
+      </div>
 
-    <span class="global-search-hint">
-      Ctrl + K
-    </span>
+      <div id="email-quota-count">
+        טוען...
+      </div>
+
+      <div id="email-quota-remaining"></div>
+    </div>
   </div>
+
+  <div class="global-search-wrap">
+    <div
+      class="global-search-launcher"
+      onclick="openGlobalSearch()"
+    >
+      <div class="global-search-icon">🔎</div>
+
+      <input
+        id="global-search-input"
+        type="text"
+        placeholder="חיפוש בכל המערכת..."
+        autocomplete="off"
+        readonly
+      />
+
+      <span class="global-search-hint">
+        Ctrl + K
+      </span>
+    </div>
+  </div>
+
 </div>
   <div class="month-picker-title">
   בחר חודש להצגת התלמידים
@@ -13258,6 +13371,7 @@ if (!result.token) {
     authToken = result.token;
     sessionStorage.setItem('authToken', authToken);
     resetAuthIdleTimer();
+	  refreshEmailQuotaStatus();
     sessionStorage.setItem('loggedInUsername', username);
 
 const userEl =
@@ -13331,6 +13445,82 @@ if (result.loginInfo) {
 
   // ── DRIVE SYNC ────────────────────────────────────────
   const API_URL = 'https://script.google.com/macros/s/AKfycbxJb1_AFLWh8axOKQoDvz0RPsHGwKPdu-YnROHLeKNoch-bQf1b3kyidbwrwWJPBSxs/exec';
+	async function refreshEmailQuotaStatus() {
+  if (!authToken) return;
+
+  const card =
+    document.getElementById(
+      'email-quota-card'
+    );
+
+  const countEl =
+    document.getElementById(
+      'email-quota-count'
+    );
+
+  const remainingEl =
+    document.getElementById(
+      'email-quota-remaining'
+    );
+
+  if (!card || !countEl || !remainingEl) {
+    return;
+  }
+
+  try {
+    const response =
+      await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type':
+            'text/plain;charset=utf-8'
+        },
+        body: JSON.stringify({
+          action: 'getEmailQuotaStatus',
+          token: authToken
+        })
+      });
+
+    const result =
+      await response.json();
+
+    if (!result.ok) return;
+
+    countEl.textContent =
+      result.sent +
+      ' / ' +
+      result.limit;
+
+    remainingEl.textContent =
+      'נותרו ' +
+      result.remaining;
+
+    card.classList.remove(
+      'warning',
+      'danger'
+    );
+
+    if (result.remaining === 0) {
+      card.classList.add('danger');
+
+    } else if (
+      result.remaining <= 20
+    ) {
+      card.classList.add('warning');
+    }
+
+  } catch (error) {
+    console.error(
+      'EMAIL QUOTA ERROR:',
+      error
+    );
+  }
+}
+
+setInterval(
+  refreshEmailQuotaStatus,
+  60000
+);
   const LOCAL_KEY = 'sumtracker_v1';
   let saveTimer = null;
 let isSyncing = false;
