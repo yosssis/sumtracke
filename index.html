@@ -1413,7 +1413,9 @@ body.auth-locked #login-overlay .btn-action {
 
 @media (max-width: 700px) {
   .global-search-row {
-    display: block;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
     margin: 14px auto 17px;
   }
 
@@ -1423,8 +1425,12 @@ body.auth-locked #login-overlay .btn-action {
   }
 
   .email-quota-card {
-    display: none;
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    justify-content: center;
   }
+}
 }
 .global-search-wrap {
   max-width: 620px;
