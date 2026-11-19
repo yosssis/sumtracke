@@ -9613,31 +9613,115 @@ if (item.type === 'bankDetails') {
         ? item.phoneData
         : null;
 
-  const isBranch2 =
+const isBranch2 =
   phoneData &&
-  String(phoneData.reportType || '') === '2';
+  String(
+    phoneData.reportType || ''
+  ) === '2';
 
 const isHourly =
   phoneData &&
-  String(phoneData.reportType || '') === 'hourly';
-    
+  String(
+    phoneData.reportType || ''
+  ) === 'hourly';
 
-  const source =
+const isAdjustment =
+  phoneData &&
+  String(
+    phoneData.reportType || ''
+  ) === 'adjustment';
+
+let branchPath = '';
+
+if (phoneData) {
+  branchPath =
+    String(
+      phoneData.branchPath || ''
+    ).trim();
+}
+
+/*
+  תמיכה גם בדיווחים ישנים
+  שבהם branchPath עדיין לא נשמר
+*/
+if (!branchPath && isHourly) {
+  branchPath = '/1/2';
+
+} else if (
+  !branchPath &&
+  isBranch2
+) {
+  branchPath = '/2';
+
+} else if (
+  !branchPath &&
+  isAdjustment
+) {
+  branchPath = '/5';
+
+} else if (
+  !branchPath &&
+  phoneData
+) {
+  branchPath = '/1/1';
+}
+
+const source =
   item.source === 'phone'
     ? (
-        isHourly
-          ? '📞 טלפון — שלוחה 1/2'
-          : isBranch2
-            ? '📞 טלפון — שלוחה 2'
-            : '📞 טלפון — שלוחה 1/1'
+        '📞 טלפון — שלוחה ' +
+        branchPath.replace(
+          /^\/+/,
+          ''
+        )
       )
     : '✏️ שינוי באתר';
 
    
-    const phoneDetails =
-      phoneData
-        ? (
-            isHourly
+   const phoneDetails =
+  phoneData
+    ? (
+        isAdjustment
+          ? `
+            <div style="margin-top:8px;padding:9px 10px;background:#fff7f2;border-radius:10px;font-size:0.70rem;line-height:1.7;color:var(--text);">
+
+              <div>
+                <strong>סוג שינוי:</strong>
+                ${
+                  phoneData.adjustmentType === 'add'
+                    ? 'תוספת'
+                    : 'הפחתה'
+                }
+              </div>
+
+              <div>
+                <strong>סכום שינוי:</strong>
+                ${fmt(
+                  Number(
+                    phoneData.adjustmentAmount
+                  ) || 0
+                )}
+              </div>
+
+              <div>
+                <strong>סכום קודם:</strong>
+                ${fmt(
+                  Number(
+                    item.previousAmount
+                  ) || 0
+                )}
+              </div>
+
+              <div>
+                <strong>סכום חדש:</strong>
+                ${fmt(
+                  Number(item.amount) || 0
+                )}
+              </div>
+
+            </div>
+          `
+          : isHourly
               ? `
                 <div style="margin-top:8px;padding:9px 10px;background:#fff7f2;border-radius:10px;font-size:0.70rem;line-height:1.7;color:var(--text);">
                 
