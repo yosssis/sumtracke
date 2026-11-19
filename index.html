@@ -9773,6 +9773,21 @@ const source =
                   <div><strong>דקות:</strong> ${Number(phoneData.hourlyMinutes) || 0}</div>
                   <div><strong>חצאי שעות:</strong> ${Number(phoneData.hourlyHalfHours) || 0}</div>
                   <div><strong>מסירת שיעור:</strong> ${phoneData.hourlyGaveLesson ? 'כן' : 'לא'}</div>
+				  ${Number(phoneData.noteDays) > 0 || Number(phoneData.noteMinutes) > 0
+  ? `
+    <div><strong>ימי עשרת ימי תשובה:</strong> ${Number(phoneData.noteDays) || 0}</div>
+    <div><strong>דקות עשרת ימי תשובה:</strong> ${Number(phoneData.noteMinutes) || 0}</div>
+  `
+  : ''
+}
+
+${Number(phoneData.hanukkahDays) > 0
+  ? `
+    <div><strong>ימי חנוכה:</strong> ${Number(phoneData.hanukkahDays)}</div>
+    <div><strong>תוספת חנוכה:</strong> ${fmt((Number(phoneData.hanukkahDays) || 0) * 100)}</div>
+  `
+  : ''
+}
                 </div>
               `
               : isBranch2
