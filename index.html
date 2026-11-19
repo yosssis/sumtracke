@@ -4153,7 +4153,26 @@ body:not(.month-picker-open) .month-back-bar {
                   <th>שם</th>
                   <th>טלפון</th>
                   <th>סכום</th>
-                  <th>סטטוס</th>
+                  <th>
+  <select
+    id="kesher-status-filter"
+    onchange="renderKesherTransactions()"
+    style="
+      border:0;
+      background:transparent;
+      color:inherit;
+      font:inherit;
+      font-weight:inherit;
+      cursor:pointer;
+      text-align:center;
+      outline:none;
+    "
+  >
+    <option value="">
+      סטטוס
+    </option>
+  </select>
+</th>
                   <th>אמצעי תשלום</th>
                   <th>כרטיס</th>
                   <th>אישור</th>
@@ -18567,6 +18586,84 @@ function kesherFormatDate(value) {
   );
 }
 
+function updateKesherStatusFilter() {
+  const select =
+    document.getElementById(
+      'kesher-status-filter'
+    );
+
+  if (!select) return;
+
+  const currentValue =
+    String(
+      select.value || ''
+    ).trim();
+
+  const statuses =
+    [
+      ...new Set(
+        kesherTransactions
+          .map(item =>
+            String(
+              item.status || ''
+            ).trim()
+          )
+          .filter(Boolean)
+      )
+    ].sort(
+      (a, b) =>
+        a.localeCompare(
+          b,
+          'he'
+        )
+    );
+
+  select.innerHTML = '';
+
+  const allOption =
+    document.createElement(
+      'option'
+    );
+
+  allOption.value = '';
+  allOption.textContent =
+    'סטטוס';
+
+  select.appendChild(
+    allOption
+  );
+
+  statuses.forEach(status => {
+    const option =
+      document.createElement(
+        'option'
+      );
+
+    option.value = status;
+    option.textContent = status;
+
+    select.appendChild(
+      option
+    );
+  });
+
+  if (
+    currentValue &&
+    statuses.includes(
+      currentValue
+    )
+  ) {
+    select.value =
+      currentValue;
+  } else {
+    select.value = '';
+  }
+
+  select.disabled =
+    statuses.length === 0;
+}
+
+
 function renderKesherTransactions() {
   const body =
     document.getElementById(
@@ -18578,7 +18675,32 @@ function renderKesherTransactions() {
       'kesher-transactions-summary'
     );
 
-  if (kesherTransactions.length === 0) {
+  updateKesherStatusFilter();
+
+  const statusSelect =
+    document.getElementById(
+      'kesher-status-filter'
+    );
+
+  const selectedStatus =
+    String(
+      statusSelect?.value || ''
+    ).trim();
+
+  const visibleTransactions =
+    selectedStatus
+      ? kesherTransactions.filter(
+          item =>
+            String(
+              item.status || ''
+            ).trim() ===
+            selectedStatus
+        )
+      : kesherTransactions;
+
+  if (
+    kesherTransactions.length === 0
+  ) {
     body.innerHTML =
       '<tr><td colspan="9">לא נמצאו עסקאות</td></tr>';
 
@@ -18588,21 +18710,49 @@ function renderKesherTransactions() {
     return;
   }
 
+  if (
+    visibleTransactions.length === 0
+  ) {
+    body.innerHTML =
+      '<tr><td colspan="9">לא נמצאו עסקאות בסטטוס שנבחר</td></tr>';
+
+    summary.textContent =
+      '0 מתוך ' +
+      kesherTransactions.length +
+      ' עסקאות · סה״כ ₪0.00';
+
+    return;
+  }
+
   const total =
-    kesherTransactions.reduce(
+    visibleTransactions.reduce(
       (sum, item) =>
         sum +
-        (Number(item.amount) || 0),
+        (
+          Number(
+            item.amount
+          ) || 0
+        ),
       0
     );
 
-  summary.textContent =
-    kesherTransactions.length +
-    ' עסקאות · סה״כ ' +
-    fmt(total);
+  if (selectedStatus) {
+    summary.textContent =
+      visibleTransactions.length +
+      ' מתוך ' +
+      kesherTransactions.length +
+      ' עסקאות · סה״כ ' +
+      fmt(total);
+
+  } else {
+    summary.textContent =
+      kesherTransactions.length +
+      ' עסקאות · סה״כ ' +
+      fmt(total);
+  }
 
   body.innerHTML =
-    kesherTransactions
+    visibleTransactions
       .map(item => `
         <tr>
           <td>${esc(kesherFormatDate(item.date))}</td>
