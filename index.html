@@ -18645,12 +18645,16 @@ async function loadKesherTransactions() {
 
     renderKesherTransactions();
 
-  } catch (error) {
-    kesherShowResult(
-      'kesher-transactions-result',
-      '❌ ' + esc(error.message),
-      true
-    );
+} catch (error) {
+
+  kesherTransactions = [];
+  renderKesherTransactions();
+
+  kesherShowResult(
+    'kesher-transactions-result',
+    '❌ ' + esc(error.message),
+    true
+  );
 
   } finally {
     kesherSetBusy(
