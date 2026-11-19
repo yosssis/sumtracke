@@ -2927,6 +2927,14 @@ body:not(.month-picker-open) .month-back-bar {
   color: white;
   background: #315a78;
 }
+	  #kesher-status-filter {
+  color: white;
+}
+
+#kesher-status-filter option {
+  color: #173f5f;
+  background: white;
+}
 
 .kesher-summary {
   margin-top: 12px;
@@ -4132,6 +4140,13 @@ body:not(.month-picker-open) .month-back-bar {
             >
               רענון עסקאות
             </button>
+			  <button
+  type="button"
+  class="kesher-secondary"
+  onclick="exportKesherTransactionsExcel()"
+>
+  📥 הורד לאקסל
+</button>
           </div>
 
           <div
@@ -4261,15 +4276,25 @@ body:not(.month-picker-open) .month-back-bar {
 
 </div>
 
-    <div class="kesher-actions">
-      <button
-        id="kesher-returns-refresh"
-        class="kesher-primary"
-        onclick="loadKesherReturns()"
-      >
-        רענון הו״ק חוזרות
-      </button>
-    </div>
+<div class="kesher-actions">
+
+  <button
+    id="kesher-returns-refresh"
+    class="kesher-primary"
+    onclick="loadKesherReturns()"
+  >
+    רענון הו״ק חוזרות
+  </button>
+
+  <button
+    type="button"
+    class="kesher-secondary"
+    onclick="exportKesherReturnsExcel()"
+  >
+    📥 הורד לאקסל
+  </button>
+
+</div>
 
     <div
       id="kesher-returns-result"
@@ -18768,7 +18793,145 @@ function renderKesherTransactions() {
       `)
       .join('');
 }
+function exportKesherTransactionsExcel() {
+  if (typeof XLSX === 'undefined') {
+    showToast('❌ ספריית Excel לא נטענה');
+    return;
+  }
 
+  const selectedStatus =
+    String(
+      document.getElementById(
+        'kesher-status-filter'
+      )?.value || ''
+    ).trim();
+
+  const rows =
+    selectedStatus
+      ? kesherTransactions.filter(
+          item =>
+            String(
+              item.status || ''
+            ).trim() ===
+            selectedStatus
+        )
+      : [...kesherTransactions];
+
+  if (!rows.length) {
+    showToast(
+      'אין עסקאות לייצוא'
+    );
+    return;
+  }
+
+  const excelData = [
+    [
+      'תאריך',
+      'עסקה',
+      'שם',
+      'טלפון',
+      'סכום',
+      'סטטוס',
+      'אמצעי תשלום',
+      'כרטיס',
+      'אישור'
+    ]
+  ];
+
+  rows.forEach(item => {
+    excelData.push([
+      kesherFormatDate(
+        item.date
+      ),
+
+      item.id || '',
+      item.name || '',
+      item.phone || '',
+
+      Number(
+        item.amount
+      ) || 0,
+
+      item.status || '',
+      item.paymentMethod || '',
+      item.maskedCard || '',
+      item.approvalNumber || ''
+    ]);
+  });
+
+  const worksheet =
+    XLSX.utils.aoa_to_sheet(
+      excelData
+    );
+
+  worksheet['!cols'] = [
+    { wch: 20 },
+    { wch: 14 },
+    { wch: 28 },
+    { wch: 16 },
+    { wch: 14 },
+    { wch: 28 },
+    { wch: 20 },
+    { wch: 22 },
+    { wch: 16 }
+  ];
+
+  for (
+    let row = 2;
+    row <= excelData.length;
+    row++
+  ) {
+    const cell =
+      worksheet['E' + row];
+
+    if (cell) {
+      cell.z =
+        '#,##0.00 "₪"';
+    }
+  }
+
+  const workbook =
+    XLSX.utils.book_new();
+
+  workbook.Workbook = {
+    Views: [
+      {
+        RTL: true
+      }
+    ]
+  };
+
+  XLSX.utils.book_append_sheet(
+    workbook,
+    worksheet,
+    'עסקאות'
+  );
+
+  const fromDate =
+    kesherValue(
+      'kesher-from-date'
+    ) || 'התחלה';
+
+  const toDate =
+    kesherValue(
+      'kesher-to-date'
+    ) || 'היום';
+
+  XLSX.writeFile(
+    workbook,
+    'עסקאות_קשר_' +
+    fromDate +
+    '_עד_' +
+    toDate +
+    '.xlsx'
+  );
+
+  showToast(
+    '✅ יוצאו ' +
+    rows.length +
+    ' עסקאות לאקסל'
+  );
+}
 async function loadKesherTransactions() {
   kesherClearResult('kesher-transactions-result');
   kesherSetBusy(
@@ -19027,6 +19190,225 @@ function renderKesherReturns() {
       </td>
     </tr>
   `).join('');
+}
+	function exportKesherReturnsExcel() {
+  if (typeof XLSX === 'undefined') {
+    showToast('❌ ספריית Excel לא נטענה');
+    return;
+  }
+
+  const filter =
+    document.getElementById(
+      'kesher-returns-filter'
+    )?.value || 'all';
+
+  const query =
+    String(
+      document.getElementById(
+        'kesher-returns-search'
+      )?.value || ''
+    )
+      .trim()
+      .toLowerCase();
+
+  const fromDate =
+    String(
+      document.getElementById(
+        'kesher-returns-from-date'
+      )?.value || ''
+    ).trim();
+
+  const toDate =
+    String(
+      document.getElementById(
+        'kesher-returns-to-date'
+      )?.value || ''
+    ).trim();
+
+  const rows =
+    kesherReturns.filter(item => {
+      if (
+        filter === '9' &&
+        item.statusCode !== 9
+      ) {
+        return false;
+      }
+
+      if (
+        filter === 'review' &&
+        ![6, 14, 16].includes(
+          item.statusCode
+        )
+      ) {
+        return false;
+      }
+
+      const itemDate =
+        kesherReturnDateKey(
+          item.eventDate
+        ) ||
+        kesherReturnDateKey(
+          item.receivedAt
+        );
+
+      if (
+        fromDate &&
+        (
+          !itemDate ||
+          itemDate < fromDate
+        )
+      ) {
+        return false;
+      }
+
+      if (
+        toDate &&
+        (
+          !itemDate ||
+          itemDate > toDate
+        )
+      ) {
+        return false;
+      }
+
+      const haystack = [
+        item.customer,
+        item.phone,
+        item.transactionId,
+        item.obligationRef,
+        item.cancelReason
+      ]
+        .join(' ')
+        .toLowerCase();
+
+      if (
+        query &&
+        !haystack.includes(query)
+      ) {
+        return false;
+      }
+
+      return true;
+    });
+
+  if (!rows.length) {
+    showToast(
+      'אין הו״ק חוזרות לייצוא'
+    );
+    return;
+  }
+
+  const excelData = [
+    [
+      'נקלט',
+      'לקוח',
+      'טלפון',
+      'מזהה עסקה',
+      'אסמכתת הו״ק',
+      'תאריך חיוב',
+      'סכום לפי קשר',
+      'סטטוס',
+      'סיבת חזרה',
+      'תשובת אשראי',
+      'מייל',
+      'מידע נוסף'
+    ]
+  ];
+
+  rows.forEach(item => {
+    excelData.push([
+      item.receivedAt || '',
+
+      [
+        item.customer,
+        item.email,
+        item.maskedIdentity
+      ]
+        .filter(Boolean)
+        .join('\n'),
+
+      item.phone || '',
+      item.transactionId || '',
+      item.obligationRef || '',
+      item.eventDate || '',
+      item.amountRaw || '',
+
+      kesherReturnStatusText(
+        item
+      ),
+
+      item.cancelReason || '',
+
+      [
+        item.creditCode,
+        item.creditStatus,
+        item.creditDescription
+      ]
+        .filter(Boolean)
+        .join(' | '),
+
+      item.emailStatus === 'SENT'
+        ? 'נשלח'
+        : item.emailStatus ===
+          'NOT_REQUIRED'
+          ? 'לא נדרש'
+          : 'ממתין / שגיאה',
+
+      item.details || ''
+    ]);
+  });
+
+  const worksheet =
+    XLSX.utils.aoa_to_sheet(
+      excelData
+    );
+
+  worksheet['!cols'] = [
+    { wch: 20 },
+    { wch: 28 },
+    { wch: 16 },
+    { wch: 14 },
+    { wch: 18 },
+    { wch: 18 },
+    { wch: 15 },
+    { wch: 28 },
+    { wch: 30 },
+    { wch: 30 },
+    { wch: 16 },
+    { wch: 50 }
+  ];
+
+  const workbook =
+    XLSX.utils.book_new();
+
+  workbook.Workbook = {
+    Views: [
+      {
+        RTL: true
+      }
+    ]
+  };
+
+  XLSX.utils.book_append_sheet(
+    workbook,
+    worksheet,
+    'הוק חוזרות'
+  );
+
+  XLSX.writeFile(
+    workbook,
+    'הוק_חוזרות_' +
+    (fromDate || 'התחלה') +
+    '_עד_' +
+    (toDate || 'היום') +
+    '.xlsx'
+  );
+
+  showToast(
+    '✅ יוצאו ' +
+    rows.length +
+    ' רשומות לאקסל'
+  );
 }
 async function loadKesherReturns() {
   kesherClearResult('kesher-returns-result');
