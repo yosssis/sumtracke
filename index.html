@@ -19627,11 +19627,22 @@ async function createKesherBitPayment() {
       }
     );
 
-    renderKesherLinkResult(
-      'kesher-bit-result',
-      result.bitUrl,
-      '✅ קישור Bit נוצר'
-    );
+ kesherShowResult(
+  'kesher-bit-result',
+  '✅ בקשת Bit נוצרה בהצלחה' +
+  (
+    result.transactionId
+      ? '\nאסמכתא: ' +
+        result.transactionId
+      : ''
+  ) +
+  (
+    result.status
+      ? '\nסטטוס: ' +
+        result.status
+      : ''
+  )
+);
 
   } catch (error) {
     kesherShowResult(
