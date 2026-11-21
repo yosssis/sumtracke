@@ -19108,11 +19108,32 @@ function kesherReturnStatusText(item) {
     23: 'בוטל בשידור היום'
   };
 
-  return (
-    (statuses[item.statusCode] ||
+  const code =
+    Number(
+      item.statusCode
+    );
+
+  if (
+    !Number.isInteger(code) ||
+    code <= 0
+  ) {
+    return (
       item.statusText ||
-      'לא ידוע') +
-    ' (' + item.statusCode + ')'
+      item.creditStatus ||
+      item.cancelReason ||
+      'לא ידוע'
+    );
+  }
+
+  return (
+    (
+      statuses[code] ||
+      item.statusText ||
+      'לא ידוע'
+    ) +
+    ' (' +
+    code +
+    ')'
   );
 }
 
