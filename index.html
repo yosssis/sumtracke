@@ -4220,6 +4220,13 @@ body:not(.month-picker-open) .month-back-bar {
       >
         🏦 הוראת קבע
       </button>
+		<button
+  class="kesher-tab-btn"
+  data-kesher-tab="credit-standing-order"
+  onclick="selectKesherTab('credit-standing-order',this)"
+>
+  💳 הו״ק באשראי
+</button>
     </div>
 
     <div class="kesher-content">
@@ -4731,7 +4738,53 @@ body:not(.month-picker-open) .month-back-bar {
           <div class="kesher-card-title">
             הקמת הוראת קבע בנקאית
           </div>
+<section
+  class="kesher-panel"
+  data-kesher-panel="credit-standing-order"
+>
+  <div class="kesher-card">
 
+    <div class="kesher-card-title">
+      💳 הוראת קבע באשראי
+    </div>
+
+    <div
+      style="
+        margin-bottom:12px;
+        color:#667;
+        font-size:0.82rem;
+        font-weight:600;
+      "
+    >
+      הקמת הוראת הקבע מתבצעת ישירות במערכת קשר
+    </div>
+
+    <div
+      style="
+        width:100%;
+        height:70vh;
+        min-height:600px;
+        border:1px solid #dfe4e8;
+        border-radius:12px;
+        overflow:hidden;
+        background:#fff;
+      "
+    >
+      <iframe
+        src="https://www.kesherhk.info/kehilot/#!/Label/50716/moked=kehilot-site"
+        allow="payment *"
+        style="
+          width:100%;
+          height:100%;
+          border:0;
+          display:block;
+          background:white;
+        "
+      ></iframe>
+    </div>
+
+  </div>
+</section>
           <div class="kesher-form-grid">
             <div class="kesher-field">
               <label>סכום חודשי *</label>
@@ -20100,51 +20153,5 @@ restoreLoginChangesFromSession();
   openInitialLogin();
 }
 
-</script>
-	<div
-  id="iframe-test-box"
-  style="
-    position:fixed;
-    inset:20px;
-    z-index:999999;
-    background:white;
-    border:2px solid #333;
-    border-radius:12px;
-    overflow:hidden;
-    box-shadow:0 20px 60px rgba(0,0,0,0.25);
-  "
->
-  <button
-    type="button"
-    onclick="document.getElementById('iframe-test-box').remove()"
-    style="
-      position:absolute;
-      top:10px;
-      left:10px;
-      z-index:10;
-      padding:8px 14px;
-      border:none;
-      border-radius:8px;
-      background:#ff6b35;
-      color:white;
-      font-family:Heebo,sans-serif;
-      font-weight:700;
-      cursor:pointer;
-    "
-  >
-    ✕ סגור
-  </button>
-
-  <iframe
-    src="https://www.kesherhk.info/kehilot/#!/Label/50716/moked=kehilot-site"
-    allow="payment *"
-    style="
-      width:100%;
-      height:100%;
-      border:0;
-      background:white;
-    "
-  ></iframe>
-</div>
 </body>
 </html>
