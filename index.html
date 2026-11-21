@@ -13643,7 +13643,10 @@ countEl.textContent =
   'נשלחו ' +
   result.sentToday;
 
-remainingEl.textContent =
+remainingEl.innerHTML =
+  'ממתינים לשליחה: ' +
+  Number(result.pending || 0) +
+  '<br>' +
   'מכסת Google נותרה: ' +
   result.remaining;
 
