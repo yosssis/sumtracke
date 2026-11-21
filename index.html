@@ -4105,40 +4105,53 @@ body:not(.month-picker-open) .month-back-bar {
       מה ברצונך לבצע?
     </div>
 
-    <div
-      class="dialog-btns"
-      style="flex-wrap:wrap;"
-    >
-      <button
-        class="btn-cancel"
-        onclick="closeDonationChoice()"
-      >
-        יציאה
-      </button>
-
-      <button
-        class="btn-action export"
-        onclick="openDonationPage()"
-      >
-        💳 מעבר לתרומה
-      </button>
-
-      <button
-        class="btn-action"
-        onclick="shareDonationLink()"
-      >
-        🔗 שיתוף קישור
-      </button>
-      <button
-  class="btn-action"
-  onclick="openKesherCenter()"
+   <div
+  class="dialog-btns"
+  style="
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    width:100%;
+  "
 >
-  🏦 מרכז קשר המלא
-</button>
-    </div>
-  </div>
+
+  <button
+    class="btn-action export"
+    onclick="openDonationPage()"
+    style="width:100%;"
+  >
+    💳 מעבר לתרומה
+  </button>
+
+  <button
+    class="btn-action"
+    onclick="shareDonationLink()"
+    style="width:100%;"
+  >
+    🔗 שיתוף קישור
+  </button>
+
+  <button
+    class="btn-action"
+    onclick="openKesherCenter()"
+    style="width:100%;"
+  >
+    🏦 מרכז קשר המלא
+  </button>
+
+  <button
+    class="btn-cancel"
+    onclick="closeDonationChoice()"
+    style="width:100%;"
+  >
+    יציאה
+  </button>
+
 </div>
-  <!-- Kesher Management Center -->
+	    </div>
+</div>
+
+<!-- Kesher Management Center -->
 <div
   id="kesher-center-overlay"
   class="kesher-overlay"
@@ -4147,7 +4160,7 @@ body:not(.month-picker-open) .month-back-bar {
 
     <div class="kesher-head">
       <div>
-        <div class="kesher-head-title">
+	  <div class="kesher-head-title">
           🏦 מרכז קשר
         </div>
 
@@ -18793,15 +18806,28 @@ function selectKesherTab(
     .querySelectorAll(
       '[data-kesher-tab]'
     )
-    .forEach(button => {
-      button.classList.toggle(
-        'active',
-        button === selectedButton
-      );
-    });
-	  if (tabName === 'returns') {
-    loadKesherReturns();
+.forEach(button => {
+  button.classList.toggle(
+    'active',
+    button === selectedButton
+  );
+});
+
+if (tabName === 'credit-standing-order') {
+  const creditFrame =
+    document.getElementById(
+      'kesher-credit-standing-order-frame'
+    );
+
+  if (creditFrame) {
+    creditFrame.src =
+      'https://www.kesherhk.info/kehilot/#!/Label/50716/moked=kehilot-site';
   }
+}
+
+if (tabName === 'returns') {
+  loadKesherReturns();
+}
 }		
 
 async function loadKesherConfig() {
