@@ -4208,13 +4208,7 @@ body:not(.month-picker-open) .month-back-bar {
         🔗 קישור תשלום
       </button>
 
-      <button
-        class="kesher-tab-btn"
-        data-kesher-tab="bit"
-        onclick="selectKesherTab('bit',this)"
-      >
-        📱 Bit
-      </button>
+ 
 
      
 
@@ -4226,20 +4220,15 @@ body:not(.month-picker-open) .month-back-bar {
         👤 עדכון לקוח
       </button>
 
-      <button
-        class="kesher-tab-btn"
-        data-kesher-tab="bank"
-        onclick="selectKesherTab('bank',this)"
-      >
-        🏦 הוראת קבע
-      </button>
+ 
 		<button
   class="kesher-tab-btn"
   data-kesher-tab="credit-standing-order"
   onclick="selectKesherTab('credit-standing-order',this)"
 >
-  💳 הו״ק באשראי
-</button>
+💳 הוראת קבע באשראי \ Bit \ בנק
+			
+		</button>
     </div>
 
     <div class="kesher-content">
@@ -4588,52 +4577,7 @@ body:not(.month-picker-open) .month-back-bar {
         </div>
       </section>
 
-      <section
-        class="kesher-panel"
-        data-kesher-panel="bit"
-      >
-        <div class="kesher-card">
-          <div class="kesher-card-title">
-            יצירת תשלום Bit
-          </div>
-
-          <div class="kesher-form-grid">
-            <div class="kesher-field">
-              <label>סכום *</label>
-              <input
-                id="kesher-bit-amount"
-                type="number"
-                min="0.01"
-                step="0.01"
-              >
-            </div>
-
-            <div class="kesher-field">
-              <label>טלפון *</label>
-              <input
-                id="kesher-bit-phone"
-                type="tel"
-              >
-            </div>
-          </div>
-
-          <div class="kesher-actions">
-            <button
-              id="kesher-bit-create"
-              class="kesher-primary"
-              onclick="createKesherBitPayment()"
-            >
-              יצירת בקשת Bit
-            </button>
-          </div>
-
-          <div
-            id="kesher-bit-result"
-            class="kesher-result"
-          ></div>
-        </div>
-      </section>
-
+ 
      
 
       <section
@@ -4743,131 +4687,7 @@ body:not(.month-picker-open) .month-back-bar {
         </div>
       </section>
 
-      <section
-        class="kesher-panel"
-        data-kesher-panel="bank"
-      >
-        <div class="kesher-card">
-          <div class="kesher-card-title">
-            הקמת הוראת קבע בנקאית
-          </div>
-          <div class="kesher-form-grid">
-            <div class="kesher-field">
-              <label>סכום חודשי *</label>
-              <input
-                id="kesher-bank-amount"
-                type="number"
-                min="0.01"
-                step="0.01"
-              >
-            </div>
-
-            <div class="kesher-field">
-              <label>קוד בנק *</label>
-              <input
-                id="kesher-bank-code"
-                type="text"
-              >
-            </div>
-
-            <div class="kesher-field">
-              <label>סניף *</label>
-              <input
-                id="kesher-bank-branch"
-                type="text"
-              >
-            </div>
-
-            <div class="kesher-field">
-              <label>מספר חשבון *</label>
-              <input
-                id="kesher-bank-account"
-                type="text"
-              >
-            </div>
-
-            <div class="kesher-field">
-              <label>מספר תשלומים</label>
-              <input
-                id="kesher-bank-payments"
-                type="number"
-                value="9999"
-              >
-            </div>
-
-            <div class="kesher-field">
-              <label>תאריך התחלה</label>
-              <input
-                id="kesher-bank-start-date"
-                type="date"
-              >
-            </div>
-
-            <div class="kesher-field">
-              <label>שם פרטי</label>
-              <input
-                id="kesher-bank-first-name"
-                type="text"
-              >
-            </div>
-
-            <div class="kesher-field">
-              <label>שם משפחה</label>
-              <input
-                id="kesher-bank-last-name"
-                type="text"
-              >
-            </div>
-
-            <div class="kesher-field">
-              <label>טלפון</label>
-              <input
-                id="kesher-bank-phone"
-                type="tel"
-              >
-            </div>
-
-            <div class="kesher-field">
-              <label>אימייל</label>
-              <input
-                id="kesher-bank-mail"
-                type="email"
-              >
-            </div>
-
-            <div class="kesher-field">
-              <label>מזהה לקוח</label>
-              <input
-                id="kesher-bank-client-id"
-                type="text"
-              >
-            </div>
-          </div>
-
-          <label class="kesher-confirm-row">
-            <input
-              id="kesher-bank-confirm"
-              type="checkbox"
-            >
-            בדקתי את פרטי החשבון ואני מאשר את הקמת הוראת הקבע
-          </label>
-
-          <div class="kesher-actions">
-            <button
-              id="kesher-bank-create"
-              class="kesher-primary"
-              onclick="createKesherBankObligation()"
-            >
-              הקמת הוראת קבע
-            </button>
-          </div>
-
-          <div
-            id="kesher-bank-result"
-            class="kesher-result"
-          ></div>
-        </div>
-      </section>
+    
 <section
   class="kesher-panel"
   data-kesher-panel="credit-standing-order"
