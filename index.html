@@ -20101,5 +20101,50 @@ restoreLoginChangesFromSession();
 }
 
 </script>
+	<div
+  id="iframe-test-box"
+  style="
+    position:fixed;
+    inset:20px;
+    z-index:999999;
+    background:white;
+    border:2px solid #333;
+    border-radius:12px;
+    overflow:hidden;
+    box-shadow:0 20px 60px rgba(0,0,0,0.25);
+  "
+>
+  <button
+    type="button"
+    onclick="document.getElementById('iframe-test-box').remove()"
+    style="
+      position:absolute;
+      top:10px;
+      left:10px;
+      z-index:10;
+      padding:8px 14px;
+      border:none;
+      border-radius:8px;
+      background:#ff6b35;
+      color:white;
+      font-family:Heebo,sans-serif;
+      font-weight:700;
+      cursor:pointer;
+    "
+  >
+    ✕ סגור
+  </button>
+
+  <iframe
+    src="https://www.kesherhk.info/kehilot/#!/Label/50716/moked=kehilot-site"
+    allow="payment *"
+    style="
+      width:100%;
+      height:100%;
+      border:0;
+      background:white;
+    "
+  ></iframe>
+</div>
 </body>
 </html>
