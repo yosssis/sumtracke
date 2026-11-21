@@ -3066,6 +3066,191 @@ body:not(.month-picker-open) .month-back-bar {
     width: 100%;
   }
 }
+	  /* ===== EMAIL LOG ===== */
+
+#email-log-overlay {
+  z-index: 420;
+}
+
+#email-log-overlay .email-log-dialog {
+  width: min(1050px, calc(100vw - 30px));
+  max-width: 1050px;
+  max-height: 88vh;
+  padding: 0;
+  overflow: hidden;
+  text-align: right;
+  border-radius: 22px;
+}
+
+.email-log-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 20px;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  background: #fff;
+}
+
+.email-log-head-title {
+  font-size: 1.05rem;
+  font-weight: 900;
+}
+
+.email-log-head-sub {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.email-log-close {
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.email-log-close:hover {
+  background: #fff1eb;
+  color: var(--accent);
+}
+
+.email-log-filters {
+  display: grid;
+  grid-template-columns:
+    150px
+    150px
+    150px
+    minmax(180px, 1fr);
+  gap: 10px;
+  padding: 14px 18px;
+  background: #faf9f7;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+
+.email-log-filters select,
+.email-log-filters input {
+  width: 100%;
+  height: 40px;
+  border: 1px solid rgba(0,0,0,0.09);
+  border-radius: 10px;
+  padding: 0 10px;
+  background: #fff;
+  color: var(--text);
+  font-family: Heebo, sans-serif;
+  font-size: 0.78rem;
+  outline: none;
+}
+
+.email-log-filters select:focus,
+.email-log-filters input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(255,107,53,0.08);
+}
+
+.email-log-summary {
+  padding: 10px 18px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.email-log-list {
+  max-height: 58vh;
+  overflow-y: auto;
+  padding: 0 12px 14px;
+}
+
+.email-log-item {
+  display: grid;
+  grid-template-columns:
+    145px
+    minmax(180px, 1.1fr)
+    minmax(220px, 1.5fr)
+    90px
+    85px;
+  gap: 10px;
+  align-items: center;
+  padding: 11px 12px;
+  margin-top: 7px;
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 12px;
+  background: #fff;
+  font-size: 0.74rem;
+}
+
+.email-log-item:hover {
+  border-color: rgba(255,107,53,0.18);
+  background: #fffdfb;
+}
+
+.email-log-date {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.email-log-recipient {
+  overflow-wrap: anywhere;
+  font-weight: 700;
+}
+
+.email-log-subject {
+  overflow-wrap: anywhere;
+}
+
+.email-log-type {
+  text-align: center;
+  padding: 4px 8px;
+  border-radius: 20px;
+  background: #fff3ed;
+  color: var(--accent);
+  font-weight: 800;
+}
+
+.email-log-status {
+  text-align: center;
+  font-weight: 900;
+}
+
+.email-log-status.sent {
+  color: #219653;
+}
+
+.email-log-status.error {
+  color: var(--delete);
+}
+
+.email-log-empty {
+  padding: 45px 15px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+@media (max-width: 750px) {
+  #email-log-overlay .email-log-dialog {
+    width: calc(100vw - 16px);
+    max-height: 92vh;
+  }
+
+  .email-log-filters {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .email-log-item {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .email-log-subject {
+    grid-column: 1 / -1;
+  }
+}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
@@ -3125,11 +3310,13 @@ body:not(.month-picker-open) .month-back-bar {
   </div>
 <div class="global-search-row">
 
-  <div
-    id="email-quota-card"
-    class="email-quota-card"
-    title="מכסת שליחת המיילים"
-  >
+<div
+  id="email-quota-card"
+  class="email-quota-card"
+  title="לחץ לצפייה ביומן המיילים"
+  onclick="openEmailLog()"
+  style="cursor:pointer;"
+>
     <div class="email-quota-icon">📧</div>
 
     <div class="email-quota-info">
@@ -3166,6 +3353,89 @@ body:not(.month-picker-open) .month-back-bar {
     </div>
   </div>
 
+</div>
+	<div
+  id="email-log-overlay"
+  class="overlay"
+>
+  <div class="dialog email-log-dialog">
+
+    <div class="email-log-head">
+      <div>
+        <div class="email-log-head-title">
+          📧 יומן מיילים
+        </div>
+
+        <div class="email-log-head-sub">
+          כל המיילים שנשלחו מהמערכת
+        </div>
+      </div>
+
+      <button
+        type="button"
+        class="email-log-close"
+        onclick="closeEmailLog()"
+        title="סגור"
+      >
+        ✕
+      </button>
+    </div>
+
+    <div class="email-log-filters">
+
+      <select
+        id="email-log-period"
+        onchange="loadEmailLog()"
+      >
+        <option value="today">היום</option>
+        <option value="week">7 ימים אחרונים</option>
+        <option value="month">החודש</option>
+        <option value="all">הכל</option>
+      </select>
+
+      <select
+        id="email-log-type"
+        onchange="loadEmailLog()"
+      >
+        <option value="">כל הסוגים</option>
+        <option value="תלמיד">תלמיד</option>
+        <option value="קשר">קשר</option>
+        <option value="דוח">דוח</option>
+        <option value="מערכת">מערכת</option>
+        <option value="אחר">אחר</option>
+      </select>
+
+      <select
+        id="email-log-status"
+        onchange="loadEmailLog()"
+      >
+        <option value="">כל הסטטוסים</option>
+        <option value="נשלח">נשלח</option>
+        <option value="שגיאה">שגיאה</option>
+      </select>
+
+      <input
+        id="email-log-search"
+        type="text"
+        placeholder="חיפוש לפי מייל או נושא..."
+        oninput="emailLogSearchChanged()"
+      />
+
+    </div>
+
+    <div
+      id="email-log-summary"
+      class="email-log-summary"
+    >
+      טוען...
+    </div>
+
+    <div
+      id="email-log-list"
+      class="email-log-list"
+    ></div>
+
+  </div>
 </div>
   <div class="month-picker-title">
   בחר חודש להצגת התלמידים
@@ -4351,23 +4621,14 @@ body:not(.month-picker-open) .month-back-bar {
   <div class="kesher-field">
     <label>סטטוס</label>
 
-    <select
-      id="kesher-returns-filter"
-      onchange="renderKesherReturns()"
-    >
-      <option value="all" selected>
-        הכל
-      </option>
-
-      <option value="9">
-        חזר (9)
-      </option>
-
-      <option value="review">
-        דורש בדיקה (6, 14, 16)
-      </option>
-    </select>
-  </div>
+  <select
+  id="kesher-returns-filter"
+  onchange="renderKesherReturns()"
+>
+  <option value="">
+    הכל
+  </option>
+</select>
 
   <div class="kesher-field">
     <label>מתאריך</label>
@@ -13378,14 +13639,13 @@ if (result.loginInfo) {
 
     if (!result.ok) return;
 
-    countEl.textContent =
-      result.sent +
-      ' / ' +
-      result.limit;
+countEl.textContent =
+  'נשלחו ' +
+  result.sentToday;
 
-    remainingEl.textContent =
-      'נותרו ' +
-      result.remaining;
+remainingEl.textContent =
+  'מכסת Google נותרה: ' +
+  result.remaining;
 
     card.classList.remove(
       'warning',
@@ -13413,6 +13673,229 @@ setInterval(
   refreshEmailQuotaStatus,
   60000
 );
+
+
+	let emailLogSearchTimer = null;
+
+function openEmailLog() {
+  const overlay =
+    document.getElementById(
+      'email-log-overlay'
+    );
+
+  if (!overlay) return;
+
+  overlay.classList.add('show');
+
+  const period =
+    document.getElementById(
+      'email-log-period'
+    );
+
+  if (period) {
+    period.value = 'today';
+  }
+
+  loadEmailLog();
+}
+
+function closeEmailLog() {
+  const overlay =
+    document.getElementById(
+      'email-log-overlay'
+    );
+
+  if (!overlay) return;
+
+  overlay.classList.remove('show');
+}
+
+function emailLogSearchChanged() {
+  clearTimeout(
+    emailLogSearchTimer
+  );
+
+  emailLogSearchTimer =
+    setTimeout(
+      loadEmailLog,
+      300
+    );
+}
+
+async function loadEmailLog() {
+  if (!authToken) return;
+
+  const list =
+    document.getElementById(
+      'email-log-list'
+    );
+
+  const summary =
+    document.getElementById(
+      'email-log-summary'
+    );
+
+  if (!list || !summary) {
+    return;
+  }
+
+  const period =
+    document.getElementById(
+      'email-log-period'
+    )?.value || 'today';
+
+  const type =
+    document.getElementById(
+      'email-log-type'
+    )?.value || '';
+
+  const status =
+    document.getElementById(
+      'email-log-status'
+    )?.value || '';
+
+  const search =
+    document.getElementById(
+      'email-log-search'
+    )?.value || '';
+
+  list.innerHTML =
+    '<div class="email-log-empty">טוען...</div>';
+
+  summary.textContent =
+    'טוען נתונים...';
+
+  try {
+    const response =
+      await fetch(
+        API_URL,
+        {
+          method: 'POST',
+
+          headers: {
+            'Content-Type':
+              'text/plain;charset=utf-8'
+          },
+
+          body: JSON.stringify({
+            action:
+              'getEmailLog',
+
+            token:
+              authToken,
+
+            filters: {
+              period:
+                period,
+
+              type:
+                type,
+
+              status:
+                status,
+
+              search:
+                search
+            }
+          })
+        }
+      );
+
+    const result =
+      await response.json();
+
+    if (!result.ok) {
+      throw new Error(
+        result.error ||
+        'load_failed'
+      );
+    }
+
+    const items =
+      Array.isArray(
+        result.items
+      )
+        ? result.items
+        : [];
+
+    summary.textContent =
+      'נמצאו ' +
+      items.length +
+      ' רשומות';
+
+    if (items.length === 0) {
+      list.innerHTML =
+        '<div class="email-log-empty">' +
+        'לא נמצאו מיילים בהתאם לסינון' +
+        '</div>';
+
+      return;
+    }
+
+    list.innerHTML =
+      items
+        .map(item => {
+
+          const isError =
+            item.status ===
+            'שגיאה';
+
+          return `
+            <div class="email-log-item">
+
+              <div class="email-log-date">
+                ${esc(item.sentAt || '')}
+              </div>
+
+              <div class="email-log-recipient">
+                ${esc(item.recipient || '—')}
+              </div>
+
+              <div class="email-log-subject">
+                ${esc(item.subject || 'ללא נושא')}
+              </div>
+
+              <div class="email-log-type">
+                ${esc(item.type || 'אחר')}
+              </div>
+
+              <div
+                class="email-log-status ${
+                  isError
+                    ? 'error'
+                    : 'sent'
+                }"
+                ${
+                  item.error
+                    ? `title="${esc(item.error)}"`
+                    : ''
+                }
+              >
+                ${esc(item.status || '—')}
+              </div>
+
+            </div>
+          `;
+        })
+        .join('');
+
+  } catch (error) {
+    console.error(
+      'EMAIL LOG LOAD ERROR:',
+      error
+    );
+
+    summary.textContent =
+      'שגיאה בטעינת יומן המיילים';
+
+    list.innerHTML =
+      '<div class="email-log-empty">' +
+      'לא ניתן לטעון את יומן המיילים' +
+      '</div>';
+  }
+}
+
+	
   const LOCAL_KEY = 'sumtracker_v1';
   let saveTimer = null;
 let isSyncing = false;
@@ -19180,7 +19663,82 @@ function kesherReturnDateKey(value) {
 
   return '';
 }
+function updateKesherReturnsStatusFilter() {
+  const select =
+    document.getElementById(
+      'kesher-returns-filter'
+    );
 
+  if (!select) return;
+
+  const currentValue =
+    String(
+      select.value || ''
+    ).trim();
+
+  const statuses =
+    [
+      ...new Set(
+        kesherReturns
+          .map(item =>
+            String(
+              kesherReturnStatusText(item) ||
+              ''
+            ).trim()
+          )
+          .filter(Boolean)
+      )
+    ].sort(
+      (a, b) =>
+        a.localeCompare(
+          b,
+          'he'
+        )
+    );
+
+  select.innerHTML = '';
+
+  const allOption =
+    document.createElement(
+      'option'
+    );
+
+  allOption.value = '';
+  allOption.textContent = 'הכל';
+
+  select.appendChild(
+    allOption
+  );
+
+  statuses.forEach(status => {
+    const option =
+      document.createElement(
+        'option'
+      );
+
+    option.value = status;
+    option.textContent = status;
+
+    select.appendChild(
+      option
+    );
+  });
+
+  if (
+    currentValue &&
+    statuses.includes(
+      currentValue
+    )
+  ) {
+    select.value =
+      currentValue;
+  } else {
+    select.value = '';
+  }
+
+  select.disabled =
+    statuses.length === 0;
+}
 function renderKesherReturns() {
   const body = document.getElementById(
     'kesher-returns-body'
@@ -19190,11 +19748,16 @@ function renderKesherReturns() {
     'kesher-returns-summary'
   );
 
-  if (!body || !summary) return;
+if (!body || !summary) return;
 
-  const filter = document.getElementById(
-    'kesher-returns-filter'
-  ).value;
+updateKesherReturnsStatusFilter();
+
+const filter =
+  String(
+    document.getElementById(
+      'kesher-returns-filter'
+    )?.value || ''
+  ).trim();
 
   const query = document.getElementById(
     'kesher-returns-search'
@@ -19213,19 +19776,13 @@ function renderKesherReturns() {
   ).trim();
 
   const visible = kesherReturns.filter(item => {
-    if (
-      filter === '9' &&
-      item.statusCode !== 9
-    ) {
-      return false;
-    }
-
-    if (
-      filter === 'review' &&
-      ![6, 14, 16].includes(item.statusCode)
-    ) {
-      return false;
-    }
+if (
+  filter &&
+  kesherReturnStatusText(item) !==
+    filter
+) {
+  return false;
+}
 
     const itemDate =
       kesherReturnDateKey(item.eventDate) ||
