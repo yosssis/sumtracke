@@ -13695,39 +13695,40 @@ if (result.loginInfo) {
 
     if (!result.ok) return;
 
-const totalToday =
-  Number(result.sentToday || 0) +
-  Number(result.pending || 0);
+    const sentToday =
+      Number(result.sentToday || 0);
 
-countEl.textContent =
-  'סה"כ היום: ' +
-  totalToday +
-  ' | נשלחו: ' +
-  Number(result.sentToday || 0);
-remainingEl.innerHTML =
-  'ממתינים: <strong>' +
-  Number(result.pending || 0) +
-  '</strong>' +
-  '<br>' +
-  'מכסת Google נותרה: ' +
-  Number(result.remaining || 0);
+    const pending =
+      Number(result.pending || 0);
+
+    const totalToday =
+      sentToday + pending;
+
+    countEl.textContent =
+      'סה"כ היום: ' +
+      totalToday +
+      ' | נשלחו: ' +
+      sentToday;
+
+    remainingEl.innerHTML =
+      'ממתינים: <strong>' +
+      pending +
+      '</strong>' +
+      '<br>' +
+      'שירות שליחה: <strong>Brevo</strong>';
+
     card.classList.remove(
       'warning',
       'danger'
     );
 
-    if (result.remaining === 0) {
-      card.classList.add('danger');
-
-    } else if (
-      result.remaining <= 20
-    ) {
+    if (pending >= 20) {
       card.classList.add('warning');
     }
 
   } catch (error) {
     console.error(
-      'EMAIL QUOTA ERROR:',
+      'EMAIL STATUS ERROR:',
       error
     );
   }
