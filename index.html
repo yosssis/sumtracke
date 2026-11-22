@@ -3852,6 +3852,84 @@ body:not(.month-picker-open) .month-back-bar {
   ♻️ סל מיחזור
   <span id="recycle-bin-count">(0)</span>
 </button>
+	  <button
+  type="button"
+  class="btn-action"
+  onclick="openPhoneAdmins()"
+  style="
+    width:100%;
+    margin-top:10px;
+    justify-content:center;
+    color:#20639b;
+    border-color:#bfd8eb;
+  "
+>
+  📞 מורשי ניהול טלפוני
+</button>
+	  <div
+  id="phone-admins-overlay"
+  class="overlay"
+>
+  <div
+    class="dialog"
+    style="
+      max-width:430px;
+      width:94%;
+      text-align:right;
+    "
+  >
+    <div
+      class="dialog-msg"
+      style="text-align:center;"
+    >
+      📞 מורשי ניהול טלפוני
+    </div>
+
+    <div
+      class="dialog-sub"
+      style="text-align:center;"
+    >
+      המספרים שיוכלו להשתמש בשלוחה 9
+    </div>
+
+    <textarea
+      id="phone-admins-input"
+      placeholder="מספר אחד בכל שורה&#10;0526070003"
+      style="
+        width:100%;
+        min-height:180px;
+        resize:vertical;
+        padding:12px;
+        border:1px solid var(--border);
+        border-radius:10px;
+        font-family:Heebo;
+        direction:ltr;
+      "
+    ></textarea>
+
+    <div
+      class="dialog-btns"
+      style="margin-top:16px;"
+    >
+      <button
+        type="button"
+        class="btn-cancel"
+        onclick="closePhoneAdmins()"
+      >
+        ביטול
+      </button>
+
+      <button
+        type="button"
+        class="btn-confirm-del"
+        style="background:#20639b;"
+        onclick="savePhoneAdmins()"
+      >
+        שמור
+      </button>
+    </div>
+  </div>
+</div>
     <!-- Recycle Bin Dialog -->
 <div
   class="overlay"
@@ -14308,6 +14386,138 @@ if (hanukkahEnabled) {
       renderHanukkahButton();
     }
   });
+}
+	async function openPhoneAdmins() {
+  if (!authToken) return;
+
+  try {
+    const response =
+      await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type':
+            'text/plain;charset=utf-8'
+        },
+        body: JSON.stringify({
+          action:
+            'getPhoneAdminNumbers',
+          token:
+            authToken
+        })
+      });
+
+    const result =
+      await response.json();
+
+    if (!result.ok) {
+      throw new Error(
+        result.error ||
+        'load_failed'
+      );
+    }
+
+    const input =
+      document.getElementById(
+        'phone-admins-input'
+      );
+
+    input.value =
+      (
+        Array.isArray(
+          result.numbers
+        )
+          ? result.numbers
+          : []
+      ).join('\n');
+
+    document
+      .getElementById(
+        'phone-admins-overlay'
+      )
+      .classList.add('show');
+
+  } catch (error) {
+    console.error(
+      'PHONE ADMINS LOAD:',
+      error
+    );
+
+    showToast(
+      '❌ לא ניתן לטעון את רשימת המורשים'
+    );
+  }
+}
+
+function closePhoneAdmins() {
+  document
+    .getElementById(
+      'phone-admins-overlay'
+    )
+    ?.classList.remove('show');
+}
+
+async function savePhoneAdmins() {
+  if (!authToken) return;
+
+  const input =
+    document.getElementById(
+      'phone-admins-input'
+    );
+
+  const numbers =
+    String(
+      input?.value || ''
+    )
+      .split(/[\n,;]+/)
+      .map(value =>
+        value.trim()
+      )
+      .filter(Boolean);
+
+  try {
+    const response =
+      await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type':
+            'text/plain;charset=utf-8'
+        },
+        body: JSON.stringify({
+          action:
+            'setPhoneAdminNumbers',
+          token:
+            authToken,
+          numbers:
+            numbers
+        })
+      });
+
+    const result =
+      await response.json();
+
+    if (!result.ok) {
+      throw new Error(
+        result.error ||
+        'save_failed'
+      );
+    }
+
+    closePhoneAdmins();
+
+    showToast(
+      '✅ מורשי הניהול נשמרו'
+    );
+
+  } catch (error) {
+    console.error(
+      'PHONE ADMINS SAVE:',
+      error
+    );
+
+    showToast(
+      '❌ שמירת המורשים נכשלה'
+    );
+  }
 }
 function getPayload() {
   return JSON.stringify({
